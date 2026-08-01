@@ -1,0 +1,46 @@
+# ============================================================
+# PostgresPulse - Entorno de desarrollo
+# Levanta: pulse-db (almacenamiento propio) y target-demo
+# (base de datos demo con datos de ventas mal modelados a proposito).
+#
+# Uso: docker compose up -d
+# El servicio "app" se agrega en la Fase 7 (imagen de produccion).
+# ============================================================
+
+services:
+  pulse-db:
+    image: postgres:16-alpine
+    container_name: pulse-db
+    environment:
+      POSTGRES_DB: pulse_db
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pulse_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse -d pulse_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  target-demo:
+    image: postgres:16-alpine
+    container_name: pulse-target-demo
+    environment:
+      POSTGRES_DB: ventas_db
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d ventas_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pulse_data:

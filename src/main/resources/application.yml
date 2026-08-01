@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: postgrespulse
+
+  datasource:
+    url: ${PULSE_DB_URL:jdbc:postgresql://localhost:5432/pulse_db}
+    username: ${PULSE_DB_USER:pulse}
+    password: ${PULSE_DB_PASSWORD:pulse}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+
+  flyway:
+    enabled: true
+
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  crypto:
+    key: ${PULSE_CRYPTO_KEY:}
+  scheduler:
+    cron: ${PULSE_SCHEDULER_CRON:0 0 * * * *}
+    enabled: ${PULSE_SCHEDULER_ENABLED:false}

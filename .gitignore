@@ -1,0 +1,39 @@
+# Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE - IntelliJ
+.idea/
+*.iml
+out/
+
+# IDE - Eclipse
+.settings/
+.classpath
+.project
+bin/
+
+# IDE - VS Code
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Secretos y entornos locales
+.env
+*.local
+application-local.yml
+
+# Logs
+*.log
+logs/
+
+# Docker
+postgres-data/
+pgdata/
+
+# Reportes de cobertura
+coverage/
