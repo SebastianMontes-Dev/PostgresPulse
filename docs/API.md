@@ -7,19 +7,20 @@ Base URL: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva
 ## 1. Convenciones
 
 - **Paginación**: `?page=0&size=20` (respuestas `Pageable` estándar de Spring).
-- **Autenticación**: Basic Auth (se habilita en la Fase 7). Cabecera `Authorization: Basic base64(user:pass)`.
-- **Credenciales**: el campo `password` **nunca** se devuelve en las respuestas; solo `"passwordMasked": true`.
+- **Autenticación**: Basic Auth (se habilita en la Fase 7). Cabecera `Authorization: Basic base64(usuario:contrasena)`.
+- **Credenciales**: el campo `contrasena` **nunca** se devuelve en las respuestas; solo `"contrasenaEnmascarada": true`.
 - **Errores**: todas las respuestas 4xx/5xx usan el formato `ApiError` (sección 5).
 - **Datos nulos**: se omiten en las respuestas (`default-property-inclusion: non_null`).
+- **Nombres en español**: rutas, campos JSON y mensajes están en español (ej. `fuentes`, `puerto`, `contrasena`).
 
 ---
 
-## 2. Fuentes (`/sources`)
+## 2. Fuentes (`/fuentes`)
 
 ### 2.1 Listar fuentes
 
 ```
-GET /api/v1/sources
+GET /api/v1/fuentes
 ```
 
 **Respuesta 200**
@@ -27,17 +28,17 @@ GET /api/v1/sources
 [
   {
     "id": 1,
-    "name": "Ventas Demo",
+    "nombre": "Ventas Demo",
     "host": "localhost",
-    "port": 5433,
-    "database": "ventas_db",
-    "username": "demo",
-    "passwordMasked": true,
-    "schemaFilter": "public",
-    "tags": ["demo"],
-    "enabled": true,
-    "status": "ONLINE",
-    "lastAnalyzedAt": "2026-08-01T15:04:05Z"
+    "puerto": 5433,
+    "baseDeDatos": "ventas_db",
+    "usuario": "demo",
+    "contrasenaEnmascarada": true,
+    "filtroEsquema": "public",
+    "etiquetas": ["demo"],
+    "habilitado": true,
+    "estado": "EN_LINEA",
+    "ultimoAnalizadoEn": "2026-08-01T15:04:05Z"
   }
 ]
 ```
@@ -45,41 +46,41 @@ GET /api/v1/sources
 ### 2.2 Registrar fuente
 
 ```
-POST /api/v1/sources
+POST /api/v1/fuentes
 Content-Type: application/json
 ```
 
-**Body**
+**Cuerpo**
 ```json
 {
-  "name": "Ventas Producción",
+  "nombre": "Ventas Producción",
   "host": "localhost",
-  "port": 5433,
-  "database": "ventas_db",
-  "username": "demo",
-  "password": "demo",
-  "schemaFilter": "public,ventas",
-  "tags": ["produccion", "core"]
+  "puerto": 5433,
+  "baseDeDatos": "ventas_db",
+  "usuario": "demo",
+  "contrasena": "demo",
+  "filtroEsquema": "public,ventas",
+  "etiquetas": ["produccion", "core"]
 }
 ```
 
 | Campo | Tipo | Obligatorio | Validación |
 |---|---|---|---|
-| `name` | string | ✅ | 1–100 caracteres, único |
+| `nombre` | string | ✅ | 1–100 caracteres, único (insensible a mayúsculas) |
 | `host` | string | ✅ | 1–255 caracteres |
-| `port` | int | ✅ | 1–65535 |
-| `database` | string | ✅ | 1–100 caracteres |
-| `username` | string | ✅ | 1–100 caracteres |
-| `password` | string | ✅ | 1–255 caracteres (nunca se devuelve) |
-| `schemaFilter` | string | ❌ | regex `[a-zA-Z0-9_.,]*` |
-| `tags` | list[string] | ❌ | máx. 10 etiquetas |
+| `puerto` | int | ✅ | 1–65535 |
+| `baseDeDatos` | string | ✅ | 1–100 caracteres |
+| `usuario` | string | ✅ | 1–100 caracteres |
+| `contrasena` | string | ✅ | 1–255 caracteres (cifrada AES-256-GCM, nunca se devuelve) |
+| `filtroEsquema` | string | ❌ | regex `[a-zA-Z0-9_.,]*` |
+| `etiquetas` | list[string] | ❌ | máx. 10 etiquetas |
 
-**Respuesta 201** — fuente creada con `status: OFFLINE` (se verifica en el primer test/análisis).
+**Respuesta 201** — fuente creada con `estado: FUERA_LINEA` (se verifica en la primera prueba/análisis).
 
 ### 2.3 Detalle de fuente
 
 ```
-GET /api/v1/sources/{id}
+GET /api/v1/fuentes/{id}
 ```
 
 **404** si no existe. **Respuesta 200**: igual al listado.
@@ -87,102 +88,104 @@ GET /api/v1/sources/{id}
 ### 2.4 Actualizar fuente
 
 ```
-PUT /api/v1/sources/{id}
+PUT /api/v1/fuentes/{id}
 ```
-Mismo body que el registro. Campos omitidos conservan su valor. **Respuesta 200**.
+Mismo cuerpo que el registro. Campos omitidos conservan su valor. **Respuesta 200**.
 
 ### 2.5 Eliminar fuente
 
 ```
-DELETE /api/v1/sources/{id}
+DELETE /api/v1/fuentes/{id}
 ```
-Elimina también sus snapshots en cascada. **Respuesta 204**.
+Elimina también sus análisis en cascada. **Respuesta 204**.
 
----
-
-## 3. Operaciones de análisis
-
-### 3.1 Probar conexión
+### 2.6 Probar conexión
 
 ```
-POST /api/v1/sources/{id}/test
+POST /api/v1/fuentes/{id}/probar
 ```
 
 **Respuesta 200**
 ```json
-{ "reachable": true, "latencyMs": 23, "version": "16.3", "message": "Conexión exitosa" }
+{ "alcanzable": true, "latenciaMs": 23, "version": "16.3", "mensaje": "Conexión exitosa" }
 ```
 
 **Respuesta 422** (fuente inalcanzable)
 ```json
-{ "reachable": false, "message": "No se pudo conectar: connection refused" }
+{ "alcanzable": false, "mensaje": "No se pudo conectar: connection refused" }
 ```
 
-### 3.2 Ejecutar análisis
+> La prueba actualiza el estado de la fuente: `EN_LINEA` al conectar, `ERROR` + `ultimoError` al fallar.
+
+---
+
+## 3. Operaciones de análisis (Fases 3–4)
+
+### 3.1 Ejecutar análisis
 
 ```
-POST /api/v1/sources/{id}/analyze
+POST /api/v1/fuentes/{id}/analizar
 ```
 
-**Respuesta 201** — resumen del snapshot creado
+**Respuesta 201** — resumen del análisis creado
 ```json
 {
   "id": 12,
-  "sourceId": 1,
-  "healthScore": 47.3,
-  "status": "CRITICAL",
-  "durationMs": 812,
-  "analyzedAt": "2026-08-01T15:04:05Z",
-  "triggeredBy": "MANUAL"
+  "fuenteId": 1,
+  "puntajeSalud": 47.3,
+  "estado": "CRITICO",
+  "duracionMs": 812,
+  "analizadoEn": "2026-08-01T15:04:05Z",
+  "disparadoPor": "MANUAL"
 }
 ```
 
 **422** si no se pudo conectar. **409** si ya hay un análisis en curso para esa fuente.
 
-### 3.3 Historial de snapshots
+### 3.2 Historial de análisis
 
 ```
-GET /api/v1/sources/{id}/snapshots?page=0&size=20
+GET /api/v1/fuentes/{id}/analisis?page=0&size=20
 ```
 
 **Respuesta 200**
 ```json
 {
   "content": [
-    { "id": 12, "healthScore": 47.3, "status": "CRITICAL", "analyzedAt": "..." },
-    { "id": 11, "healthScore": 52.1, "status": "CRITICAL", "analyzedAt": "..." }
+    { "id": 12, "puntajeSalud": 47.3, "estado": "CRITICO", "analizadoEn": "..." },
+    { "id": 11, "puntajeSalud": 52.1, "estado": "CRITICO", "analizadoEn": "..." }
   ],
   "page": 0, "size": 20, "totalElements": 12, "totalPages": 1
 }
 ```
 
-### 3.4 Snapshot completo
+### 3.3 Análisis completo
 
 ```
-GET /api/v1/snapshots/{id}
+GET /api/v1/analisis/{id}
 ```
 
 **Respuesta 200**
 ```json
 {
   "id": 12,
-  "sourceId": 1,
-  "sourceName": "Ventas Demo",
-  "healthScore": 47.3,
-  "status": "CRITICAL",
-  "analyzedAt": "2026-08-01T15:04:05Z",
-  "durationMs": 812,
-  "checks": [
+  "fuenteId": 1,
+  "nombreFuente": "Ventas Demo",
+  "puntajeSalud": 47.3,
+  "estado": "CRITICO",
+  "analizadoEn": "2026-08-01T15:04:05Z",
+  "duracionMs": 812,
+  "chequeos": [
     {
-      "code": "SEQ_SCAN",
-      "category": "PERFORMANCE",
-      "status": "CRITICAL",
-      "score": 35.0,
-      "message": "3 tablas con 100% de scans secuenciales",
-      "recommendation": "CREATE INDEX idx_ventas_cliente_id ON ventas(cliente_id);",
-      "details": {
-        "tables": [
-          { "table": "ventas", "seqScans": 15432, "idxScans": 0, "estimatedRows": 500000 }
+      "codigo": "SEQ_SCAN",
+      "categoria": "RENDIMIENTO",
+      "estado": "CRITICO",
+      "puntaje": 35.0,
+      "mensaje": "3 tablas con 100% de scans secuenciales",
+      "recomendacion": "CREATE INDEX idx_ventas_cliente_id ON ventas(cliente_id);",
+      "detalle": {
+        "tablas": [
+          { "tabla": "ventas", "scansSecuenciales": 15432, "scansPorIndice": 0, "filasEstimadas": 500000 }
         ]
       }
     }
@@ -190,60 +193,60 @@ GET /api/v1/snapshots/{id}
 }
 ```
 
-### 3.5 Exportar reporte
+### 3.4 Exportar reporte
 
 ```
-GET /api/v1/snapshots/{id}/export?format=json|csv|html
+GET /api/v1/analisis/{id}/exportar?formato=json|csv|html
 ```
 
-- `json` → objeto completo del snapshot
-- `csv` → filas `check_code,status,score,message,recommendation` (apto para hojas de cálculo)
+- `json` → objeto completo del análisis
+- `csv` → filas `codigo_chequeo,estado,puntaje,mensaje,recomendacion` (apto para hojas de cálculo)
 - `html` → reporte autónomo imprimible (dashboard)
 
 Cabecera `Content-Disposition: attachment` en los tres formatos.
 
-### 3.6 Salud y tendencia
+### 3.5 Salud y tendencia
 
 ```
-GET /api/v1/sources/{id}/health
+GET /api/v1/fuentes/{id}/salud
 ```
 
 **Respuesta 200**
 ```json
 {
-  "sourceId": 1,
-  "currentScore": 47.3,
-  "currentStatus": "CRITICAL",
-  "lastAnalyzedAt": "2026-08-01T15:04:05Z",
-  "trend7d": [
-    { "analyzedAt": "2026-07-31T15:00:00Z", "healthScore": 52.1 },
-    { "analyzedAt": "2026-08-01T15:04:05Z", "healthScore": 47.3 }
+  "fuenteId": 1,
+  "puntajeActual": 47.3,
+  "estadoActual": "CRITICO",
+  "ultimoAnalizadoEn": "2026-08-01T15:04:05Z",
+  "tendencia7d": [
+    { "analizadoEn": "2026-07-31T15:00:00Z", "puntajeSalud": 52.1 },
+    { "analizadoEn": "2026-08-01T15:04:05Z", "puntajeSalud": 47.3 }
   ]
 }
 ```
 
 ---
 
-## 4. Detalle del último análisis
+## 4. Detalle del último análisis (Fases 3–4)
 
 ### 4.1 Tablas
 
 ```
-GET /api/v1/sources/{id}/tables
+GET /api/v1/fuentes/{id}/tablas
 ```
-Devuelve el detalle del último snapshot: por tabla — filas estimadas, dead tuples, dead_tup_ratio, bloat estimado, seq/index scans, tamaño.
+Devuelve el detalle del último análisis: por tabla — filas estimadas, dead tuples, razón de dead tuples, bloat estimado, scans secuenciales/por índice, tamaño.
 
 ### 4.2 Queries lentas
 
 ```
-GET /api/v1/sources/{id}/queries
+GET /api/v1/fuentes/{id}/queries
 ```
 Top N por tiempo medio de ejecución (`pg_stat_statements`). Requiere la extensión habilitada en la BD objetivo; si no, `400` con código `EXTENSION_AUSENTE`.
 
 ### 4.3 Índices
 
 ```
-GET /api/v1/sources/{id}/indexes`
+GET /api/v1/fuentes/{id}/indices
 ```
 Hallazgos del último análisis: índices sin uso, duplicados y superpuestos, con tamaño y `DROP INDEX` sugerido.
 
@@ -255,19 +258,19 @@ Hallazgos del último análisis: índices sin uso, duplicados y superpuestos, co
 {
   "timestamp": "2026-08-01T15:04:05Z",
   "status": 400,
-  "code": "SOLICITUD_INVALIDA",
-  "message": "El puerto debe estar entre 1 y 65535",
-  "path": "/api/v1/sources",
-  "details": ["port: must be between 1 and 65535"]
+  "codigo": "SOLICITUD_INVALIDA",
+  "mensaje": "Validación de entrada fallida",
+  "ruta": "/api/v1/fuentes",
+  "detalles": ["puerto: El puerto debe estar entre 1 y 65535"]
 }
 ```
 
 | Código | HTTP | Cuándo |
 |---|---|---|
 | `SOLICITUD_INVALIDA` | 400 | Fallo de validación de entrada |
-| `NO_ENCONTRADA` | 404 | Fuente/snapshot inexistente |
+| `NO_ENCONTRADA` | 404 | Fuente/análisis inexistente |
 | `CONFLICTO` | 409 | Nombre de fuente duplicado o análisis en curso |
-| `CONEXION_FALLIDA` | 422 | Test/análisis no pudieron conectar |
+| `CONEXION_FALLIDA` | 422 | Prueba/análisis no pudieron conectar |
 | `EXTENSION_AUSENTE` | 400 | `pg_stat_statements` no disponible |
 | `NO_AUTORIZADO` | 401 | Credenciales inválidas (Fase 7) |
 | `ERROR_INTERNO` | 500 | Error inesperado |
@@ -278,19 +281,19 @@ Hallazgos del último análisis: índices sin uso, duplicados y superpuestos, co
 
 ```bash
 # 1. Registrar la base demo
-curl -X POST http://localhost:8080/api/v1/sources \
+curl -X POST http://localhost:8080/api/v1/fuentes \
   -H "Content-Type: application/json" \
-  -d '{"name":"Ventas Demo","host":"localhost","port":5433,"database":"ventas_db","username":"demo","password":"demo","tags":["demo"]}'
+  -d '{"nombre":"Ventas Demo","host":"localhost","puerto":5433,"baseDeDatos":"ventas_db","usuario":"demo","contrasena":"demo","etiquetas":["demo"]}'
 
 # 2. Probar conexión
-curl -X POST http://localhost:8080/api/v1/sources/1/test
+curl -X POST http://localhost:8080/api/v1/fuentes/1/probar
 
-# 3. Analizar
-curl -X POST http://localhost:8080/api/v1/sources/1/analyze
+# 3. Analizar (Fases 3–4)
+curl -X POST http://localhost:8080/api/v1/fuentes/1/analizar
 
-# 4. Ver el snapshot con hallazgos
-curl http://localhost:8080/api/v1/snapshots/1
+# 4. Ver el análisis con hallazgos
+curl http://localhost:8080/api/v1/analisis/1
 
 # 5. Exportar reporte CSV
-curl -o reporte.csv "http://localhost:8080/api/v1/snapshots/1/export?format=csv"
+curl -o reporte.csv "http://localhost:8080/api/v1/analisis/1/exportar?formato=csv"
 ```

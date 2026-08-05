@@ -39,8 +39,8 @@ springdoc:
     path: /swagger-ui.html
 
 app:
-  crypto:
-    key: ${PULSE_CRYPTO_KEY:}
-  scheduler:
+  cifrado:
+    clave: ${PULSE_CRYPTO_KEY:clave-de-desarrollo-por-defecto-32-caracteres!}
+  programacion:
     cron: ${PULSE_SCHEDULER_CRON:0 0 * * * *}
-    enabled: ${PULSE_SCHEDULER_ENABLED:false}
+    habilitado: ${PULSE_SCHEDULER_ENABLED:false}

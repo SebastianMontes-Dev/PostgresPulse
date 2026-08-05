@@ -64,9 +64,9 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 
 | Término | Definición |
 |---|---|
-| **Fuente (DbSource)** | Conexión registrada a una BD PostgreSQL a analizar |
-| **Snapshot** | Resultado completo de una ejecución de análisis (score + chequeos) |
-| **CheckResult** | Resultado individual de un chequeo (estado, score parcial, mensaje, recomendación SQL) |
+| **Fuente (FuenteDatos)** | Conexión registrada a una BD PostgreSQL a analizar |
+| **Análisis (Analisis)** | Resultado completo de una ejecución de análisis (score + chequeos) |
+| **ResultadoChequeo** | Resultado individual de un chequeo (estado, puntaje parcial, mensaje, recomendación SQL) |
 | **Health Score** | Índice 0–100 de salud global ponderado |
 | **Bloat** | Espacio desperdiciado en tablas/índices por el modelo MVCC de PostgreSQL |
 | **Dead tuples** | Filas obsoletas pendientes de limpieza por autovacuum |
@@ -120,12 +120,12 @@ Docker Compose:
 
 | Patrón | Uso |
 |---|---|
-| **Strategy** | `AnalysisChecker` (interfaz) + 8 implementaciones — añadir chequeo = 1 clase |
-| **Factory** | `CheckerFactory` construye la cadena de chequeos por categoría |
-| **Orchestrator** | `AnalysisOrchestratorService` coordina: conectar → chequear → puntuar → persistir |
+| **Strategy** | `ChequeoAnalisis` (interfaz) + 8 implementaciones — añadir chequeo = 1 clase |
+| **Factory** | `FabricaChequeos` construye la cadena de chequeos por categoría |
+| **Orchestrator** | `OrquestadorAnalisisServicio` coordina: conectar → chequear → puntuar → persistir |
 | **Repository** | JPA + repositorios dedicados para consultas SQL nativas pesadas |
 | **DTO** | Separación estricta entidad/API (nunca se exponen entidades JPA) |
-| **Registry** | `ConnectionRegistryService` — pool de DataSources runtime con ciclo de vida |
+| **Registry** | `RegistroConexionesServicio` — pool de DataSources runtime con ciclo de vida |
 
 ### 6.4 Decisiones de Arquitectura (ADRs)
 
@@ -144,46 +144,46 @@ Docker Compose:
 ## 7. Modelo de datos propio (esquema de la aplicación)
 
 ```
-pulse_sources
-┌─────────────────────────────┐
-│ id            BIGSERIAL PK  │
-│ name          VARCHAR(100)  │
-│ host / port / database      │
-│ username      VARCHAR(100)  │
-│ password_enc  TEXT (AES-GCM)│
-│ schema_filter VARCHAR(200)  │ (opcional, ej: public,ventas)
-│ tags          VARCHAR(255)  │ (ej: "produccion,core")
-│ enabled       BOOLEAN       │
-│ status        VARCHAR(20)   │ ONLINE / OFFLINE / ERROR
-│ last_error    TEXT          │
-│ last_analyzed_at TIMESTAMPTZ│
-│ created_at / updated_at     │
-└─────────────────────────────┘
+fuentes
+┌───────────────────────────────────────┐
+│ id                   BIGSERIAL PK     │
+│ nombre               VARCHAR(100)     │
+│ host / puerto / nombre_bd             │
+│ usuario              VARCHAR(100)     │
+│ contrasena_cifrada   TEXT (AES-GCM)   │
+│ filtro_esquema       VARCHAR(200)     │ (opcional, ej: public,ventas)
+│ etiquetas            VARCHAR(255)     │ (ej: "produccion,core")
+│ habilitado           BOOLEAN          │
+│ estado               VARCHAR(20)      │ EN_LINEA / FUERA_LINEA / ERROR
+│ ultimo_error         TEXT             │
+│ ultimo_analizado_en  TIMESTAMPTZ      │
+│ creado_en / actualizado_en            │
+└───────────────────────────────────────┘
 
-pulse_snapshots
-┌─────────────────────────────┐
-│ id            BIGSERIAL PK  │
-│ source_id     FK → sources  │
-│ health_score  NUMERIC(5,2)  │
-│ status        VARCHAR(20)   │ HEALTHY/WARNING/CRITICAL
-│ duration_ms   BIGINT        │
-│ analyzed_at   TIMESTAMPTZ   │
-│ triggered_by  VARCHAR(20)   │ MANUAL / SCHEDULED
-│ raw_json      JSONB         │ (detalle completo, tolerante a cambios de esquema)
-└─────────────────────────────┘
+analisis
+┌───────────────────────────────────────┐
+│ id            BIGSERIAL PK            │
+│ fuente_id     FK → fuentes            │
+│ puntaje_salud NUMERIC(5,2)            │
+│ estado        VARCHAR(20)             │ SANO/ADVERTENCIA/CRITICO
+│ duracion_ms   BIGINT                  │
+│ analizado_en  TIMESTAMPTZ             │
+│ disparado_por VARCHAR(20)             │ MANUAL / PROGRAMADO
+│ detalle_json  JSONB                   │ (detalle completo, tolerante a cambios de esquema)
+└───────────────────────────────────────┘
 
-pulse_check_results
-┌─────────────────────────────┐
-│ id            BIGSERIAL PK  │
-│ snapshot_id   FK → snapshots│
-│ check_code    VARCHAR(50)   │ ej: BLOAT, INDEX_HEALTH
-│ category      VARCHAR(20)   │ PERFORMANCE/STORAGE/INTEGRITY/CONCURRENCY/CONNECTIONS
-│ status        VARCHAR(20)   │ HEALTHY/WARNING/CRITICAL
-│ score         NUMERIC(5,2)  │ 0–100
-│ message       TEXT          │ resumen legible
-│ recommendation TEXT         │ SQL/acción sugerida (NULL si ok)
-│ details       JSONB         │ detalle estructurado (tablas, queries, índices)
-└─────────────────────────────┘
+resultados_chequeos
+┌───────────────────────────────────────┐
+│ id             BIGSERIAL PK           │
+│ analisis_id    FK → analisis          │
+│ codigo_chequeo VARCHAR(50)            │ ej: BLOAT, INDEX_HEALTH (único por análisis)
+│ categoria      VARCHAR(20)            │ RENDIMIENTO/ALMACENAMIENTO/INTEGRIDAD/CONCURRENCIA/CONEXIONES
+│ estado         VARCHAR(20)            │ SANO/ADVERTENCIA/CRITICO
+│ puntaje        NUMERIC(5,2)           │ 0–100
+│ mensaje        TEXT                   │ resumen legible
+│ recomendacion  TEXT                   │ SQL/acción sugerida (NULL si ok)
+│ detalle        JSONB                  │ detalle estructurado (tablas, queries, índices)
+└───────────────────────────────────────┘
 ```
 
 **Regla de retención**: snapshots con más de 90 días se compactan a `raw_json` agregado (job mensual). Índice compuesto `(source_id, analyzed_at)` para consultas de tendencia.
@@ -211,7 +211,7 @@ pesos:  Performance 0.30 · Storage 0.25 · Integridad 0.20 · Concurrencia 0.15
 Score_categoria = promedio de scores de sus chequeos
 ```
 
-**Clasificación**: ≥85 `HEALTHY` (verde) · 60–84 `WARNING` (ámbar) · <60 `CRITICAL` (rojo).
+**Clasificación**: ≥85 `SANO` (verde) · 60–84 `ADVERTENCIA` (ámbar) · <60 `CRITICO` (rojo).
 
 Cada chequeo devuelve `details` (JSONB): lista de tablas/índices/queries con métricas — alimenta las vistas del dashboard y las exportaciones.
 
@@ -228,20 +228,20 @@ Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginaci
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/api/v1/sources` | Lista fuentes (credenciales enmascaradas) |
-| POST | `/api/v1/sources` | Registrar fuente |
-| GET | `/api/v1/sources/{id}` | Detalle de fuente |
-| PUT | `/api/v1/sources/{id}` | Actualizar fuente |
-| DELETE | `/api/v1/sources/{id}` | Eliminar fuente |
-| POST | `/api/v1/sources/{id}/test` | Probar conexión |
-| POST | `/api/v1/sources/{id}/analyze` | Ejecutar análisis ahora |
-| GET | `/api/v1/sources/{id}/snapshots` | Historial paginado |
-| GET | `/api/v1/snapshots/{id}` | Snapshot completo |
-| GET | `/api/v1/snapshots/{id}/export` | Reporte `?format=json\|csv\|html` |
-| GET | `/api/v1/sources/{id}/health` | Último score + tendencia 7d |
-| GET | `/api/v1/sources/{id}/tables` | Detalle de tablas |
-| GET | `/api/v1/sources/{id}/queries` | Top queries lentas |
-| GET | `/api/v1/sources/{id}/indexes` | Hallazgos de índices |
+| GET | `/api/v1/fuentes` | Lista fuentes (credenciales enmascaradas) |
+| POST | `/api/v1/fuentes` | Registrar fuente |
+| GET | `/api/v1/fuentes/{id}` | Detalle de fuente |
+| PUT | `/api/v1/fuentes/{id}` | Actualizar fuente |
+| DELETE | `/api/v1/fuentes/{id}` | Eliminar fuente |
+| POST | `/api/v1/fuentes/{id}/probar` | Probar conexión |
+| POST | `/api/v1/fuentes/{id}/analizar` | Ejecutar análisis ahora |
+| GET | `/api/v1/fuentes/{id}/analisis` | Historial paginado |
+| GET | `/api/v1/analisis/{id}` | Análisis completo |
+| GET | `/api/v1/analisis/{id}/exportar` | Reporte `?formato=json\|csv\|html` |
+| GET | `/api/v1/fuentes/{id}/salud` | Último score + tendencia 7d |
+| GET | `/api/v1/fuentes/{id}/tablas` | Detalle de tablas |
+| GET | `/api/v1/fuentes/{id}/queries` | Top queries lentas |
+| GET | `/api/v1/fuentes/{id}/indices` | Hallazgos de índices |
 
 ---
 
@@ -250,10 +250,10 @@ Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginaci
 | Pantalla | Ruta | Contenido |
 |---|---|---|
 | Resumen | `/` | Cards por fuente (nombre, tags, score, status), tabla general, botón "Analizar ahora" |
-| Detalle de fuente | `/sources/{id}` | Score + estado, tendencia 7d (Chart.js), tarjetas por categoría, hallazgos con SQL recomendado y botón copiar |
-| Detalle de tabla | `/sources/{id}/tables/{table}` | Filas estimadas, dead tuples, bloat, caché, índices, recomendaciones |
-| Historial | `/sources/{id}/history` | Snapshots paginados + tendencia |
-| Reporte exportable | `GET /snapshots/{id}/export?format=html` | Reporte HTML autónomo (imprimir/compartir) |
+| Detalle de fuente | `/fuentes/{id}` | Score + estado, tendencia 7d (Chart.js), tarjetas por categoría, hallazgos con SQL recomendado y botón copiar |
+| Detalle de tabla | `/fuentes/{id}/tablas/{tabla}` | Filas estimadas, dead tuples, bloat, caché, índices, recomendaciones |
+| Historial | `/fuentes/{id}/historial` | Análisis paginados + tendencia |
+| Reporte exportable | `GET /analisis/{id}/exportar?formato=html` | Reporte HTML autónomo (imprimir/compartir) |
 
 Estética: tema oscuro tipo dashboard de monitoreo, semáforo verde/ámbar/rojo, responsivo.
 
@@ -339,9 +339,9 @@ push/PR → jobs:
 |---|---|---|
 | **0** Preparación | Repo, estructura Maven, pom, wrapper, config, documentación v1.0 | ✅ `mvn compile` limpio; docs creadas |
 | **1** Dominio y datos | Entidades, migraciones Flyway, repositorios, DTOs base | Tests de repos pasan; esquema migrado |
-| **2** Gestión de fuentes | CRUD + cifrado + ConnectionRegistry + test de conexión | `POST /test` contra `target-demo` responde ONLINE |
-| **3** Motor de análisis | Interfaz + 8 checkers + Factory + Orchestrator + Scoring | BD sana → HEALTHY; BD mala → CRITICAL (tests) |
-| **4** API REST | 14 endpoints + ApiError + Swagger + paginación | cURL: registro → análisis → snapshot (200) |
+| **2** Gestión de fuentes | CRUD + cifrado + ConnectionRegistry + prueba de conexión | `POST /fuentes/{id}/probar` contra `target-demo` responde `EN_LINEA` |
+| **3** Motor de análisis | Interfaz + 8 checkers + Factory + Orchestrator + Scoring | BD sana → `SANO`; BD mala → `CRITICO` (tests) |
+| **4** API REST | 14 endpoints + ApiError + Swagger + paginación | cURL: registro → análisis → resultado (200) |
 | **5** Dashboard | 5 pantallas + Chart.js | Score y hallazgos reales visibles contra demo |
 | **6** Scheduler y reportes | Cron configurable, export JSON/CSV/HTML | Historial automático + archivo descargable |
 | **7** Seguridad y despliegue | Basic Auth, hardening, Dockerfile, Compose app, healthchecks | `docker compose up` levanta los 3 servicios |

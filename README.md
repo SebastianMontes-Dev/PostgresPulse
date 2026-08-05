@@ -89,9 +89,12 @@ Requisitos: **JDK 21** y **Docker**. Maven no es necesario (usa el wrapper).
 El contenedor `target-demo` levanta una base `ventas_db` **intencionalmente mal modelada** (tablas sin PK, FKs sin índice, índices duplicados, queries lentas) para que la herramienta demuestre hallazgos reales desde el primer arranque:
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/sources \
+curl -X POST http://localhost:8080/api/v1/fuentes \
   -H "Content-Type: application/json" \
-  -d '{"name":"Ventas Demo","host":"localhost","port":5433,"database":"ventas_db","username":"demo","password":"demo","tags":["demo"]}'
+  -d '{"nombre":"Ventas Demo","host":"localhost","puerto":5433,"baseDeDatos":"ventas_db","usuario":"demo","contrasena":"demo","etiquetas":["demo"]}'
+
+# Probar la conexión (estado → EN_LINEA)
+curl -X POST http://localhost:8080/api/v1/fuentes/1/probar
 ```
 
 ---
@@ -108,7 +111,7 @@ curl -X POST http://localhost:8080/api/v1/sources \
 
 ## 🗺️ Roadmap
 
-**v1.0 (actual)** — Motor de análisis completo, API REST, dashboard, scheduler, reportes, Docker, CI/CD.
+**v1.0 (en curso)** — Fases 0–2 completadas: dominio y persistencia, gestión de fuentes (CRUD, cifrado AES-256-GCM, pools runtime y prueba de conexión). Siguiente: motor de análisis (8 chequeos + scoring).
 
 **Futuro** — Soporte MySQL · JWT + RBAC · Alertas (email/Slack) · Métricas Prometheus/Grafana · Multi-tenant SaaS.
 

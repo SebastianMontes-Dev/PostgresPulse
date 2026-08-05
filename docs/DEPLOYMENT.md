@@ -59,7 +59,7 @@ En Windows: `.\mvnw.cmd spring-boot:run`
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Health: `http://localhost:8080/actuator/health`
-- Registro de la BD demo: `POST /api/v1/sources` con `host=localhost, port=5433, database=ventas_db, username=demo, password=demo`
+- Registro de la BD demo: `POST /api/v1/fuentes` con `host=localhost, puerto=5433, baseDeDatos=ventas_db, usuario=demo, contrasena=demo`
 
 ### 3.4 Ejecutar pruebas
 

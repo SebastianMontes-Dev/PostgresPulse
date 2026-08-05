@@ -1,0 +1,172 @@
+package com.postgrespulse;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.postgrespulse.dominio.EstadoFuente;
+import com.postgrespulse.dominio.FuenteDatos;
+import com.postgrespulse.repositorio.FuenteDatosRepositorio;
+import com.postgrespulse.servicio.cifrado.CifradoServicio;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@Testcontainers
+@SpringBootTest
+@AutoConfigureMockMvc
+class FuenteApiIntegracionTest {
+
+    @Container
+    static final PostgreSQLContainer<?> BD_APLICACION = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("pulse_prueba")
+            .withUsername("pulse")
+            .withPassword("pulse");
+
+    @Container
+    static final PostgreSQLContainer<?> BD_OBJETIVO = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("ventas_db")
+            .withUsername("demo")
+            .withPassword("demo");
+
+    @DynamicPropertySource
+    static void propiedadesDatasource(DynamicPropertyRegistry registro) {
+        registro.add("spring.datasource.url", BD_APLICACION::getJdbcUrl);
+        registro.add("spring.datasource.username", BD_APLICACION::getUsername);
+        registro.add("spring.datasource.password", BD_APLICACION::getPassword);
+    }
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Autowired
+    FuenteDatosRepositorio repositorio;
+
+    @Autowired
+    CifradoServicio cifradoServicio;
+
+    private int puertoObjetivo() {
+        return BD_OBJETIVO.getMappedPort(5432);
+    }
+
+    @Test
+    void cicloCompletoRegistrarProbarActualizarYEliminar() throws Exception {
+        String cuerpo = String.format("""
+                {"nombre":"Ventas Demo","host":"localhost","puerto":%d,"baseDeDatos":"ventas_db",
+                 "usuario":"demo","contrasena":"demo","filtroEsquema":"public","etiquetas":["demo","core"]}""",
+                puertoObjetivo());
+
+        String respuesta = mockMvc.perform(post("/api/v1/fuentes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombre").value("Ventas Demo"))
+                .andExpect(jsonPath("$.baseDeDatos").value("ventas_db"))
+                .andExpect(jsonPath("$.contrasenaEnmascarada").value(true))
+                .andExpect(jsonPath("$.estado").value("FUERA_LINEA"))
+                .andExpect(jsonPath("$.contrasena").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(respuesta).get("id").asLong();
+
+        mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.alcanzable").value(true))
+                .andExpect(jsonPath("$.version").value(org.hamcrest.Matchers.containsString("PostgreSQL")));
+
+        FuenteDatos fuente = repositorio.findById(id).orElseThrow();
+        assertThat(fuente.getEstado()).isEqualTo(EstadoFuente.EN_LINEA);
+        assertThat(fuente.getContrasenaCifrada()).isNotEqualTo("demo");
+        assertThat(cifradoServicio.descifrar(fuente.getContrasenaCifrada())).isEqualTo("demo");
+
+        mockMvc.perform(get("/api/v1/fuentes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        mockMvc.perform(put("/api/v1/fuentes/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Ventas Producción\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Ventas Producción"))
+                .andExpect(jsonPath("$.puerto").value(puertoObjetivo()));
+
+        mockMvc.perform(delete("/api/v1/fuentes/{id}", id))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/fuentes/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADA"));
+    }
+
+    @Test
+    void rechazaNombreDuplicadoConConflicto() throws Exception {
+        String cuerpo = String.format(
+                "{\"nombre\":\"Demo Duplicada\",\"host\":\"localhost\",\"puerto\":%d,\"baseDeDatos\":\"ventas_db\",\"usuario\":\"demo\",\"contrasena\":\"demo\"}",
+                puertoObjetivo());
+        mockMvc.perform(post("/api/v1/fuentes").contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/fuentes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo.replace("Demo Duplicada", "demo duplicada")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("CONFLICTO"));
+    }
+
+    @Test
+    void rechazaDatosInvalidosConValidacion() throws Exception {
+        String cuerpo = """
+                {"nombre":"","host":"localhost","port":70000,"baseDeDatos":"ventas_db","usuario":"demo",
+                 "contrasena":"demo","filtroEsquema":"public;DROP"}""";
+        mockMvc.perform(post("/api/v1/fuentes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"))
+                .andExpect(jsonPath("$.detalles.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
+    }
+
+    @Test
+    void fallaPruebaConCredencialesInvalidasYMarcaError() throws Exception {
+        String cuerpo = String.format(
+                "{\"nombre\":\"Fuente Mala\",\"host\":\"localhost\",\"puerto\":%d,\"baseDeDatos\":\"ventas_db\",\"usuario\":\"demo\",\"contrasena\":\"incorrecta\"}",
+                puertoObjetivo());
+        String respuesta = mockMvc.perform(post("/api/v1/fuentes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(respuesta).get("id").asLong();
+
+        mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.codigo").value("CONEXION_FALLIDA"));
+
+        FuenteDatos fuente = repositorio.findById(id).orElseThrow();
+        assertThat(fuente.getEstado()).isEqualTo(EstadoFuente.ERROR);
+        assertThat(fuente.getUltimoError()).isNotBlank();
+    }
+
+    @Test
+    void probarFuenteInexistenteDevuelve404() throws Exception {
+        mockMvc.perform(post("/api/v1/fuentes/99999/probar"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADA"));
+    }
+}
