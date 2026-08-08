@@ -1,55 +1,85 @@
-# ⚡ PostgresPulse
+<div align="center">
+  <h1>⚡ PostgresPulse</h1>
+  <p><strong>Plataforma de Monitoreo y Salud de PostgreSQL a Nivel Empresarial</strong></p>
+  
+  [![Java Version](https://img.shields.io/badge/Java-21-blue.svg?style=for-the-badge&logo=openjdk)](#)
+  [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg?style=for-the-badge&logo=springboot)](#)
+  [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](#)
+  [![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](#)
+</div>
 
-> **Enterprise-grade PostgreSQL Health & Monitoring Platform**
+<br/>
 
-![Java Version](https://img.shields.io/badge/Java-21-blue.svg) ![Spring Boot Version](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg) ![License](https://img.shields.io/badge/License-MIT-purple.svg)
+**PostgresPulse** es una plataforma avanzada de nivel empresarial diseñada para monitorear, analizar y mantener la salud de las bases de datos PostgreSQL. Construida sobre una arquitectura moderna con **Java 21** y **Spring Boot 3.x**, ofrece métricas robustas en tiempo real, una arquitectura resiliente y APIs amigables para los desarrolladores.
 
-PostgresPulse is an advanced, enterprise-grade platform designed for monitoring, analyzing, and maintaining the health of PostgreSQL databases. Built on a modern Java 21 and Spring Boot 3.x stack, it delivers robust real-time metrics, resilient architecture, and developer-friendly APIs.
+---
 
-## 🚀 Key Features
-- **Real-time Monitoring:** Deep insights into database performance, query execution, and connections.
-- **Resilient Architecture:** Integrated with Resilience4j for fault tolerance and graceful degradation.
-- **Automated Migrations:** Flyway support for seamless database schema management.
-- **Developer-Ready APIs:** OpenAPI/Swagger integrations out of the box.
-- **Containerized Testing:** Testcontainers integrated for reliable, ephemeral testing environments.
+## ✨ Características Principales
 
-## 🛠️ Architecture & Tech Stack
-- **Core Framework:** Spring Boot 3.4.1, Java 21
-- **Persistence:** Spring Data JPA, PostgreSQL Driver
-- **Resilience:** Resilience4j
-- **Database Migrations:** Flyway
-- **API Documentation:** Springdoc OpenAPI
-- **Testing:** JUnit Jupiter, Testcontainers
-- **Templating:** Thymeleaf (for dashboards/UI)
+*   📊 **Monitoreo en Tiempo Real:** Información detallada sobre el rendimiento de la base de datos, ejecución de consultas y conexiones.
+*   🛡️ **Arquitectura Resiliente:** Integrado con Resilience4j para tolerancia a fallos y degradación elegante.
+*   🔄 **Migraciones Automatizadas:** Soporte de Flyway para una gestión impecable del esquema de la base de datos.
+*   🔌 **APIs Listas para Desarrolladores:** Integración lista para usar con OpenAPI/Swagger.
+*   🧪 **Pruebas en Contenedores:** Testcontainers integrado para entornos de prueba efímeros y confiables.
 
-## 📦 Quick Start
+---
 
-### 1. Prerequisites
-- JDK 21+
-- Maven 3.8+
-- Docker (for Testcontainers and local PostgreSQL)
+## 🏗️ Arquitectura y Tecnologías
 
-### 2. Run the Application
-You can start the application quickly using the provided Maven wrapper:
+| Categoría | Tecnología |
+| :--- | :--- |
+| **Framework Base** | Spring Boot 3.4.1, Java 21 |
+| **Persistencia** | Spring Data JPA, Controlador PostgreSQL |
+| **Resiliencia** | Resilience4j |
+| **Migración de BD** | Flyway |
+| **Documentación API**| Springdoc OpenAPI |
+| **Pruebas** | JUnit Jupiter, Testcontainers |
+| **Plantillas / UI** | Thymeleaf (para paneles y vistas) |
+
+---
+
+## 🚀 Guía de Inicio Rápido
+
+### 1️⃣ Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+*   ☕ **JDK 21** o superior
+*   📦 **Maven 3.8** o superior
+*   🐳 **Docker** (para Testcontainers y PostgreSQL local)
+
+### 2️⃣ Ejecutar la Aplicación
+
+Puedes iniciar la aplicación rápidamente utilizando el *wrapper* de Maven incluido:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Or via Docker Compose if you prefer a fully containerized setup:
+O si prefieres un entorno completamente basado en contenedores usando Docker Compose:
 
 ```bash
 docker-compose up -d
 ```
 
-## 📖 Documentation
-Detailed technical specifications, API guidelines, and deployment instructions can be found in the `docs` directory:
-- [API Documentation](docs/API.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Technical Specs](docs/SPECS.md)
+---
 
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome. Feel free to check the issues page.
+## 📚 Documentación
+
+Las especificaciones técnicas detalladas, las guías de la API y las instrucciones de despliegue se pueden encontrar en el directorio `docs`:
+
+*   📘 [Documentación de la API](docs/API.md)
+*   🛠️ [Guía de Despliegue](docs/DEPLOYMENT.md)
+*   📄 [Especificaciones Técnicas](docs/SPECS.md)
 
 ---
-*Built with ❤️ for the Open Source Data Community.*
+
+## 🤝 Contribuciones
+
+¡Las contribuciones, informes de problemas (*issues*) y solicitudes de nuevas características son siempre bienvenidos! No dudes en visitar la página de *issues*.
+
+---
+
+<div align="center">
+  <em>Desarrollado con ❤️ para la comunidad de código abierto de datos.</em>
+</div>

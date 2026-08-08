@@ -1,6 +1,6 @@
 # PostgresPulse — Especificación Técnica y Funcional v1.0
 
-**Plataforma Enterprise de Análisis y Salud de Bases de Datos PostgreSQL**
+**Plataforma Empresarial de Análisis y Salud de Bases de Datos PostgreSQL**
 
 | Campo | Valor |
 |---|---|
@@ -15,25 +15,25 @@
 
 ## 1. Resumen ejecutivo
 
-PostgresPulse es una plataforma que se conecta a cualquier base de datos PostgreSQL, ejecuta **8 chequeos de diagnóstico profesional** (performance, storage, integridad, concurrencia, conexiones), calcula un **Índice de Salud (Health Score 0–100)** ponderado, genera **recomendaciones accionables con SQL listo para ejecutar**, conserva **historial de tendencias** y lo expone vía **API REST + Dashboard web** con reportes exportables. Diseño enterprise: multi-conexión runtime, credenciales cifradas, modo solo-lectura estricto (nunca escribe en la base analizada) y despliegue Docker.
+PostgresPulse es una plataforma que se conecta a cualquier base de datos PostgreSQL, ejecuta **8 chequeos de diagnóstico profesional** (rendimiento, almacenamiento, integridad, concurrencia, conexiones), calcula un **Índice de Salud (Puntuación de Salud 0–100)** ponderado, genera **recomendaciones accionables con SQL listo para ejecutar**, conserva **historial de tendencias** y lo expone vía **API REST + Panel de control web** con reportes exportables. Diseño empresarial: multi-conexión en tiempo de ejecución, credenciales cifradas, modo de solo-lectura estricto (nunca escribe en la base analizada) y despliegue con Docker.
 
-**Valor profesional**: SQL avanzado, tuning de performance, modelado de datos, arquitectura Spring multi-datasource, seguridad, observabilidad y entrega de producto completo (API + UI + infra).
+**Valor profesional**: SQL avanzado, optimización de rendimiento, modelado de datos, arquitectura Spring con múltiples fuentes de datos, seguridad, observabilidad y entrega de producto completo (API + interfaz de usuario + infraestructura).
 
 ---
 
 ## 2. Objetivos
 
-**General**: construir una herramienta enterprise de diagnóstico proactivo de bases PostgreSQL.
+**General**: construir una herramienta empresarial de diagnóstico proactivo de bases PostgreSQL.
 
 **Específicos**:
 
 - O1. Registrar y administrar múltiples fuentes de datos PostgreSQL de forma segura.
 - O2. Ejecutar análisis profundo de salud (8 chequeos) bajo demanda y programado.
-- O3. Generar puntajes por categoría + score global con recomendaciones accionables.
+- O3. Generar puntajes por categoría + puntuación global con recomendaciones accionables.
 - O4. Conservar historial para análisis de tendencia y degradación.
-- O5. Exponer API REST documentada + dashboard visual.
+- O5. Exponer API REST documentada + panel de control visual.
 - O6. Exportar reportes (JSON/CSV/HTML) para integración con equipos de datos.
-- O7. Desplegar con un solo comando (Docker Compose), listo para demo.
+- O7. Desplegar con un solo comando (Docker Compose), listo para demostración.
 
 ---
 
@@ -42,21 +42,21 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 ### 3.1 Incluido (v1.0)
 
 - Monitoreo de PostgreSQL 12–17
-- 8 chequeos de análisis, scoring ponderado, historial, scheduler
-- API REST + Swagger, dashboard Thymeleaf + Chart.js
-- Autenticación Basic Auth, cifrado AES-GCM de credenciales, modo solo-lectura
-- Docker Compose (app + BD propia + BD demo con datos mal modelados a propósito)
-- Tests unitarios + integración (Testcontainers), CI/CD GitHub Actions
-- Documentación completa (README + docs/)
+- 8 chequeos de análisis, puntuación ponderada, historial, programador
+- API REST + Swagger, panel de control con Thymeleaf + Chart.js
+- Autenticación Básica, cifrado AES-GCM de credenciales, modo solo-lectura
+- Docker Compose (aplicación + BD propia + BD de demostración con datos mal modelados a propósito)
+- Pruebas unitarias + integración (Testcontainers), integración/entrega continua con GitHub Actions
+- Documentación completa (LÉAME + docs/)
 
-### 3.2 Excluido (fuera de alcance v1.0, roadmap futuro)
+### 3.2 Excluido (fuera de alcance v1.0, hoja de ruta futura)
 
 - Soporte MySQL / Oracle / SQL Server
-- Múltiples usuarios/roles con RBAC granular y JWT
-- Alertas en tiempo real (email / Slack / PagerDuty)
+- Múltiples usuarios/roles con control de acceso basado en roles granular y JWT
+- Alertas en tiempo real (correo electrónico / Slack / PagerDuty)
 - Integración Prometheus / Grafana
-- Plataforma SaaS multi-tenant con panel de suscripciones
-- Agent-less basado en extensiones instaladas en las bases objetivo
+- Plataforma de software como servicio multiinquilino con panel de suscripciones
+- Sin agente, basado en extensiones instaladas en las bases objetivo
 
 ---
 
@@ -65,22 +65,22 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 | Término | Definición |
 |---|---|
 | **Fuente (FuenteDatos)** | Conexión registrada a una BD PostgreSQL a analizar |
-| **Análisis (Analisis)** | Resultado completo de una ejecución de análisis (score + chequeos) |
+| **Análisis (Analisis)** | Resultado completo de una ejecución de análisis (puntuación + chequeos) |
 | **ResultadoChequeo** | Resultado individual de un chequeo (estado, puntaje parcial, mensaje, recomendación SQL) |
-| **Health Score** | Índice 0–100 de salud global ponderado |
-| **Bloat** | Espacio desperdiciado en tablas/índices por el modelo MVCC de PostgreSQL |
-| **Dead tuples** | Filas obsoletas pendientes de limpieza por autovacuum |
-| **pg_stat_statements** | Vista de estadísticas de ejecución de queries (requiere extensión) |
-| **DoD** | Definition of Done — criterios que definen "fase terminada" |
+| **Puntuación de Salud** | Índice 0–100 de salud global ponderado |
+| **Hinchamiento (Bloat)** | Espacio desperdiciado en tablas/índices por el modelo de control de concurrencia multiversión de PostgreSQL |
+| **Tuplas muertas** | Filas obsoletas pendientes de limpieza por autovacuum |
+| **pg_stat_statements** | Vista de estadísticas de ejecución de consultas (requiere extensión) |
+| **DoD** | Definición de Terminado — criterios que definen "fase terminada" |
 
 ---
 
 ## 5. Referencias técnicas
 
 - Documentación oficial PostgreSQL 16: catálogo `pg_catalog`, `information_schema`, `pg_stat_user_tables`, `pg_stat_user_indexes`, `pg_stat_database`, `pg_stat_activity`, `pg_stat_statements`
-- O'Reilly, *PostgreSQL High Performance* (2018) — criterios de bloat y autovacuum
-- Documentación Spring Boot 3.4: DataSources dinámicos, Scheduling, Security, Actuator
-- PgHero (referencia de producto de mercado) — benchmark de chequeos
+- O'Reilly, *PostgreSQL de Alto Rendimiento* (2018) — criterios de hinchamiento y autovacuum
+- Documentación Spring Boot 3.4: Fuentes de datos dinámicas, Programación, Seguridad, Actuator
+- PgHero (referencia de producto de mercado) — punto de referencia de chequeos
 
 ---
 
@@ -91,53 +91,54 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 ```
 ┌───────────────────────────────────────────────┐
 │  ADMINISTRADOR DE BASES (usuario humano)       │
-│  usa Dashboard web + API REST                 │
+│  usa Panel de control web + API REST          │
 └───────────────────────┬───────────────────────┘
                         │ HTTPS
 ┌───────────────────────▼───────────────────────┐
-│              POSTGRESPULSE (app)               │
-│  Orquestador de análisis + scoring + historial │
+│              POSTGRESPULSE (aplicación)        │
+│  Orquestador de análisis + puntuación + histor.│
 └──────────────┬────────────────────┬────────────┘
-               │ conexiones runtime │ JDBC (solo lectura)
+               │ conexiones en t.   │ JDBC (solo lectura)
+               │ de ejecución       │
 ┌──────────────▼───────┐   ┌────────▼───────────────┐
 │ pulse-db (BD propia) │   │ BD OBJETIVO #1..#N      │
-│ snapshots, fuentes   │   │ (PostgreSQL 12–17)      │
+│ capturas, fuentes    │   │ (PostgreSQL 12–17)      │
 └──────────────────────┘   └────────────────────────┘
 ```
 
-### 6.2 Vista C4 — Nivel Contenedores (deploy)
+### 6.2 Vista C4 — Nivel Contenedores (despliegue)
 
 ```
 Docker Compose:
-├── service: app          → Spring Boot 3.4, puerto 8080
+├── servicio: app          → Spring Boot 3.4, puerto 8080
 │     └─ conecta a: pulse-db (propia) + target-demo (objetivo)
-├── service: pulse-db     → PostgreSQL 16 (esquema propio con Flyway)
-└── service: target-demo  → PostgreSQL 16 + sample_data.sql
-                            (BD "ventas" mal modelada a propósito)
+├── servicio: pulse-db     → PostgreSQL 16 (esquema propio con Flyway)
+└── servicio: target-demo  → PostgreSQL 16 + sample_data.sql
+                             (BD "ventas" mal modelada a propósito)
 ```
 
 ### 6.3 Patrones de diseño
 
 | Patrón | Uso |
 |---|---|
-| **Strategy** | `ChequeoAnalisis` (interfaz) + 8 implementaciones — añadir chequeo = 1 clase |
-| **Factory** | `FabricaChequeos` construye la cadena de chequeos por categoría |
-| **Orchestrator** | `OrquestadorAnalisisServicio` coordina: conectar → chequear → puntuar → persistir |
-| **Repository** | JPA + repositorios dedicados para consultas SQL nativas pesadas |
+| **Estrategia** | `ChequeoAnalisis` (interfaz) + 8 implementaciones — añadir chequeo = 1 clase |
+| **Fábrica** | `FabricaChequeos` construye la cadena de chequeos por categoría |
+| **Orquestador** | `OrquestadorAnalisisServicio` coordina: conectar → chequear → puntuar → persistir |
+| **Repositorio** | JPA + repositorios dedicados para consultas SQL nativas pesadas |
 | **DTO** | Separación estricta entidad/API (nunca se exponen entidades JPA) |
-| **Registry** | `RegistroConexionesServicio` — pool de DataSources runtime con ciclo de vida |
+| **Registro** | `RegistroConexionesServicio` — grupo de fuentes de datos en tiempo de ejecución con ciclo de vida |
 
 ### 6.4 Decisiones de Arquitectura (ADRs)
 
 | ADR | Decisión | Justificación |
 |---|---|---|
-| ADR-1 | DataSources creados **en runtime** por fuente (no `AbstractRoutingDataSource`) | Las fuentes se registran sin reiniciar; aislamiento de pools, timeouts y fallos |
-| ADR-2 | Conexión de análisis **siempre `defaultReadOnly=true`** | Garantía de solo-lectura a nivel JDBC — jamás se modifica la BD objetivo |
-| ADR-3 | Almacenamiento propio en PostgreSQL (no H2) | Consistencia con el ecosistema; Flyway versionado; paridad dev/prod |
-| ADR-4 | Bloat por **estimación heurística** (relpages/reltuples) con fallback a `pgstattuple` | No requerir extensiones en BD objetivo = compatibilidad total |
+| ADR-1 | Fuentes de datos creadas **en tiempo de ejecución** por fuente (no `AbstractRoutingDataSource`) | Las fuentes se registran sin reiniciar; aislamiento de grupos, tiempos de espera y fallos |
+| ADR-2 | Conexión de análisis **siempre de solo lectura** | Garantía de solo-lectura a nivel JDBC — jamás se modifica la BD objetivo |
+| ADR-3 | Almacenamiento propio en PostgreSQL (no H2) | Consistencia con el ecosistema; Flyway versionado; paridad de desarrollo/producción |
+| ADR-4 | Hinchamiento por **estimación heurística** con alternativa a `pgstattuple` | No requerir extensiones en BD objetivo = compatibilidad total |
 | ADR-5 | `pg_stat_statements` opcional (detección y degradación elegante) | No todos los entornos la tienen habilitada |
 | ADR-6 | Cifrado AES-GCM con clave por variable de entorno | Sin dependencias externas (Vault/KMS); documentado para migrar a KMS |
-| ADR-7 | Thymeleaf + Chart.js (sin React/Angular) | Ruta server-side simple, sin build de frontend, mantenible en monorepo |
+| ADR-7 | Thymeleaf + Chart.js (sin React/Angular) | Ruta del lado del servidor simple, sin construcción de frontend, mantenible en monorepositorio |
 
 ---
 
@@ -182,49 +183,49 @@ resultados_chequeos
 │ puntaje        NUMERIC(5,2)           │ 0–100
 │ mensaje        TEXT                   │ resumen legible
 │ recomendacion  TEXT                   │ SQL/acción sugerida (NULL si ok)
-│ detalle        JSONB                  │ detalle estructurado (tablas, queries, índices)
+│ detalle        JSONB                  │ detalle estructurado (tablas, consultas, índices)
 └───────────────────────────────────────┘
 ```
 
-**Regla de retención**: snapshots con más de 90 días se compactan a `raw_json` agregado (job mensual). Índice compuesto `(source_id, analyzed_at)` para consultas de tendencia.
+**Regla de retención**: capturas instantáneas con más de 90 días se compactan a `raw_json` agregado (trabajo mensual). Índice compuesto `(source_id, analyzed_at)` para consultas de tendencia.
 
 ---
 
 ## 8. Motor de análisis — especificación de los 8 chequeos
 
-| # | Check | Categoría (peso) | Qué analiza | Fuente de datos | Umbrales | Recomendación |
+| # | Chequeo | Categoría (peso) | Qué analiza | Fuente de datos | Umbrales | Recomendación |
 |---|---|---|---|---|---|---|
-| 1 | `CONNECTIONS` | Conexiones (10%) | Uso de `max_connections`, idle-in-transaction | `pg_stat_activity`, `pg_settings` | >80% WARN, >95% CRIT | Cerrar idle, ajustar `max_connections`, pool de conexiones |
-| 2 | `CACHE_HIT` | Performance (30%) | Cache hit ratio (heap + índices) | `pg_stat_database` | <99% WARN, <95% CRIT | Subir `shared_buffers`, revisar queries |
-| 3 | `SEQ_SCAN` | Performance (30%) | seq_scan vs idx_scan por tabla | `pg_stat_user_tables` | ratio >0.5 WARN | `CREATE INDEX ...` sugerido por columna |
-| 4 | `VACUUM_HEALTH` | Storage (25%) | dead_tup_ratio vs umbrales de autovacuum | `pg_stat_user_tables` | >20% WARN, >40% CRIT | `VACUUM`, ajustar `autovacuum_vacuum_scale_factor` |
-| 5 | `BLOAT` | Storage (25%) | Bloat estimado de tablas e índices | `relpages`/`reltuples` + `pgstattuple` si existe | >20% WARN, >40% CRIT | `VACUUM FULL` / `pg_repack` (tabla, tamaño, % bloat) |
-| 6 | `INDEX_HEALTH` | Integridad (20%) | Índices sin uso (`idx_scan=0`), duplicados, superpuestos | `pg_stat_user_indexes` + `pg_catalog` | 1–2 WARN, ≥3 CRIT | `DROP INDEX` (candidato, tamaño, ahorro) |
-| 7 | `SCHEMA_INTEGRITY` | Integridad (20%) | Tablas sin PK, FKs sin índice, columnas nullable | `information_schema` + `pg_catalog` | cualquier hallazgo WARN | `ALTER TABLE ADD PRIMARY KEY`, `CREATE INDEX` en FK |
-| 8 | `LOCKS_SLOW` | Concurrencia (15%) | Locks activos, transacciones >5 min, bloqueos encadenados | `pg_stat_activity` + `pg_locks` | 0 HEALTHY; >0 WARN/CRIT | Revisión de transacciones; `pg_terminate_backend(pid)` (advertencia) |
+| 1 | `CONNECTIONS` | Conexiones (10%) | Uso de `max_connections`, inactiva en transacción | `pg_stat_activity`, `pg_settings` | >80% ADVERT, >95% CRIT | Cerrar inactivas, ajustar `max_connections`, grupo de conexiones |
+| 2 | `CACHE_HIT` | Rendimiento (30%) | Proporción de aciertos de caché | `pg_stat_database` | <99% ADVERT, <95% CRIT | Subir `shared_buffers`, revisar consultas |
+| 3 | `SEQ_SCAN` | Rendimiento (30%) | escaneo secuencial vs escaneo por índice | `pg_stat_user_tables` | ratio >0.5 ADVERT | `CREATE INDEX ...` sugerido por columna |
+| 4 | `VACUUM_HEALTH` | Almacenamiento (25%) | tuplas muertas vs umbrales de autovacuum | `pg_stat_user_tables` | >20% ADVERT, >40% CRIT | `VACUUM`, ajustar `autovacuum_vacuum_scale_factor` |
+| 5 | `BLOAT` | Almacenamiento (25%) | Hinchamiento estimado de tablas e índices | `relpages`/`reltuples` + `pgstattuple` si existe | >20% ADVERT, >40% CRIT | `VACUUM FULL` / `pg_repack` (tabla, tamaño, % hinchamiento) |
+| 6 | `INDEX_HEALTH` | Integridad (20%) | Índices sin uso (`idx_scan=0`), duplicados, superpuestos | `pg_stat_user_indexes` + `pg_catalog` | 1–2 ADVERT, ≥3 CRIT | `DROP INDEX` (candidato, tamaño, ahorro) |
+| 7 | `SCHEMA_INTEGRITY` | Integridad (20%) | Tablas sin clave primaria, claves foráneas sin índice | `information_schema` + `pg_catalog` | cualquier hallazgo ADVERT | `ALTER TABLE ADD PRIMARY KEY`, `CREATE INDEX` en clave foránea |
+| 8 | `LOCKS_SLOW` | Concurrencia (15%) | Bloqueos activos, transacciones >5 min, bloqueos encadenados | `pg_stat_activity` + `pg_locks` | 0 SANO; >0 ADVERT/CRIT | Revisión de transacciones; `pg_terminate_backend(pid)` |
 
-### 8.1 Fórmula del Health Score global
+### 8.1 Fórmula de la Puntuación de Salud global
 
 ```
-ScoreGlobal   = Σ ( score_categoria × peso_categoria )
-pesos:  Performance 0.30 · Storage 0.25 · Integridad 0.20 · Concurrencia 0.15 · Conexiones 0.10
-Score_categoria = promedio de scores de sus chequeos
+PuntuacionGlobal   = Σ ( puntuacion_categoria × peso_categoria )
+pesos:  Rendimiento 0.30 · Almacenamiento 0.25 · Integridad 0.20 · Concurrencia 0.15 · Conexiones 0.10
+Puntuacion_categoria = promedio de puntuaciones de sus chequeos
 ```
 
 **Clasificación**: ≥85 `SANO` (verde) · 60–84 `ADVERTENCIA` (ámbar) · <60 `CRITICO` (rojo).
 
-Cada chequeo devuelve `details` (JSONB): lista de tablas/índices/queries con métricas — alimenta las vistas del dashboard y las exportaciones.
+Cada chequeo devuelve `details` (JSONB): lista de tablas/índices/consultas con métricas — alimenta las vistas del panel de control y las exportaciones.
 
 ### 8.2 Modos degradados
 
-- `pg_stat_statements` no está habilitado en la BD objetivo → el chequeo `SEQ_SCAN`/queries lentas se ejecuta parcial y se documenta en el snapshot.
-- BD objetivo offline → snapshot marcado `ERROR`, `last_error` actualizado en la fuente, el sistema continúa operando (aislamiento de pools).
+- `pg_stat_statements` no está habilitado en la BD objetivo → el chequeo de consultas lentas se ejecuta parcialmente y se documenta en la captura.
+- BD objetivo fuera de línea → captura marcada `ERROR`, último error actualizado en la fuente, el sistema continúa operando (aislamiento de grupos).
 
 ---
 
 ## 9. API REST — resumen
 
-Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginación `?page&size` · autenticación Basic Auth · Swagger en `/swagger-ui.html`. Referencia detallada en [`docs/API.md`](API.md).
+Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginación `?page&size` · Autenticación Básica · Swagger en `/swagger-ui.html`. Referencia detallada en [`docs/API.md`](API.md).
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -238,36 +239,36 @@ Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginaci
 | GET | `/api/v1/fuentes/{id}/analisis` | Historial paginado |
 | GET | `/api/v1/analisis/{id}` | Análisis completo |
 | GET | `/api/v1/analisis/{id}/exportar` | Reporte `?formato=json\|csv\|html` |
-| GET | `/api/v1/fuentes/{id}/salud` | Último score + tendencia 7d |
+| GET | `/api/v1/fuentes/{id}/salud` | Última puntuación + tendencia 7d |
 | GET | `/api/v1/fuentes/{id}/tablas` | Detalle de tablas |
-| GET | `/api/v1/fuentes/{id}/queries` | Top queries lentas |
+| GET | `/api/v1/fuentes/{id}/consultas` | Consultas principales lentas |
 | GET | `/api/v1/fuentes/{id}/indices` | Hallazgos de índices |
 
 ---
 
-## 10. Dashboard web (pantallas)
+## 10. Panel de control web (pantallas)
 
 | Pantalla | Ruta | Contenido |
 |---|---|---|
-| Resumen | `/` | Cards por fuente (nombre, tags, score, status), tabla general, botón "Analizar ahora" |
-| Detalle de fuente | `/fuentes/{id}` | Score + estado, tendencia 7d (Chart.js), tarjetas por categoría, hallazgos con SQL recomendado y botón copiar |
-| Detalle de tabla | `/fuentes/{id}/tablas/{tabla}` | Filas estimadas, dead tuples, bloat, caché, índices, recomendaciones |
+| Resumen | `/` | Tarjetas por fuente, tabla general, botón "Analizar ahora" |
+| Detalle de fuente | `/fuentes/{id}` | Puntuación + estado, tendencia 7d, tarjetas por categoría, recomendaciones SQL |
+| Detalle de tabla | `/fuentes/{id}/tablas/{tabla}` | Filas estimadas, tuplas muertas, hinchamiento, caché, índices, recomendaciones |
 | Historial | `/fuentes/{id}/historial` | Análisis paginados + tendencia |
 | Reporte exportable | `GET /analisis/{id}/exportar?formato=html` | Reporte HTML autónomo (imprimir/compartir) |
 
-Estética: tema oscuro tipo dashboard de monitoreo, semáforo verde/ámbar/rojo, responsivo.
+Estética: tema oscuro tipo panel de monitoreo, semáforo verde/ámbar/rojo, responsivo.
 
 ---
 
 ## 11. Seguridad
 
-1. **Solo-lectura estricto**: `defaultReadOnly=true` en el DataSource de análisis + `Connection.setReadOnly(true)`; guard clause en el orquestador que impide transacciones de escritura hacia BD objetivo.
-2. **Cifrado de credenciales**: AES-256-GCM, clave `PULSE_CRYPTO_KEY` (env var, ≥32 bytes), IV único por registro; nunca se loguea ni expone.
-3. **Basic Auth** en API y dashboard: `PULSE_ADMIN_USER` / `PULSE_ADMIN_PASSWORD` (env vars), hashing BCrypt, delay anti fuerza-bruta en fallos de login.
-4. **Validación de entrada**: Bean Validation en todos los DTOs; `schemaFilter` restringido a `[a-zA-Z0-9_.,]` (previene SQL injection en filtros dinámicos).
-5. **Sin inyección SQL**: todas las queries dinámicas usan parámetros; nombres de objetos/columnas validados contra `pg_catalog` antes de usarlos.
+1. **Solo-lectura estricto**: de solo lectura en la fuente de datos de análisis; cláusula de guardia en el orquestador que impide transacciones de escritura hacia BD objetivo.
+2. **Cifrado de credenciales**: AES-256-GCM, clave por variable de entorno; nunca se registra ni expone.
+3. **Autenticación Básica** en API y panel de control: credenciales por variables de entorno, función hash BCrypt, retraso contra fuerza bruta en fallos de inicio de sesión.
+4. **Validación de entrada**: Validación de Beans en todos los DTOs; previene inyección SQL en filtros dinámicos.
+5. **Sin inyección SQL**: todas las consultas dinámicas usan parámetros; nombres de objetos/columnas validados contra `pg_catalog` antes de usarlos.
 6. **Secretos**: `.env.example` documentado, `.gitignore` excluye `.env`; credenciales solo por variables de entorno.
-7. **Timeouts de red**: connectTimeout 5s, socketTimeout 30s, pool máx. 4 conexiones por fuente (evita DoS hacia la BD objetivo).
+7. **Tiempos de espera de red**: tiempo de espera de conexión 5s, tiempo de espera de socket 30s, grupo máx. 4 conexiones por fuente (evita denegación de servicio hacia la BD objetivo).
 
 ---
 
@@ -275,12 +276,12 @@ Estética: tema oscuro tipo dashboard de monitoreo, semáforo verde/ámbar/rojo,
 
 | RNF | Requisito |
 |---|---|
-| Performance | Análisis de fuente típica (<500 tablas) en <10s; paginación en todas las listas; límite 500 filas en detalle |
-| Concurrencia | Scheduler y análisis manual no se solapan (lock por fuente con `SELECT ... FOR UPDATE`); máx. 3 análisis paralelos |
-| Resiliencia | BD objetivo offline no derriba el sistema; retry 1x en fallos transitorios; circuit breaker por fuente (Resilience4j) |
-| Observabilidad | Actuator (health, info, metrics); logs estructurados; `duration_ms` por snapshot; métrica custom `pulse_analysis_total` |
-| Disponibilidad | App stateless (escalable horizontal); BD propia respaldable; healthcheck en Docker |
-| Mantenibilidad | Código SOLID; chequeos como plugins; cobertura ≥80% en núcleo de scoring |
+| Rendimiento | Análisis de fuente típica (<500 tablas) en <10s; paginación en todas las listas; límite 500 filas en detalle |
+| Concurrencia | Programador y análisis manual no se solapan (bloqueo por fuente); máx. 3 análisis paralelos |
+| Resiliencia | BD objetivo fuera de línea no derriba el sistema; reintento 1x en fallos transitorios; interruptor de circuito por fuente |
+| Observabilidad | Actuator (salud, información, métricas); registros estructurados; métrica personalizada de total de análisis |
+| Disponibilidad | Aplicación sin estado (escalable horizontalmente); BD propia respaldable; verificación de salud en Docker |
+| Mantenibilidad | Código SOLID; chequeos como complementos; cobertura ≥80% en núcleo de puntuación |
 
 ---
 
@@ -292,17 +293,17 @@ services:
   pulse-db:      # postgres:16-alpine · puerto 5432 · volumen pulse_data
   target-demo:   # postgres:16-alpine · puerto 5433 · carga scripts/ al iniciar
 ```
-El servicio `app` (Dockerfile multi-stage + healthcheck) se incorpora en la **Fase 7**.
+El servicio `app` (Dockerfile multi-etapa + verificación de salud) se incorpora en la **Fase 7**.
 
-**CI/CD (GitHub Actions)** — `.github/workflows/ci.yml` (Fase 8):
+**Integración/entrega continua (GitHub Actions)** — `.github/workflows/ci.yml` (Fase 8):
 ```
-push/PR → jobs:
-  1. build   : mvn verify (Java 21 + Maven 3.9) con Testcontainers
-  2. docker  : build + push imagen a GHCR (solo main)
-  3. calidad : SonarCloud (opcional)
+push/PR → trabajos:
+  1. construcción : verificar con Maven (Java 21 + Maven 3.9) con Testcontainers
+  2. docker       : construir + empujar imagen a registro (solo principal)
+  3. calidad      : SonarCloud (opcional)
 ```
 
-**README.md**: badges de build, stack, arquitectura, arranque en 3 comandos, capturas, tabla de chequeos, roadmap.
+**LÉAME (README.md)**: insignias de construcción, pila de tecnologías, arquitectura, arranque en 3 comandos, capturas, tabla de chequeos, hoja de ruta.
 
 ---
 
@@ -310,13 +311,13 @@ push/PR → jobs:
 
 | Nivel | Herramienta | Qué cubre |
 |---|---|---|
-| Unitarias | JUnit 5 + Mockito | Scoring (pesos/umbrales), cifrado/descifrado AES, mapeos DTO, validación de `schemaFilter` |
-| Integración | Testcontainers (PostgreSQL real) | Cada checker contra esquema sintético conocido: BD sana → HEALTHY; BD con bloat/queries lentas → WARNING/CRITICAL |
-| API | MockMvc + Testcontainers | CRUD fuentes, análisis end-to-end, formato de errores, paginación |
-| Seguridad | Unit + integración | Contraseñas nunca en respuestas; acceso sin auth → 401; solo-lectura verificado |
-| E2E demo | Script PowerShell + cURL | Registrar → analizar → ver dashboard → exportar |
+| Unitarias | JUnit 5 + Mockito | Puntuación (pesos/umbrales), cifrado/descifrado AES, mapeos DTO, validación |
+| Integración | Testcontainers | Cada comprobador contra esquema sintético conocido: BD sana → SANO; BD mala → ADVERTENCIA/CRITICO |
+| API | MockMvc + Testcontainers | CRUD fuentes, análisis de principio a fin, formato de errores, paginación |
+| Seguridad | Unidad + integración | Contraseñas nunca en respuestas; acceso sin autenticación → 401; solo-lectura verificado |
+| Demostración E2E| Script de PowerShell + cURL | Registrar → analizar → ver panel de control → exportar |
 
-**Datos sintéticos** (`scripts/sample_data.sql`): 6 tablas (clientes, productos, ventas, detalle_ventas, inventario, proveedores), ~500K filas con `generate_series`, 2 índices duplicados, 1 índice sin uso, 2 FKs sin índice, tabla sin PK, y simulación de dead tuples con UPDATEs en bucle. **La demo demuestra hallazgos reales en datos mal modelados.**
+**Datos sintéticos** (`scripts/sample_data.sql`): 6 tablas, ~500K filas generadas, índices duplicados, claves foráneas sin índice, tabla sin clave primaria, y simulación de tuplas muertas. **La demostración demuestra hallazgos reales en datos mal modelados.**
 
 ---
 
@@ -324,51 +325,51 @@ push/PR → jobs:
 
 | # | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|---|
-| R1 | Queries de análisis lentas en BD grandes | Media | Alta | Timeouts, límites, análisis por lotes |
-| R2 | `pg_stat_statements` ausente | Alta | Media | Degradación elegante (ADR-5) + documentación |
+| R1 | Consultas de análisis lentas en BD grandes | Media | Alta | Tiempos de espera, límites, análisis por lotes |
+| R2 | `pg_stat_statements` ausente | Alta | Media | Degradación elegante + documentación |
 | R3 | Credenciales filtradas por error | Baja | Alta | Cifrado, enmascaramiento, `.gitignore`, revisión |
-| R4 | Estimación de bloat inexacta | Media | Media | Heurística documentada + modo `pgstattuple` exacto |
-| R5 | Scheduler saturado por fuentes offline | Media | Baja | Circuit breaker + salto de ciclo con registro |
-| R6 | Alcance excesivo (no terminar) | Media | Alta | Fases con DoD estricto; v1.0 acotada; roadmap separado |
+| R4 | Estimación de hinchamiento inexacta | Media | Media | Heurística documentada + modo exacto |
+| R5 | Programador saturado por fuentes fuera de línea | Media | Baja | Interruptor de circuito + salto de ciclo con registro |
+| R6 | Alcance excesivo (no terminar) | Media | Alta | Fases con Definición de Terminado estricta; v1.0 acotada |
 
 ---
 
-## 16. Plan de ejecución — fases con Definition of Done
+## 16. Plan de ejecución — fases con Definición de Terminado
 
-| Fase | Alcance | DoD (terminada solo si…) |
+| Fase | Alcance | Definición de Terminado (terminada solo si…) |
 |---|---|---|
-| **0** Preparación | Repo, estructura Maven, pom, wrapper, config, documentación v1.0 | ✅ `mvn compile` limpio; docs creadas |
-| **1** Dominio y datos | Entidades, migraciones Flyway, repositorios, DTOs base | Tests de repos pasan; esquema migrado |
-| **2** Gestión de fuentes | CRUD + cifrado + ConnectionRegistry + prueba de conexión | `POST /fuentes/{id}/probar` contra `target-demo` responde `EN_LINEA` |
-| **3** Motor de análisis | Interfaz + 8 checkers + Factory + Orchestrator + Scoring | BD sana → `SANO`; BD mala → `CRITICO` (tests) |
-| **4** API REST | 14 endpoints + ApiError + Swagger + paginación | cURL: registro → análisis → resultado (200) |
-| **5** Dashboard | 5 pantallas + Chart.js | Score y hallazgos reales visibles contra demo |
-| **6** Scheduler y reportes | Cron configurable, export JSON/CSV/HTML | Historial automático + archivo descargable |
-| **7** Seguridad y despliegue | Basic Auth, hardening, Dockerfile, Compose app, healthchecks | `docker compose up` levanta los 3 servicios |
-| **8** CI/CD y calidad | GitHub Actions, Testcontainers completo, badges | `mvn verify` en CI; README final con capturas |
+| **0** Preparación | Repositorio, estructura Maven, configuración, documentación v1.0 | ✅ compilación limpia; documentación creada |
+| **1** Dominio y datos | Entidades, migraciones Flyway, repositorios, DTOs base | Pruebas de repositorios pasan; esquema migrado |
+| **2** Gestión de fuentes | CRUD + cifrado + Registro de Conexiones + prueba de conexión | Prueba contra de demostración responde `EN_LINEA` |
+| **3** Motor de análisis | Interfaz + 8 comprobadores + Fábrica + Orquestador + Puntuación | BD sana → `SANO`; BD mala → `CRITICO` (pruebas) |
+| **4** API REST | 14 puntos de enlace + Error de API + Swagger + paginación | cURL: registro → análisis → resultado (200) |
+| **5** Panel de control | 5 pantallas + Chart.js | Puntuación y hallazgos reales visibles contra demostración |
+| **6** Programador y reportes| Cron configurable, exportación JSON/CSV/HTML | Historial automático + archivo descargable |
+| **7** Seguridad y despliegue| Autenticación Básica, endurecimiento, Dockerfile, composición de aplicación, verif. salud | Levanta los 3 servicios con comando de Docker |
+| **8** CI/CD y calidad | GitHub Actions, Testcontainers completo, insignias | Verificación en CI; LÉAME final con capturas |
 
 **Criterio de avance**: cada fase se verifica y demuestra con resultados reales antes de continuar. Estimación global: 8–12 sesiones de trabajo.
 
 ---
 
-## 17. Criterios de aceptación del producto (checklist)
+## 17. Criterios de aceptación del producto (lista de verificación)
 
-- [ ] Registrar 3 fuentes (2 online + 1 offline) sin reiniciar la app
-- [ ] Análisis manual y programado generan snapshots con 8 chequeos
-- [ ] Score global y por categoría correctos contra BD de referencia conocida
-- [ ] Recomendaciones SQL ejecutables mejoran el score al aplicarse (demo)
+- [ ] Registrar 3 fuentes (2 en línea + 1 fuera de línea) sin reiniciar la aplicación
+- [ ] Análisis manual y programado generan capturas con 8 chequeos
+- [ ] Puntuación global y por categoría correctas contra BD de referencia conocida
+- [ ] Recomendaciones SQL ejecutables mejoran la puntuación al aplicarse (demostración)
 - [ ] Historial de tendencia muestra degradación/reparación
-- [ ] Credenciales cifradas en BD, enmascaradas en API, ausentes en logs
+- [ ] Credenciales cifradas en BD, enmascaradas en API, ausentes en registros
 - [ ] BD objetivo nunca recibe escrituras (verificado con prueba)
-- [ ] `docker compose up` + dashboard funcional en un solo comando
-- [ ] CI verde con cobertura ≥80% en núcleo de análisis
+- [ ] Funcional con un solo comando de Docker Compose + panel de control
+- [ ] Integración continua verde con cobertura ≥80% en núcleo de análisis
 
 ---
 
 ## 18. Métricas de éxito y valor para hoja de vida
 
-- 8 chequeos de diagnóstico profesional de PostgreSQL (estándar de industria, tipo PgHero)
-- SQL avanzado: catálogos del sistema, estadísticas, tuning, autovacuum, bloat
-- Arquitectura: multi-datasource runtime, Strategy, orquestación, cifrado AES-256-GCM
-- Producto completo: API + dashboard + Docker + CI/CD + Testcontainers
-- Demo self-contained que demuestra hallazgos reales con datos mal modelados
+- 8 chequeos de diagnóstico profesional de PostgreSQL (estándar de industria)
+- SQL avanzado: catálogos del sistema, estadísticas, optimización, autovacuum, hinchamiento
+- Arquitectura: múltiples fuentes de datos, Estrategia, orquestación, cifrado AES-256-GCM
+- Producto completo: API + panel de control + Docker + CI/CD + Testcontainers
+- Demostración contenida en sí misma que demuestra hallazgos reales con datos mal modelados

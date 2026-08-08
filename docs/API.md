@@ -1,13 +1,13 @@
 # PostgresPulse — Referencia de API REST v1
 
-Base URL: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva: [Swagger UI](http://localhost:8080/swagger-ui.html)
+URL Base: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva: [Swagger UI](http://localhost:8080/swagger-ui.html)
 
 ---
 
 ## 1. Convenciones
 
 - **Paginación**: `?page=0&size=20` (respuestas `Pageable` estándar de Spring).
-- **Autenticación**: Basic Auth (se habilita en la Fase 7). Cabecera `Authorization: Basic base64(usuario:contrasena)`.
+- **Autenticación**: Autenticación Básica (se habilita en la Fase 7). Cabecera `Authorization: Basic base64(usuario:contrasena)`.
 - **Credenciales**: el campo `contrasena` **nunca** se devuelve en las respuestas; solo `"contrasenaEnmascarada": true`.
 - **Errores**: todas las respuestas 4xx/5xx usan el formato `ApiError` (sección 5).
 - **Datos nulos**: se omiten en las respuestas (`default-property-inclusion: non_null`).
@@ -112,7 +112,7 @@ POST /api/v1/fuentes/{id}/probar
 
 **Respuesta 422** (fuente inalcanzable)
 ```json
-{ "alcanzable": false, "mensaje": "No se pudo conectar: connection refused" }
+{ "alcanzable": false, "mensaje": "No se pudo conectar: conexión rechazada" }
 ```
 
 > La prueba actualiza el estado de la fuente: `EN_LINEA` al conectar, `ERROR` + `ultimoError` al fallar.
@@ -181,11 +181,11 @@ GET /api/v1/analisis/{id}
       "categoria": "RENDIMIENTO",
       "estado": "CRITICO",
       "puntaje": 35.0,
-      "mensaje": "3 tablas con 100% de scans secuenciales",
+      "mensaje": "3 tablas con 100% de escaneos secuenciales",
       "recomendacion": "CREATE INDEX idx_ventas_cliente_id ON ventas(cliente_id);",
       "detalle": {
         "tablas": [
-          { "tabla": "ventas", "scansSecuenciales": 15432, "scansPorIndice": 0, "filasEstimadas": 500000 }
+          { "tabla": "ventas", "escaneosSecuenciales": 15432, "escaneosPorIndice": 0, "filasEstimadas": 500000 }
         ]
       }
     }
@@ -201,7 +201,7 @@ GET /api/v1/analisis/{id}/exportar?formato=json|csv|html
 
 - `json` → objeto completo del análisis
 - `csv` → filas `codigo_chequeo,estado,puntaje,mensaje,recomendacion` (apto para hojas de cálculo)
-- `html` → reporte autónomo imprimible (dashboard)
+- `html` → reporte autónomo imprimible (panel de control)
 
 Cabecera `Content-Disposition: attachment` en los tres formatos.
 
@@ -234,14 +234,14 @@ GET /api/v1/fuentes/{id}/salud
 ```
 GET /api/v1/fuentes/{id}/tablas
 ```
-Devuelve el detalle del último análisis: por tabla — filas estimadas, dead tuples, razón de dead tuples, bloat estimado, scans secuenciales/por índice, tamaño.
+Devuelve el detalle del último análisis: por tabla — filas estimadas, tuplas muertas, razón de tuplas muertas, hinchamiento estimado, escaneos secuenciales/por índice, tamaño.
 
-### 4.2 Queries lentas
+### 4.2 Consultas lentas
 
 ```
 GET /api/v1/fuentes/{id}/queries
 ```
-Top N por tiempo medio de ejecución (`pg_stat_statements`). Requiere la extensión habilitada en la BD objetivo; si no, `400` con código `EXTENSION_AUSENTE`.
+Los N principales por tiempo medio de ejecución (`pg_stat_statements`). Requiere la extensión habilitada en la BD objetivo; si no, `400` con código `EXTENSION_AUSENTE`.
 
 ### 4.3 Índices
 
