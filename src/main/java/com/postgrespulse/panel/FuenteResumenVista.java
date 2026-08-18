@@ -1,10 +1,10 @@
 package com.postgrespulse.panel;
 
+import com.postgrespulse.dto.AnalisisResumenDto;
 import com.postgrespulse.dto.FuenteRespuestaDto;
-import com.postgrespulse.dto.SaludDto;
 
-/** Tarjeta de la pantalla Resumen ("/"): fuente + su ultima puntuacion conocida. */
+/** Tarjeta de la pantalla Resumen ("/"): fuente + su ultimo analisis, si existe. */
 public record FuenteResumenVista(
         FuenteRespuestaDto fuente,
-        SaludDto salud
+        AnalisisResumenDto ultimoAnalisis
 ) {}

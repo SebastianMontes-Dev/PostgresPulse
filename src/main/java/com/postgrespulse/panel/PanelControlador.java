@@ -70,8 +70,11 @@ public class PanelControlador {
 
     @GetMapping("/")
     public String resumen(Model modelo) {
-        List<FuenteResumenVista> fuentes = fuenteServicio.listar().stream()
-                .map(f -> new FuenteResumenVista(f, analisisServicio.salud(f.id())))
+        List<FuenteRespuestaDto> fuentesDto = fuenteServicio.listar();
+        Map<Long, AnalisisResumenDto> ultimos = analisisServicio.ultimosPorFuentes(
+                fuentesDto.stream().map(FuenteRespuestaDto::id).toList());
+        List<FuenteResumenVista> fuentes = fuentesDto.stream()
+                .map(f -> new FuenteResumenVista(f, ultimos.get(f.id())))
                 .toList();
         modelo.addAttribute("fuentes", fuentes);
         modelo.addAttribute("formulario", new RegistrarFuenteFormulario());
@@ -132,7 +135,8 @@ public class PanelControlador {
         modelo.addAttribute("tendenciaJson", aJson(salud.tendencia7d()));
         modelo.addAttribute("ultimo", ultimo.orElse(null));
         modelo.addAttribute("categorias", ultimo.map(this::agruparPorCategoria).orElse(List.of()));
-        modelo.addAttribute("tablasConHallazgos", detalleAnalisisServicio.tablas(id));
+        modelo.addAttribute("tablasConHallazgos",
+                ultimo.map(a -> detalleAnalisisServicio.tablasDesdeChequeos(a.chequeos())).orElse(List.of()));
         return "fuente-detalle";
     }
 

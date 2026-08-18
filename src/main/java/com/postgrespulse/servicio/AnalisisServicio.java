@@ -21,7 +21,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AnalisisServicio {
@@ -75,6 +77,19 @@ public class AnalisisServicio {
     public Optional<AnalisisDetalleDto> ultimoDetalle(Long fuenteId) {
         return analisisRepositorio.findFirstByFuenteIdOrderByAnalizadoEnDesc(fuenteId)
                 .map(a -> detalle(a.getId()));
+    }
+
+    /**
+     * Panel de control, pantalla Resumen: el ultimo analisis de cada fuente
+     * en un solo round-trip (antes: un findFirstByFuenteIdOrderByAnalizadoEnDesc
+     * por fuente, en un loop -- N+1 con N fuentes registradas).
+     */
+    public Map<Long, AnalisisResumenDto> ultimosPorFuentes(List<Long> fuenteIds) {
+        if (fuenteIds.isEmpty()) {
+            return Map.of();
+        }
+        return analisisRepositorio.buscarUltimosPorFuentes(fuenteIds).stream()
+                .collect(Collectors.toMap(a -> a.getFuente().getId(), this::aResumen));
     }
 
     public SaludDto salud(Long fuenteId) {

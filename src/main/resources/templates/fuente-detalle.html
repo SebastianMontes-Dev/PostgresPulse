@@ -94,7 +94,9 @@
 </div>
 
 <script type="application/json" id="datos-tendencia" th:utext="${tendenciaJson}">[]</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+        crossorigin="anonymous"></script>
 <script th:if="${!#lists.isEmpty(salud.tendencia7d)}">
     const datosTendencia = JSON.parse(document.getElementById('datos-tendencia').textContent);
     new Chart(document.getElementById('graficoTendencia'), {

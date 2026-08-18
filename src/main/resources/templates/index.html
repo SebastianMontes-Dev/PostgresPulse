@@ -26,10 +26,10 @@
             <div class="meta" th:text="${item.fuente.host} + ':' + ${item.fuente.puerto} + '/' + ${item.fuente.baseDeDatos}">host</div>
             <span class="badge" th:classappend="${item.fuente.estado}" th:text="${item.fuente.estado}">ESTADO</span>
 
-            <div class="puntaje" th:if="${item.salud.puntajeActual != null}"
-                 th:classappend="${item.salud.estadoActual}"
-                 th:text="${item.salud.puntajeActual} + ' / 100'">— / 100</div>
-            <div class="meta" th:unless="${item.salud.puntajeActual != null}">Sin análisis todavía</div>
+            <div class="puntaje" th:if="${item.ultimoAnalisis != null and item.ultimoAnalisis.puntajeSalud != null}"
+                 th:classappend="${item.ultimoAnalisis.estado}"
+                 th:text="${item.ultimoAnalisis.puntajeSalud} + ' / 100'">— / 100</div>
+            <div class="meta" th:unless="${item.ultimoAnalisis != null and item.ultimoAnalisis.puntajeSalud != null}">Sin análisis todavía</div>
 
             <div class="acciones">
                 <form th:action="@{/fuentes/{id}/analizar(id=${item.fuente.id})}" method="post">

@@ -2,6 +2,7 @@ package com.postgrespulse.servicio;
 
 import com.postgrespulse.dominio.Analisis;
 import com.postgrespulse.dominio.ResultadoChequeo;
+import com.postgrespulse.dto.ChequeoDto;
 import com.postgrespulse.dto.IndiceDto;
 import com.postgrespulse.dto.IndicesRespuestaDto;
 import com.postgrespulse.dto.TablaDto;
@@ -41,17 +42,26 @@ public class DetalleAnalisisServicio {
         this.resultadoChequeoRepositorio = resultadoChequeoRepositorio;
     }
 
-    @SuppressWarnings("unchecked")
     public List<TablaDto> tablas(Long fuenteId) {
         List<ResultadoChequeo> chequeos = chequeosDelUltimoAnalisis(fuenteId);
+        return tablasDesdeChequeos(chequeos.stream().map(DetalleAnalisisServicio::aChequeoDto).toList());
+    }
 
+    /**
+     * Misma union por esquema+tabla que tablas(fuenteId), pero a partir de
+     * chequeos ya cargados en memoria (ej. AnalisisDetalleDto.chequeos() del
+     * panel de control), para no repetir la consulta del ultimo analisis
+     * cuando el llamador ya la hizo un instante antes.
+     */
+    @SuppressWarnings("unchecked")
+    public List<TablaDto> tablasDesdeChequeos(List<ChequeoDto> chequeos) {
         Map<String, Map<String, Object>> porClave = new LinkedHashMap<>();
-        for (ResultadoChequeo chequeo : chequeos) {
-            if (!CHEQUEOS_TABLAS.contains(chequeo.getCodigoChequeo()) || chequeo.getDetalle() == null) {
+        for (ChequeoDto chequeo : chequeos) {
+            if (!CHEQUEOS_TABLAS.contains(chequeo.codigo()) || chequeo.detalle() == null) {
                 continue;
             }
             List<Map<String, Object>> tablasChequeo =
-                    (List<Map<String, Object>>) chequeo.getDetalle().getOrDefault("tablas", List.of());
+                    (List<Map<String, Object>>) chequeo.detalle().getOrDefault("tablas", List.of());
             for (Map<String, Object> tabla : tablasChequeo) {
                 String clave = texto(tabla, "esquema") + "." + texto(tabla, "tabla");
                 porClave.computeIfAbsent(clave, k -> new LinkedHashMap<>()).putAll(tabla);
@@ -139,5 +149,10 @@ public class DetalleAnalisisServicio {
     private static Double numeroDouble(Map<String, Object> mapa, String clave) {
         Object valor = mapa.get(clave);
         return valor instanceof Number n ? n.doubleValue() : null;
+    }
+
+    private static ChequeoDto aChequeoDto(ResultadoChequeo r) {
+        return new ChequeoDto(r.getCodigoChequeo(), r.getCategoria(), r.getEstado(), r.getPuntaje(),
+                r.getMensaje(), r.getRecomendacion(), r.getDetalle());
     }
 }
