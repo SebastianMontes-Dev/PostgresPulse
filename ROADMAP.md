@@ -1,39 +1,37 @@
 # 🗺️ Hoja de Ruta (Roadmap) de PostgresPulse
 
-Este documento describe la visión y los planes futuros para **PostgresPulse**. Nuestro objetivo es proporcionar la herramienta de monitoreo y análisis más robusta y fácil de usar para PostgreSQL.
+Este documento describe la visión **posterior a la v1.0** de **PostgresPulse**. El plan de ejecución de la v1.0 (fases 0–8, con su Definición de Terminado) vive en [docs/SPECS.md §16](docs/SPECS.md). Todo lo que aparece aquí está **fuera de alcance de la v1.0** por decisión explícita — ver [docs/SPECS.md §3.2](docs/SPECS.md).
 
 ---
 
-## 🚀 Fase 1: Corto Plazo (1 - 3 Meses)
-*Estabilización, métricas fundamentales y experiencia del desarrollador.*
+## 🔐 Acceso y multiusuario
 
-- [ ] **Métricas Principales de PostgreSQL:** Recopilación de estadísticas de caché, uso de índices y rendimiento de consultas.
-- [ ] **Dashboard Básico (Thymeleaf):** Interfaz gráfica inicial para visualizar las métricas clave en tiempo real.
-- [ ] **Sistema de Alertas (Email/Slack):** Notificaciones básicas cuando la carga de la CPU o las conexiones superen los umbrales configurados.
-- [ ] **Mejora de Cobertura de Pruebas:** Alcanzar un 80% de cobertura de código utilizando Testcontainers y JUnit 5.
-- [ ] **Internacionalización (i18n):** Soporte en múltiples idiomas (Inglés y Español) para el panel de control.
+- **RBAC + JWT:** múltiples usuarios y roles con control de acceso granular, reemplazando la Autenticación Básica de un solo administrador de la v1.0.
+- **Auditoría de cambios:** registro detallado de quién modificó qué configuración y cuándo.
 
 ---
 
-## ⚡ Fase 2: Mediano Plazo (3 - 6 Meses)
-*Inteligencia, automatización y análisis profundo.*
+## 📡 Integraciones externas
 
-- [ ] **Análisis de Consultas Lentas (Slow Queries):** Identificación automática y recomendaciones de optimización para consultas ineficientes.
-- [ ] **Predicción de Crecimiento de Datos:** Estimaciones de uso de disco basadas en tendencias de crecimiento del almacenamiento utilizando modelos estadísticos básicos.
-- [ ] **Integración con Prometheus y Grafana:** Exportador nativo de métricas para ecosistemas de monitoreo externos.
-- [ ] **Autenticación y Autorización (RBAC):** Implementación de Spring Security y JWT para el control de acceso a los paneles y la API.
-- [ ] **Auditoría de Cambios (Audit Logging):** Registro detallado de quién realizó cambios en las configuraciones y cuándo.
+- **Alertas (Email / Slack / PagerDuty):** notificaciones cuando la puntuación de salud cruce un umbral configurado.
+- **Exportador Prometheus + tableros Grafana:** métricas nativas para ecosistemas de observabilidad externos.
 
 ---
 
-## 🌌 Fase 3: Largo Plazo (6 - 12 Meses+)
-*Escalabilidad, IA y gestión de flotas.*
+## 🌐 Alcance de bases de datos
 
-- [ ] **Monitoreo de Múltiples Instancias (Fleet Management):** Capacidad para monitorear decenas de servidores PostgreSQL simultáneamente desde un único panel centralizado.
-- [ ] **Agente Ligero (Go/Rust):** Agente de recopilación de métricas independiente de bajo consumo de recursos para instalar directamente en los servidores de bases de datos.
-- [ ] **Recomendaciones Impulsadas por IA:** Uso de modelos de aprendizaje automático para predecir cuellos de botella en el rendimiento antes de que ocurran.
-- [ ] **Auto-Remediación:** Ejecución automática de scripts de mantenimiento (como `VACUUM` o `ANALYZE`) cuando se detectan problemas específicos.
-- [ ] **Soporte Nativo para la Nube:** Despliegue optimizado para Kubernetes y soporte integral para Amazon RDS y Google Cloud SQL.
+- **Soporte MySQL / Oracle / SQL Server:** motor de chequeos extendido más allá de PostgreSQL 12–17.
+- **Agente ligero (Go/Rust):** recolector de métricas de bajo consumo, instalable directamente en los servidores objetivo, como alternativa al modelo actual sin agente.
+
+---
+
+## 🏢 Escala y operación
+
+- **Fleet management:** monitoreo centralizado de decenas de instancias PostgreSQL desde un único panel.
+- **Plataforma SaaS multiinquilino:** panel de suscripciones y aislamiento por organización.
+- **Recomendaciones impulsadas por IA:** modelos que predicen cuellos de botella antes de que ocurran.
+- **Auto-remediación:** ejecución automática de mantenimiento (`VACUUM`, `ANALYZE`) ante hallazgos específicos.
+- **Internacionalización (i18n):** soporte multi-idioma del panel de control.
 
 ---
 

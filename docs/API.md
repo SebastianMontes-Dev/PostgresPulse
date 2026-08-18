@@ -239,7 +239,7 @@ Devuelve el detalle del último análisis: por tabla — filas estimadas, tuplas
 ### 4.2 Consultas lentas
 
 ```
-GET /api/v1/fuentes/{id}/queries
+GET /api/v1/fuentes/{id}/consultas
 ```
 Los N principales por tiempo medio de ejecución (`pg_stat_statements`). Requiere la extensión habilitada en la BD objetivo; si no, `400` con código `EXTENSION_AUSENTE`.
 
