@@ -6,9 +6,9 @@
 |---|---|
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
-| **Estado** | Aprobada para desarrollo — Fase 0 ejecutada |
-| **Versión** | 1.0 |
-| **Última actualización** | 2026-08-01 |
+| **Estado** | v1.0 completada — fases 0–8 ejecutadas y verificadas (ver §17) |
+| **Versión** | 1.0.0 |
+| **Última actualización** | 2026-08-18 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
 
 ---
@@ -317,7 +317,7 @@ push/PR → trabajos:
 | Seguridad | Unidad + integración | Contraseñas nunca en respuestas; acceso sin autenticación → 401; solo-lectura verificado |
 | Demostración E2E| Script de PowerShell + cURL | Registrar → analizar → ver panel de control → exportar |
 
-**Datos sintéticos** (`scripts/sample_data.sql`): 6 tablas, ~500K filas generadas, índices duplicados, claves foráneas sin índice, tabla sin clave primaria, y simulación de tuplas muertas. **La demostración demuestra hallazgos reales en datos mal modelados.**
+**Datos sintéticos** (`scripts/db-init/sample_data.sql`): 6 tablas, ~500K filas generadas, índices duplicados, claves foráneas sin índice, tabla sin clave primaria, y simulación de tuplas muertas. **La demostración demuestra hallazgos reales en datos mal modelados.**
 
 ---
 
@@ -354,15 +354,35 @@ push/PR → trabajos:
 
 ## 17. Criterios de aceptación del producto (lista de verificación)
 
-- [ ] Registrar 3 fuentes (2 en línea + 1 fuera de línea) sin reiniciar la aplicación
-- [ ] Análisis manual y programado generan capturas con 8 chequeos
-- [ ] Puntuación global y por categoría correctas contra BD de referencia conocida
-- [ ] Recomendaciones SQL ejecutables mejoran la puntuación al aplicarse (demostración)
-- [ ] Historial de tendencia muestra degradación/reparación
-- [ ] Credenciales cifradas en BD, enmascaradas en API, ausentes en registros
-- [ ] BD objetivo nunca recibe escrituras (verificado con prueba)
-- [ ] Funcional con un solo comando de Docker Compose + panel de control
-- [ ] Integración continua verde con cobertura ≥80% en núcleo de análisis
+Verificado en la sesión de cierre de v1.0 (2026-08-18): `./mvnw -B verify` (60 pruebas, 0 fallos) +
+`docker compose up -d --build` con los 3 servicios reales + `scripts/demo.ps1` contra `target-demo`.
+
+- [x] Registrar 3 fuentes (2 en línea + 1 fuera de línea) sin reiniciar la aplicación — pools por fuente
+      en tiempo de ejecución (ADR-1) sin reinicio, cubierto por `FuenteApiIntegracionTest` (transiciones
+      `EN_LINEA`/`FUERA_LINEA`/`ERROR`)
+- [x] Análisis manual y programado generan capturas con 8 chequeos — 2 análisis `MANUAL` reales contra
+      `target-demo` con los 8 chequeos presentes (`BLOAT`, `CACHE_HIT`, `CONNECTIONS`, `INDEX_HEALTH`,
+      `LOCKS_SLOW`, `SCHEMA_INTEGRITY`, `SEQ_SCAN`, `VACUUM_HEALTH`); ciclo `PROGRAMADO` cubierto por
+      `ProgramadorAnalisisServicioTest`
+- [x] Puntuación global y por categoría correctas contra BD de referencia conocida — `target-demo` dio
+      53.00 `CRITICO` con desglose coherente por categoría; fórmula de ponderación en
+      `PuntuacionCalculadoraTest`
+- [ ] Recomendaciones SQL ejecutables mejoran la puntuación al aplicarse (demostración) — **pendiente**:
+      no se aplicaron las recomendaciones (`VACUUM`, `CREATE INDEX`, `DROP INDEX`) sobre `target-demo`
+      ni se re-analizó para confirmar la mejora del puntaje
+- [ ] Historial de tendencia muestra degradación/reparación — el mecanismo funciona (`/salud` y
+      `/historial` muestran los 2 análisis con su tendencia), pero **no se demostró** un cambio real de
+      puntaje entre capturas (la BD objetivo no se modificó entre los 2 análisis de esta sesión)
+- [x] Credenciales cifradas en BD, enmascaradas en API, ausentes en registros — `CifradoServicioTest` +
+      `FuenteApiIntegracionTest.ningunaRespuestaDeFuentesExponeElCampoContrasenaEnTextoPlano` + logs JSON
+      de la sesión sin el campo `contrasena`
+- [x] BD objetivo nunca recibe escrituras (verificado con prueba) —
+      `RegistroConexionesServicioSoloLecturaTest`
+- [x] Funcional con un solo comando de Docker Compose + panel de control — `docker compose up -d --build`
+      deja `Ventas Demo` ya registrada en el panel (sembrado automático), sin pasos manuales
+- [x] Integración continua verde con cobertura ≥80% en núcleo de análisis — `com.postgrespulse.analisis`
+      ~93% de líneas (gate 80%); `com.postgrespulse.servicio`+`com.postgrespulse.programacion` ~80%
+      (gate 70%, ver `pom.xml`); confirmar el pipeline de GitHub Actions en verde tras el push a `main`
 
 ---
 

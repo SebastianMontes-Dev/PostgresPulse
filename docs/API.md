@@ -7,7 +7,9 @@ URL Base: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva
 ## 1. Convenciones
 
 - **Paginación**: `?page=0&size=20` (respuestas `Pageable` estándar de Spring).
-- **Autenticación**: Autenticación Básica (se habilita en la Fase 7). Cabecera `Authorization: Basic base64(usuario:contrasena)`.
+- **Autenticación**: Autenticación Básica en todas las rutas salvo `/actuator/health`. Cabecera `Authorization: Basic base64(usuario:contrasena)` (`PULSE_ADMIN_USER`/`PULSE_ADMIN_PASSWORD`).
+- **Fuerza bruta**: varios intentos fallidos de autenticación desde la misma IP devuelven `429` con cabecera `Retry-After` (segundos) antes de intentar validar credenciales.
+- **CSRF**: solo aplica a las rutas del panel de control (formularios Thymeleaf); `/api/v1/**` está exento — pensado para clientes no interactivos (curl, scripts, CI) sin token de sesión.
 - **Credenciales**: el campo `contrasena` **nunca** se devuelve en las respuestas; solo `"contrasenaEnmascarada": true`.
 - **Errores**: todas las respuestas 4xx/5xx usan el formato `ApiError` (sección 5).
 - **Datos nulos**: se omiten en las respuestas (`default-property-inclusion: non_null`).
@@ -119,7 +121,7 @@ POST /api/v1/fuentes/{id}/probar
 
 ---
 
-## 3. Operaciones de análisis (Fases 3–4)
+## 3. Operaciones de análisis
 
 ### 3.1 Ejecutar análisis
 
@@ -227,7 +229,7 @@ GET /api/v1/fuentes/{id}/salud
 
 ---
 
-## 4. Detalle del último análisis (Fases 3–4)
+## 4. Detalle del último análisis
 
 ### 4.1 Tablas
 
@@ -272,28 +274,34 @@ Hallazgos del último análisis: índices sin uso, duplicados y superpuestos, co
 | `CONFLICTO` | 409 | Nombre de fuente duplicado o análisis en curso |
 | `CONEXION_FALLIDA` | 422 | Prueba/análisis no pudieron conectar |
 | `EXTENSION_AUSENTE` | 400 | `pg_stat_statements` no disponible |
-| `NO_AUTORIZADO` | 401 | Credenciales inválidas (Fase 7) |
+| `NO_AUTORIZADO` | 401 | Credenciales inválidas o ausentes |
 | `ERROR_INTERNO` | 500 | Error inesperado |
+
+Sin formato `ApiError` propio: `429 Too Many Requests` (bloqueo por fuerza bruta, cabecera `Retry-After`).
 
 ---
 
 ## 6. Ejemplo de flujo completo (cURL)
 
+Con `docker compose up -d --build` la fuente `Ventas Demo` ya queda registrada (sembrado automático,
+ver `docs/DEPLOYMENT.md` #3.1) — el flujo real empieza en el paso 2. `scripts/demo.sh`/`scripts/demo.ps1`
+automatizan estos mismos pasos.
+
 ```bash
-# 1. Registrar la base demo
-curl -X POST http://localhost:8080/api/v1/fuentes \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Ventas Demo","host":"localhost","puerto":5433,"baseDeDatos":"ventas_db","usuario":"demo","contrasena":"demo","etiquetas":["demo"]}'
+AUTH="admin:admin"
+
+# 1. Listar fuentes (la demo ya esta registrada)
+curl -u "$AUTH" http://localhost:8080/api/v1/fuentes
 
 # 2. Probar conexión
-curl -X POST http://localhost:8080/api/v1/fuentes/1/probar
+curl -u "$AUTH" -X POST http://localhost:8080/api/v1/fuentes/1/probar
 
-# 3. Analizar (Fases 3–4)
-curl -X POST http://localhost:8080/api/v1/fuentes/1/analizar
+# 3. Analizar
+curl -u "$AUTH" -X POST http://localhost:8080/api/v1/fuentes/1/analizar
 
 # 4. Ver el análisis con hallazgos
-curl http://localhost:8080/api/v1/analisis/1
+curl -u "$AUTH" http://localhost:8080/api/v1/analisis/1
 
 # 5. Exportar reporte CSV
-curl -o reporte.csv "http://localhost:8080/api/v1/analisis/1/exportar?formato=csv"
+curl -u "$AUTH" -o reporte.csv "http://localhost:8080/api/v1/analisis/1/exportar?formato=csv"
 ```
