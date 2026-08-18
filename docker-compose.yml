@@ -37,7 +37,11 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./scripts:/docker-entrypoint-initdb.d:ro
+      # Solo scripts/db-init/ (no scripts/ completo): el entrypoint de
+      # postgres ejecuta cualquier .sh que encuentre en este directorio, y
+      # scripts/ tambien contiene demo.ps1/demo.sh (docs/SPECS.md #14, demo
+      # E2E), que no son scripts de inicializacion de esta base de datos.
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U demo -d ventas_db"]
       interval: 5s
@@ -50,6 +54,7 @@ services:
       dockerfile: Dockerfile
     container_name: pulse-app
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       PULSE_DB_URL: jdbc:postgresql://pulse-db:5432/pulse_db
       PULSE_DB_USER: pulse
       PULSE_DB_PASSWORD: pulse
@@ -58,10 +63,13 @@ services:
       PULSE_SCHEDULER_CRON: ${PULSE_SCHEDULER_CRON:-0 0 * * * *}
       PULSE_ADMIN_USER: ${PULSE_ADMIN_USER:-admin}
       PULSE_ADMIN_PASSWORD: ${PULSE_ADMIN_PASSWORD:-admin}
+      PULSE_DEMO_SEED: ${PULSE_DEMO_SEED:-true}
     ports:
       - "8080:8080"
     depends_on:
       pulse-db:
+        condition: service_healthy
+      target-demo:
         condition: service_healthy
     restart: unless-stopped
 
