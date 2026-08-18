@@ -23,14 +23,29 @@ public class ManejadorErroresGlobal {
         return construir(ex.getMessage(), HttpStatus.NOT_FOUND, "NO_ENCONTRADA", peticion, List.of());
     }
 
+    @ExceptionHandler(AnalisisNoEncontradoException.class)
+    public ResponseEntity<ApiError> analisisNoEncontrado(AnalisisNoEncontradoException ex, HttpServletRequest peticion) {
+        return construir(ex.getMessage(), HttpStatus.NOT_FOUND, "NO_ENCONTRADA", peticion, List.of());
+    }
+
     @ExceptionHandler(NombreDuplicadoException.class)
     public ResponseEntity<ApiError> nombreDuplicado(NombreDuplicadoException ex, HttpServletRequest peticion) {
+        return construir(ex.getMessage(), HttpStatus.CONFLICT, "CONFLICTO", peticion, List.of());
+    }
+
+    @ExceptionHandler(AnalisisEnCursoException.class)
+    public ResponseEntity<ApiError> analisisEnCurso(AnalisisEnCursoException ex, HttpServletRequest peticion) {
         return construir(ex.getMessage(), HttpStatus.CONFLICT, "CONFLICTO", peticion, List.of());
     }
 
     @ExceptionHandler(ConexionFallidaException.class)
     public ResponseEntity<ApiError> conexionFallida(ConexionFallidaException ex, HttpServletRequest peticion) {
         return construir(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY, "CONEXION_FALLIDA", peticion, List.of());
+    }
+
+    @ExceptionHandler(ExtensionAusenteException.class)
+    public ResponseEntity<ApiError> extensionAusente(ExtensionAusenteException ex, HttpServletRequest peticion) {
+        return construir(ex.getMessage(), HttpStatus.BAD_REQUEST, "EXTENSION_AUSENTE", peticion, List.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

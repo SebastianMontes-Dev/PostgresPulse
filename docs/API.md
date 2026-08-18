@@ -234,7 +234,7 @@ GET /api/v1/fuentes/{id}/salud
 ```
 GET /api/v1/fuentes/{id}/tablas
 ```
-Devuelve el detalle del último análisis: por tabla — filas estimadas, tuplas muertas, razón de tuplas muertas, hinchamiento estimado, escaneos secuenciales/por índice, tamaño.
+Devuelve, del último análisis, las tablas con **hallazgos** en `SEQ_SCAN`, `VACUUM_HEALTH` o `BLOAT` (unidas por esquema+tabla) — filas estimadas, tuplas muertas, razón de tuplas muertas, hinchamiento estimado, escaneos secuenciales/por índice, tamaño. No es un listado de todas las tablas de la fuente: cada chequeo solo persiste las que superan su propio umbral (docs/SPECS.md #8), que es además lo accionable. `[]` si la fuente aún no tiene análisis o no hay hallazgos.
 
 ### 4.2 Consultas lentas
 

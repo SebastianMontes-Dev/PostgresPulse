@@ -23,7 +23,7 @@ import java.util.Map;
 public class ChequeoSchemaIntegrity implements ChequeoAnalisis {
 
     private static final String SQL_SIN_PK = """
-            SELECT c.relname AS tabla
+            SELECT n.nspname AS esquema, c.relname AS tabla
             FROM pg_class c
             JOIN pg_namespace n ON n.oid = c.relnamespace
             WHERE c.relkind = 'r'
@@ -37,6 +37,7 @@ public class ChequeoSchemaIntegrity implements ChequeoAnalisis {
 
     private static final String SQL_FK_SIN_INDICE = """
             SELECT
+                n.nspname AS esquema,
                 t.relname AS tabla,
                 con.conname AS restriccion
             FROM pg_constraint con
@@ -73,6 +74,7 @@ public class ChequeoSchemaIntegrity implements ChequeoAnalisis {
                 while (rs.next()) {
                     String tabla = rs.getString("tabla");
                     Map<String, Object> hallazgo = new LinkedHashMap<>();
+                    hallazgo.put("esquema", rs.getString("esquema"));
                     hallazgo.put("tabla", tabla);
                     hallazgo.put("problema", "Sin clave primaria");
                     hallazgo.put("recomendacion", "ALTER TABLE " + tabla + " ADD PRIMARY KEY (...);");
@@ -89,6 +91,7 @@ public class ChequeoSchemaIntegrity implements ChequeoAnalisis {
                     String tabla = rs.getString("tabla");
                     String restriccion = rs.getString("restriccion");
                     Map<String, Object> hallazgo = new LinkedHashMap<>();
+                    hallazgo.put("esquema", rs.getString("esquema"));
                     hallazgo.put("tabla", tabla);
                     hallazgo.put("restriccion", restriccion);
                     hallazgo.put("problema", "Clave foranea sin indice");

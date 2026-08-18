@@ -33,7 +33,7 @@ public class ChequeoSeqScan implements ChequeoAnalisis {
     private static final long MIN_MUESTRAS = 20;
 
     private static final String SQL = """
-            SELECT relname, seq_scan, idx_scan, n_live_tup
+            SELECT schemaname, relname, seq_scan, idx_scan, n_live_tup
             FROM pg_stat_user_tables
             WHERE schemaname = ANY(?)
               AND (seq_scan + coalesce(idx_scan, 0)) >= ?
@@ -68,6 +68,7 @@ public class ChequeoSeqScan implements ChequeoAnalisis {
                     if (ratio > UMBRAL_ADVERTENCIA) {
                         peorRatio = Math.max(peorRatio, ratio);
                         Map<String, Object> tabla = new LinkedHashMap<>();
+                        tabla.put("esquema", rs.getString("schemaname"));
                         tabla.put("tabla", rs.getString("relname"));
                         tabla.put("escaneosSecuenciales", seqScan);
                         tabla.put("escaneosPorIndice", idxScan);

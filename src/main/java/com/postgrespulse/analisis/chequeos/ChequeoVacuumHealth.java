@@ -28,7 +28,7 @@ public class ChequeoVacuumHealth implements ChequeoAnalisis {
     private static final long MIN_FILAS = 1000;
 
     private static final String SQL = """
-            SELECT relname, n_live_tup, n_dead_tup
+            SELECT schemaname, relname, n_live_tup, n_dead_tup
             FROM pg_stat_user_tables
             WHERE schemaname = ANY(?)
               AND (n_live_tup + n_dead_tup) >= ?
@@ -63,6 +63,7 @@ public class ChequeoVacuumHealth implements ChequeoAnalisis {
                     if (ratio > UMBRAL_ADVERTENCIA) {
                         peorRatio = Math.max(peorRatio, ratio);
                         Map<String, Object> tabla = new LinkedHashMap<>();
+                        tabla.put("esquema", rs.getString("schemaname"));
                         tabla.put("tabla", rs.getString("relname"));
                         tabla.put("tuplasVivas", vivas);
                         tabla.put("tuplasMuertas", muertas);

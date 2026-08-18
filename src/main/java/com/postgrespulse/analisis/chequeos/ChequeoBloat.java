@@ -107,6 +107,7 @@ public class ChequeoBloat implements ChequeoAnalisis {
                     if (ratio > UMBRAL_ADVERTENCIA) {
                         peorRatio = Math.max(peorRatio, ratio);
                         Map<String, Object> hallazgo = new LinkedHashMap<>();
+                        hallazgo.put("esquema", esquema);
                         hallazgo.put("tabla", tabla);
                         hallazgo.put("tamanoBytes", rs.getLong("tamano_bytes"));
                         hallazgo.put("porcentajeHinchamiento", ratio * 100);
