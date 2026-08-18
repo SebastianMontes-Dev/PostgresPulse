@@ -1,6 +1,5 @@
 package com.postgrespulse;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.postgrespulse.dominio.EstadoFuente;
 import com.postgrespulse.dominio.FuenteDatos;
@@ -8,12 +7,15 @@ import com.postgrespulse.repositorio.FuenteDatosRepositorio;
 import com.postgrespulse.servicio.cifrado.CifradoServicio;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -62,6 +64,16 @@ class FuenteApiIntegracionTest {
     @Autowired
     CifradoServicio cifradoServicio;
 
+    @Value("${app.seguridad.usuario}")
+    String usuarioAdmin;
+
+    @Value("${app.seguridad.contrasena}")
+    String contrasenaAdmin;
+
+    private RequestPostProcessor admin() {
+        return SecurityMockMvcRequestPostProcessors.httpBasic(usuarioAdmin, contrasenaAdmin);
+    }
+
     private int puertoObjetivo() {
         return BD_OBJETIVO.getMappedPort(5432);
     }
@@ -73,7 +85,7 @@ class FuenteApiIntegracionTest {
                  "usuario":"demo","contrasena":"demo","filtroEsquema":"public","etiquetas":["demo","core"]}""",
                 puertoObjetivo());
 
-        String respuesta = mockMvc.perform(post("/api/v1/fuentes")
+        String respuesta = mockMvc.perform(post("/api/v1/fuentes").with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo))
                 .andExpect(status().isCreated())
@@ -85,7 +97,7 @@ class FuenteApiIntegracionTest {
                 .andReturn().getResponse().getContentAsString();
         long id = objectMapper.readTree(respuesta).get("id").asLong();
 
-        mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id))
+        mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alcanzable").value(true))
                 .andExpect(jsonPath("$.version").value(org.hamcrest.Matchers.containsString("PostgreSQL")));
@@ -95,21 +107,21 @@ class FuenteApiIntegracionTest {
         assertThat(fuente.getContrasenaCifrada()).isNotEqualTo("demo");
         assertThat(cifradoServicio.descifrar(fuente.getContrasenaCifrada())).isEqualTo("demo");
 
-        mockMvc.perform(get("/api/v1/fuentes"))
+        mockMvc.perform(get("/api/v1/fuentes").with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        mockMvc.perform(put("/api/v1/fuentes/{id}", id)
+        mockMvc.perform(put("/api/v1/fuentes/{id}", id).with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Ventas Producción\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre").value("Ventas Producción"))
                 .andExpect(jsonPath("$.puerto").value(puertoObjetivo()));
 
-        mockMvc.perform(delete("/api/v1/fuentes/{id}", id))
+        mockMvc.perform(delete("/api/v1/fuentes/{id}", id).with(admin()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/fuentes/{id}", id))
+        mockMvc.perform(get("/api/v1/fuentes/{id}", id).with(admin()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADA"));
     }
@@ -119,10 +131,10 @@ class FuenteApiIntegracionTest {
         String cuerpo = String.format(
                 "{\"nombre\":\"Demo Duplicada\",\"host\":\"localhost\",\"puerto\":%d,\"baseDeDatos\":\"ventas_db\",\"usuario\":\"demo\",\"contrasena\":\"demo\"}",
                 puertoObjetivo());
-        mockMvc.perform(post("/api/v1/fuentes").contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+        mockMvc.perform(post("/api/v1/fuentes").with(admin()).contentType(MediaType.APPLICATION_JSON).content(cuerpo))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/v1/fuentes")
+        mockMvc.perform(post("/api/v1/fuentes").with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo.replace("Demo Duplicada", "demo duplicada")))
                 .andExpect(status().isConflict())
@@ -134,7 +146,7 @@ class FuenteApiIntegracionTest {
         String cuerpo = """
                 {"nombre":"","host":"localhost","port":70000,"baseDeDatos":"ventas_db","usuario":"demo",
                  "contrasena":"demo","filtroEsquema":"public;DROP"}""";
-        mockMvc.perform(post("/api/v1/fuentes")
+        mockMvc.perform(post("/api/v1/fuentes").with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo))
                 .andExpect(status().isBadRequest())
@@ -147,14 +159,14 @@ class FuenteApiIntegracionTest {
         String cuerpo = String.format(
                 "{\"nombre\":\"Fuente Mala\",\"host\":\"localhost\",\"puerto\":%d,\"baseDeDatos\":\"ventas_db\",\"usuario\":\"demo\",\"contrasena\":\"incorrecta\"}",
                 puertoObjetivo());
-        String respuesta = mockMvc.perform(post("/api/v1/fuentes")
+        String respuesta = mockMvc.perform(post("/api/v1/fuentes").with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         long id = objectMapper.readTree(respuesta).get("id").asLong();
 
-        mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id))
+        mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id).with(admin()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.codigo").value("CONEXION_FALLIDA"));
 
@@ -165,8 +177,20 @@ class FuenteApiIntegracionTest {
 
     @Test
     void probarFuenteInexistenteDevuelve404() throws Exception {
-        mockMvc.perform(post("/api/v1/fuentes/99999/probar"))
+        mockMvc.perform(post("/api/v1/fuentes/99999/probar").with(admin()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADA"));
+    }
+
+    @Test
+    void sinCredencialesDevuelve401() throws Exception {
+        mockMvc.perform(get("/api/v1/fuentes"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void actuatorHealthEsPublicoSinCredenciales() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
     }
 }

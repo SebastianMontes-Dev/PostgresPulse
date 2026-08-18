@@ -72,8 +72,8 @@ Las pruebas de integración levantan PostgreSQL real vía Testcontainers (requie
 
 ## 4. Despliegue de producción (Fase 7)
 
-1. Construir la imagen: `docker build -t postgrespulse:1.0 .`
-2. Levantar la pila completa (aplicación + pulse-db) con el `docker-compose.yml` de producción que incluye el servicio `app` con verificación de salud.
+1. `docker compose up -d --build` levanta los tres servicios (`pulse-db`, `target-demo`, `app`); el servicio `app` se construye desde el `Dockerfile` multietapa (build con `./mvnw` + runtime JRE 21 Alpine, usuario no-root) y espera a que `pulse-db` esté `healthy` antes de arrancar.
+2. Para construir la imagen de forma aislada: `docker build -t postgrespulse:1.0 .`
 3. Configurar **todas** las variables de entorno, en especial:
    - `PULSE_CRYPTO_KEY` — clave fuerte generada con un gestor de secretos
    - `PULSE_ADMIN_USER` / `PULSE_ADMIN_PASSWORD` — credenciales fuertes

@@ -54,3 +54,6 @@ app:
   programacion:
     cron: ${PULSE_SCHEDULER_CRON:0 0 * * * *}
     habilitado: ${PULSE_SCHEDULER_ENABLED:false}
+  seguridad:
+    usuario: ${PULSE_ADMIN_USER:admin}
+    contrasena: ${PULSE_ADMIN_PASSWORD:admin}

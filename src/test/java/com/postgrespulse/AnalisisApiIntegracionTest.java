@@ -3,12 +3,15 @@ package com.postgrespulse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -59,12 +62,22 @@ class AnalisisApiIntegracionTest {
     @Autowired
     ObjectMapper objectMapper;
 
+    @Value("${app.seguridad.usuario}")
+    String usuarioAdmin;
+
+    @Value("${app.seguridad.contrasena}")
+    String contrasenaAdmin;
+
+    private RequestPostProcessor admin() {
+        return SecurityMockMvcRequestPostProcessors.httpBasic(usuarioAdmin, contrasenaAdmin);
+    }
+
     private long registrarFuente(String nombre) throws Exception {
         String cuerpo = String.format("""
                 {"nombre":"%s","host":"localhost","puerto":%d,"baseDeDatos":"objetivo_vacio",
                  "usuario":"demo","contrasena":"demo","filtroEsquema":"public"}""",
                 nombre, BD_OBJETIVO.getMappedPort(5432));
-        String respuesta = mockMvc.perform(post("/api/v1/fuentes")
+        String respuesta = mockMvc.perform(post("/api/v1/fuentes").with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(cuerpo))
                 .andExpect(status().isCreated())
@@ -76,7 +89,7 @@ class AnalisisApiIntegracionTest {
     void flujoCompletoAnalizarYLeerResultados() throws Exception {
         long fuenteId = registrarFuente("Objetivo Vacio Analisis");
 
-        String respuestaAnalizar = mockMvc.perform(post("/api/v1/fuentes/{id}/analizar", fuenteId))
+        String respuestaAnalizar = mockMvc.perform(post("/api/v1/fuentes/{id}/analizar", fuenteId).with(admin()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.fuenteId").value(fuenteId))
                 .andExpect(jsonPath("$.estado").value("SANO"))
@@ -84,68 +97,74 @@ class AnalisisApiIntegracionTest {
                 .andReturn().getResponse().getContentAsString();
         long analisisId = objectMapper.readTree(respuestaAnalizar).get("id").asLong();
 
-        mockMvc.perform(get("/api/v1/analisis/{id}", analisisId))
+        mockMvc.perform(get("/api/v1/analisis/{id}", analisisId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fuenteId").value(fuenteId))
                 .andExpect(jsonPath("$.nombreFuente").value("Objetivo Vacio Analisis"))
                 .andExpect(jsonPath("$.chequeos.length()").value(8));
 
-        mockMvc.perform(get("/api/v1/fuentes/{id}/analisis", fuenteId))
+        mockMvc.perform(get("/api/v1/fuentes/{id}/analisis", fuenteId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(analisisId));
 
-        mockMvc.perform(get("/api/v1/fuentes/{id}/salud", fuenteId))
+        mockMvc.perform(get("/api/v1/fuentes/{id}/salud", fuenteId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoActual").value("SANO"))
                 .andExpect(jsonPath("$.tendencia7d.length()").value(1));
 
-        mockMvc.perform(get("/api/v1/fuentes/{id}/tablas", fuenteId))
+        mockMvc.perform(get("/api/v1/fuentes/{id}/tablas", fuenteId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
 
-        mockMvc.perform(get("/api/v1/fuentes/{id}/indices", fuenteId))
+        mockMvc.perform(get("/api/v1/fuentes/{id}/indices", fuenteId).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sinUso.length()").value(0))
                 .andExpect(jsonPath("$.duplicadosORedundantes.length()").value(0));
 
-        mockMvc.perform(get("/api/v1/fuentes/{id}/consultas", fuenteId))
+        mockMvc.perform(get("/api/v1/fuentes/{id}/consultas", fuenteId).with(admin()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("EXTENSION_AUSENTE"));
 
-        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "json"))
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).with(admin()).param("formato", "json"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "csv"))
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).with(admin()).param("formato", "csv"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
                 .andExpect(content().string(org.hamcrest.Matchers.startsWith("codigo_chequeo,estado,puntaje,mensaje,recomendacion")));
 
-        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "html"))
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).with(admin()).param("formato", "html"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Objetivo Vacio Analisis")));
 
-        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "xml"))
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).with(admin()).param("formato", "xml"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"));
     }
 
     @Test
     void analizarFuenteInexistenteDevuelve404() throws Exception {
-        mockMvc.perform(post("/api/v1/fuentes/99999/analizar"))
+        mockMvc.perform(post("/api/v1/fuentes/99999/analizar").with(admin()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADA"));
     }
 
     @Test
     void obtenerAnalisisInexistenteDevuelve404() throws Exception {
-        mockMvc.perform(get("/api/v1/analisis/99999"))
+        mockMvc.perform(get("/api/v1/analisis/99999").with(admin()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADA"));
+    }
+
+    @Test
+    void analizarSinCredencialesDevuelve401() throws Exception {
+        mockMvc.perform(post("/api/v1/fuentes/1/analizar"))
+                .andExpect(status().isUnauthorized());
     }
 }

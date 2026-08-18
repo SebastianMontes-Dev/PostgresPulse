@@ -1,10 +1,12 @@
 # ============================================================
-# PostgresPulse - Entorno de desarrollo
-# Levanta: pulse-db (almacenamiento propio) y target-demo
-# (base de datos demo con datos de ventas mal modelados a proposito).
+# PostgresPulse - Entorno completo (Fase 7)
+# Levanta: pulse-db (almacenamiento propio), target-demo
+# (base de datos demo con datos de ventas mal modelados a proposito)
+# y app (la aplicacion, construida desde el Dockerfile).
 #
 # Uso: docker compose up -d
-# El servicio "app" se agrega en la Fase 7 (imagen de produccion).
+# Variables de entorno: se leen de .env (ver .env.example) si existe;
+# si no, se usan los valores de desarrollo por defecto de abajo.
 # ============================================================
 
 services:
@@ -41,6 +43,27 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pulse-app
+    environment:
+      PULSE_DB_URL: jdbc:postgresql://pulse-db:5432/pulse_db
+      PULSE_DB_USER: pulse
+      PULSE_DB_PASSWORD: pulse
+      PULSE_CRYPTO_KEY: ${PULSE_CRYPTO_KEY:-clave-de-desarrollo-por-defecto-32-caracteres!}
+      PULSE_SCHEDULER_ENABLED: ${PULSE_SCHEDULER_ENABLED:-false}
+      PULSE_SCHEDULER_CRON: ${PULSE_SCHEDULER_CRON:-0 0 * * * *}
+      PULSE_ADMIN_USER: ${PULSE_ADMIN_USER:-admin}
+      PULSE_ADMIN_PASSWORD: ${PULSE_ADMIN_PASSWORD:-admin}
+    ports:
+      - "8080:8080"
+    depends_on:
+      pulse-db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pulse_data:
