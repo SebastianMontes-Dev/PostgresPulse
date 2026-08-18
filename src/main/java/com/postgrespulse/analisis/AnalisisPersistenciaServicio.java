@@ -9,6 +9,9 @@ import com.postgrespulse.dominio.TipoDisparo;
 import com.postgrespulse.repositorio.AnalisisRepositorio;
 import com.postgrespulse.repositorio.FuenteDatosRepositorio;
 import com.postgrespulse.repositorio.ResultadoChequeoRepositorio;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +30,13 @@ import java.util.stream.Collectors;
  * cada metodo publico corra en su propia transaccion corta: el orquestador
  * ya no debe mantener una transaccion abierta durante el I/O de red hacia
  * la fuente objetivo (hasta 10s segun el RNF de rendimiento).
+ *
+ * Tambien es el unico punto por el que pasan tanto los analisis exitosos
+ * como los fallidos, asi que aqui se registran las metricas de
+ * docs/SPECS.md #12 (Observabilidad: "metrica personalizada de total de
+ * analisis"): postgrespulse.analisis.total (contador por resultado y
+ * disparador) y postgrespulse.analisis.duracion (solo en exito, ya que un
+ * fallo no completa el ciclo de chequeos).
  */
 @Service
 public class AnalisisPersistenciaServicio {
@@ -35,13 +46,16 @@ public class AnalisisPersistenciaServicio {
     private final AnalisisRepositorio analisisRepositorio;
     private final ResultadoChequeoRepositorio resultadoChequeoRepositorio;
     private final FuenteDatosRepositorio fuenteDatosRepositorio;
+    private final MeterRegistry meterRegistry;
 
     public AnalisisPersistenciaServicio(AnalisisRepositorio analisisRepositorio,
                                          ResultadoChequeoRepositorio resultadoChequeoRepositorio,
-                                         FuenteDatosRepositorio fuenteDatosRepositorio) {
+                                         FuenteDatosRepositorio fuenteDatosRepositorio,
+                                         MeterRegistry meterRegistry) {
         this.analisisRepositorio = analisisRepositorio;
         this.resultadoChequeoRepositorio = resultadoChequeoRepositorio;
         this.fuenteDatosRepositorio = fuenteDatosRepositorio;
+        this.meterRegistry = meterRegistry;
     }
 
     @Transactional
@@ -69,6 +83,7 @@ public class AnalisisPersistenciaServicio {
         fuente.setUltimoAnalizadoEn(OffsetDateTime.now());
         fuenteDatosRepositorio.save(fuente);
 
+        registrarMetricas("exito", disparadoPor, duracionMs);
         return guardado;
     }
 
@@ -88,7 +103,24 @@ public class AnalisisPersistenciaServicio {
         fuente.setUltimoError(mensajeLegible(causa));
         fuenteDatosRepositorio.save(fuente);
 
+        registrarMetricas("error", disparadoPor, null);
         return guardado;
+    }
+
+    private void registrarMetricas(String resultado, TipoDisparo disparadoPor, Long duracionMs) {
+        Counter.builder("postgrespulse.analisis.total")
+                .description("Total de analisis ejecutados, por resultado y disparador")
+                .tag("resultado", resultado)
+                .tag("disparado_por", disparadoPor.name())
+                .register(meterRegistry)
+                .increment();
+
+        if (duracionMs != null) {
+            Timer.builder("postgrespulse.analisis.duracion")
+                    .description("Duracion de los analisis completados con exito")
+                    .register(meterRegistry)
+                    .record(Duration.ofMillis(duracionMs));
+        }
     }
 
     private ResultadoChequeo aEntidad(Analisis analisis, ResultadoChequeoCalculado calculado) {
