@@ -176,6 +176,49 @@ class FuenteApiIntegracionTest {
     }
 
     @Test
+    void ningunaRespuestaDeFuentesExponeElCampoContrasenaEnTextoPlano() throws Exception {
+        // docs/SPECS.md #14 (Seguridad): "contraseñas nunca en respuestas". La
+        // clave "contrasenaEnmascarada" comparte prefijo con "contrasena", asi
+        // que se busca el par clave-valor exacto ("contrasena":) para no dar
+        // un falso negativo con ese otro campo.
+        String cuerpo = String.format(
+                "{\"nombre\":\"Fuente Sensible\",\"host\":\"localhost\",\"puerto\":%d,\"baseDeDatos\":\"ventas_db\",\"usuario\":\"demo\",\"contrasena\":\"demo\"}",
+                puertoObjetivo());
+
+        String creada = mockMvc.perform(post("/api/v1/fuentes").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(creada).doesNotContain("\"contrasena\":");
+        long id = objectMapper.readTree(creada).get("id").asLong();
+
+        String listado = mockMvc.perform(get("/api/v1/fuentes").with(admin()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(listado).doesNotContain("\"contrasena\":");
+
+        String detalle = mockMvc.perform(get("/api/v1/fuentes/{id}", id).with(admin()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(detalle).doesNotContain("\"contrasena\":");
+
+        String actualizada = mockMvc.perform(put("/api/v1/fuentes/{id}", id).with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"contrasena\":\"otra-clave\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(actualizada).doesNotContain("\"contrasena\":");
+
+        // Limpieza: otros tests de esta clase asumen que solo su propia fuente
+        // existe (p.ej. GET /api/v1/fuentes -> length()==1 en
+        // cicloCompletoRegistrarProbarActualizarYEliminar); el contenedor de
+        // BD es estatico y compartido entre metodos de esta clase.
+        mockMvc.perform(delete("/api/v1/fuentes/{id}", id).with(admin()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void probarFuenteInexistenteDevuelve404() throws Exception {
         mockMvc.perform(post("/api/v1/fuentes/99999/probar").with(admin()))
                 .andExpect(status().isNotFound())
