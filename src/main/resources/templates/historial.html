@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'PostgresPulse — Historial de ' + ${fuente.nombre}">PostgresPulse</title>
+    <link rel="stylesheet" th:href="@{/panel.css}">
+</head>
+<body>
+<div th:replace="~{fragmentos/nav :: barra}"></div>
+<div class="contenido">
+    <p class="meta"><a th:href="@{/fuentes/{id}(id=${fuente.id})}" th:text="'← ' + ${fuente.nombre}">← Fuente</a></p>
+    <h1>Historial</h1>
+
+    <div class="grafico-caja">
+        <canvas id="graficoTendencia" height="70"></canvas>
+    </div>
+
+    <div th:if="${#lists.isEmpty(pagina.content)}" class="vacio">
+        Todavía no hay análisis registrados para esta fuente.
+    </div>
+
+    <table th:unless="${#lists.isEmpty(pagina.content)}">
+        <thead>
+        <tr><th>Fecha</th><th>Estado</th><th>Puntaje</th><th>Duración</th><th>Disparado por</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="a : ${pagina.content}">
+            <td th:text="${a.analizadoEn}">-</td>
+            <td><span class="badge" th:classappend="${a.estado}" th:text="${a.estado}">-</span></td>
+            <td th:text="${a.puntajeSalud} ?: '—'">-</td>
+            <td th:text="${a.duracionMs} ?: '—'">-</td>
+            <td th:text="${a.disparadoPor}">-</td>
+            <td><a th:href="@{/api/v1/analisis/{id}/exportar(id=${a.id},formato='html')}" target="_blank" rel="noopener">Reporte</a></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="paginacion" th:if="${pagina.totalPages > 1}">
+        <a th:if="${pagina.page > 0}" th:href="@{/fuentes/{id}/historial(id=${fuente.id},page=${pagina.page - 1})}" class="boton boton-secundario">← Anterior</a>
+        <span class="meta" th:text="'Página ' + (${pagina.page} + 1) + ' de ' + ${pagina.totalPages}">-</span>
+        <a th:if="${pagina.page + 1 < pagina.totalPages}" th:href="@{/fuentes/{id}/historial(id=${fuente.id},page=${pagina.page + 1})}" class="boton boton-secundario">Siguiente →</a>
+    </div>
+</div>
+
+<script type="application/json" id="datos-tendencia" th:utext="${tendenciaJson}">[]</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const datosTendencia = JSON.parse(document.getElementById('datos-tendencia').textContent);
+    new Chart(document.getElementById('graficoTendencia'), {
+        type: 'line',
+        data: {
+            labels: datosTendencia.map(d => d.analizadoEn),
+            datasets: [{
+                label: 'Puntuación de salud (últimos 7)',
+                data: datosTendencia.map(d => d.puntajeSalud),
+                borderColor: '#7aa2f7',
+                backgroundColor: 'rgba(122,162,247,0.15)',
+                tension: 0.25,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
+                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+            },
+            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+        }
+    });
+</script>
+</body>
+</html>

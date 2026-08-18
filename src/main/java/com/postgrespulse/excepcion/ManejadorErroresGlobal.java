@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -51,6 +52,17 @@ public class ManejadorErroresGlobal {
     @ExceptionHandler(FormatoExportacionInvalidoException.class)
     public ResponseEntity<ApiError> formatoExportacionInvalido(FormatoExportacionInvalidoException ex, HttpServletRequest peticion) {
         return construir(ex.getMessage(), HttpStatus.BAD_REQUEST, "SOLICITUD_INVALIDA", peticion, List.of());
+    }
+
+    /**
+     * Recurso estatico ausente (ej. favicon.ico que el navegador pide solo):
+     * no es un fallo del servidor, no debe caer en errorInesperado() ni
+     * registrarse en ERROR -- eso llenaria los logs de produccion con
+     * "500" falsos por cada 404 legitimo de un asset inexistente.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> recursoNoEncontrado(NoResourceFoundException ex, HttpServletRequest peticion) {
+        return construir("Recurso no encontrado", HttpStatus.NOT_FOUND, "NO_ENCONTRADA", peticion, List.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

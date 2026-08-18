@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'PostgresPulse — ' + ${nombreTabla}">PostgresPulse</title>
+    <link rel="stylesheet" th:href="@{/panel.css}">
+</head>
+<body>
+<div th:replace="~{fragmentos/nav :: barra}"></div>
+<div class="contenido">
+    <p class="meta"><a th:href="@{/fuentes/{id}(id=${fuente.id})}" th:text="'← ' + ${fuente.nombre}">← Fuente</a></p>
+    <h1 th:text="${nombreTabla}">Tabla</h1>
+
+    <div th:if="${tabla == null}" class="vacio">
+        No hay hallazgos registrados para esta tabla en el último análisis.
+    </div>
+
+    <table th:if="${tabla != null}">
+        <tbody>
+        <tr><th>Esquema</th><td th:text="${tabla.esquema}">-</td></tr>
+        <tr><th>Filas estimadas</th><td th:text="${tabla.filasEstimadas} ?: '—'">-</td></tr>
+        <tr><th>Tuplas muertas</th><td th:text="${tabla.tuplasMuertas} ?: '—'">-</td></tr>
+        <tr><th>Ratio de tuplas muertas</th><td th:text="${tabla.ratioTuplasMuertas} ?: '—'">-</td></tr>
+        <tr><th>Hinchamiento estimado</th><td th:text="${tabla.porcentajeHinchamiento != null} ? ${tabla.porcentajeHinchamiento} + '%' : '—'">-</td></tr>
+        <tr><th>Tamaño</th><td th:text="${tabla.tamanoBytes} ?: '—'">-</td></tr>
+        <tr><th>Escaneos secuenciales</th><td th:text="${tabla.escaneosSecuenciales} ?: '—'">-</td></tr>
+        <tr><th>Escaneos por índice</th><td th:text="${tabla.escaneosPorIndice} ?: '—'">-</td></tr>
+        <tr><th>Ratio de escaneos secuenciales</th><td th:text="${tabla.ratioEscaneosSecuenciales} ?: '—'">-</td></tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

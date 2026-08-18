@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>PostgresPulse — Resumen</title>
+    <link rel="stylesheet" th:href="@{/panel.css}">
+</head>
+<body>
+<div th:replace="~{fragmentos/nav :: barra}"></div>
+<div class="contenido">
+    <h1>Resumen</h1>
+    <p class="meta">Puntuación de salud actual de cada fuente registrada.</p>
+
+    <div th:if="${error}" class="banner banner-error" th:text="${error}">Error</div>
+    <div th:if="${exito}" class="banner banner-exito" th:text="${exito}">Éxito</div>
+
+    <div th:if="${#lists.isEmpty(fuentes)}" class="vacio">
+        Todavía no hay fuentes registradas. Registrá la primera con el formulario de abajo.
+    </div>
+
+    <div class="tarjetas" th:unless="${#lists.isEmpty(fuentes)}">
+        <div class="tarjeta tarjeta-fuente" th:each="item : ${fuentes}">
+            <div class="nombre">
+                <a th:href="@{/fuentes/{id}(id=${item.fuente.id})}" th:text="${item.fuente.nombre}">Fuente</a>
+            </div>
+            <div class="meta" th:text="${item.fuente.host} + ':' + ${item.fuente.puerto} + '/' + ${item.fuente.baseDeDatos}">host</div>
+            <span class="badge" th:classappend="${item.fuente.estado}" th:text="${item.fuente.estado}">ESTADO</span>
+
+            <div class="puntaje" th:if="${item.salud.puntajeActual != null}"
+                 th:classappend="${item.salud.estadoActual}"
+                 th:text="${item.salud.puntajeActual} + ' / 100'">— / 100</div>
+            <div class="meta" th:unless="${item.salud.puntajeActual != null}">Sin análisis todavía</div>
+
+            <div class="acciones">
+                <form th:action="@{/fuentes/{id}/analizar(id=${item.fuente.id})}" method="post">
+                    <button type="submit" class="boton">Analizar ahora</button>
+                </form>
+                <a th:href="@{/fuentes/{id}(id=${item.fuente.id})}" class="boton boton-secundario">Ver detalle</a>
+            </div>
+        </div>
+    </div>
+
+    <h2>Registrar fuente</h2>
+    <form class="formulario" th:action="@{/fuentes}" th:object="${formulario}" method="post">
+        <div class="campo">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" type="text" th:field="*{nombre}" required>
+        </div>
+        <div class="campo">
+            <label for="host">Host</label>
+            <input id="host" type="text" th:field="*{host}" required>
+        </div>
+        <div class="campo">
+            <label for="puerto">Puerto</label>
+            <input id="puerto" type="number" th:field="*{puerto}" min="1" max="65535" required>
+        </div>
+        <div class="campo">
+            <label for="baseDeDatos">Base de datos</label>
+            <input id="baseDeDatos" type="text" th:field="*{baseDeDatos}" required>
+        </div>
+        <div class="campo">
+            <label for="usuario">Usuario</label>
+            <input id="usuario" type="text" th:field="*{usuario}" required>
+        </div>
+        <div class="campo">
+            <label for="contrasena">Contraseña</label>
+            <input id="contrasena" type="password" th:field="*{contrasena}" required>
+        </div>
+        <div class="campo">
+            <label for="filtroEsquema">Filtro de esquema</label>
+            <input id="filtroEsquema" type="text" th:field="*{filtroEsquema}" placeholder="public,ventas">
+        </div>
+        <div class="campo">
+            <button type="submit" class="boton">Registrar</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+:root { color-scheme: dark; }
+
+* { box-sizing: border-box; }
+
+body {
+    background: #0f1115;
+    color: #e6e6e6;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+a { color: #7aa2f7; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.barra-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 2rem;
+    background: #14161c;
+    border-bottom: 1px solid #24272f;
+}
+
+.barra-nav .marca {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #e6e6e6;
+}
+
+.contenido {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h1 { margin-top: 0; font-size: 1.5rem; }
+h2 { font-size: 1.1rem; color: #9aa0a6; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2.5rem; }
+
+.meta { color: #9aa0a6; font-size: 0.9rem; }
+
+.banner {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.banner-error { background: #3a1414; border: 1px solid #5a2020; color: #ff9a9a; }
+.banner-exito { background: #123a1e; border: 1px solid #1f5a34; color: #8fe3ac; }
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.badge.SANO { background: #1b3a20; color: #4caf50; }
+.badge.ADVERTENCIA { background: #3a2f10; color: #ffb300; }
+.badge.CRITICO, .badge.ERROR { background: #3a1414; color: #f44336; }
+.badge.EN_LINEA { background: #1b3a20; color: #4caf50; }
+.badge.FUERA_LINEA { background: #24272f; color: #9aa0a6; }
+
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.tarjeta {
+    background: #181b22;
+    border: 1px solid #24272f;
+    border-radius: 10px;
+    padding: 1.25rem;
+}
+
+.tarjeta-fuente .puntaje { font-size: 2.2rem; font-weight: 700; }
+.tarjeta-fuente .puntaje.SANO { color: #4caf50; }
+.tarjeta-fuente .puntaje.ADVERTENCIA { color: #ffb300; }
+.tarjeta-fuente .puntaje.CRITICO, .tarjeta-fuente .puntaje.ERROR { color: #f44336; }
+.tarjeta-fuente .nombre { font-weight: 600; margin-bottom: 0.4rem; }
+.tarjeta-fuente .acciones { margin-top: 1rem; display: flex; gap: 0.6rem; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid #24272f;
+    font-size: 0.9rem;
+    vertical-align: top;
+}
+th { color: #9aa0a6; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+
+code {
+    background: #1c1f26;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.boton {
+    display: inline-block;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.boton:hover { background: #1d4ed8; text-decoration: none; }
+.boton-secundario { background: #24272f; }
+.boton-secundario:hover { background: #2f333d; }
+
+.formulario {
+    background: #181b22;
+    border: 1px solid #24272f;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.8rem;
+    align-items: end;
+}
+.campo { display: flex; flex-direction: column; gap: 0.3rem; }
+.campo label { font-size: 0.78rem; color: #9aa0a6; text-transform: uppercase; letter-spacing: 0.03em; }
+.campo input {
+    background: #0f1115;
+    border: 1px solid #24272f;
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    color: #e6e6e6;
+    font-size: 0.9rem;
+}
+
+.grafico-caja {
+    background: #181b22;
+    border: 1px solid #24272f;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.paginacion { display: flex; gap: 0.6rem; margin-top: 1rem; }
+
+.vacio { color: #9aa0a6; font-style: italic; padding: 1rem 0; }

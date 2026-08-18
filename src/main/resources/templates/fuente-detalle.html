@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'PostgresPulse — ' + ${fuente.nombre}">PostgresPulse</title>
+    <link rel="stylesheet" th:href="@{/panel.css}">
+</head>
+<body>
+<div th:replace="~{fragmentos/nav :: barra}"></div>
+<div class="contenido">
+    <p class="meta"><a th:href="@{/}">← Resumen</a></p>
+    <h1 th:text="${fuente.nombre}">Fuente</h1>
+    <p class="meta">
+        <span th:text="${fuente.host} + ':' + ${fuente.puerto} + '/' + ${fuente.baseDeDatos}">host</span> ·
+        <span class="badge" th:classappend="${fuente.estado}" th:text="${fuente.estado}">ESTADO</span>
+        <span th:if="${fuente.ultimoError}" th:text="'· ' + ${fuente.ultimoError}" style="color:#f44336;">error</span>
+    </p>
+
+    <div th:if="${error}" class="banner banner-error" th:text="${error}">Error</div>
+
+    <div style="display:flex; align-items:center; gap:1rem; margin: 1rem 0 1.5rem;">
+        <span th:if="${salud.puntajeActual != null}" class="puntaje" th:classappend="${salud.estadoActual}"
+              th:text="${salud.puntajeActual} + ' / 100'" style="font-size:2.5rem; font-weight:700;">— / 100</span>
+        <span th:unless="${salud.puntajeActual != null}" class="meta">Sin análisis todavía</span>
+
+        <form th:action="@{/fuentes/{id}/analizar(id=${fuente.id})}" method="post">
+            <button type="submit" class="boton">Analizar ahora</button>
+        </form>
+        <a th:href="@{/fuentes/{id}/historial(id=${fuente.id})}" class="boton boton-secundario">Historial</a>
+        <a th:if="${ultimo != null}" th:href="@{/api/v1/analisis/{id}/exportar(id=${ultimo.id},formato='html')}"
+           class="boton boton-secundario" target="_blank" rel="noopener">Reporte imprimible</a>
+    </div>
+
+    <div class="grafico-caja" th:if="${!#lists.isEmpty(salud.tendencia7d)}">
+        <canvas id="graficoTendencia" height="70"></canvas>
+    </div>
+
+    <div th:if="${ultimo == null}" class="vacio">
+        Esta fuente todavía no tiene ningún análisis. Hacé clic en "Analizar ahora".
+    </div>
+
+    <div th:if="${ultimo != null}">
+        <h2>Categorías</h2>
+        <div class="tarjetas">
+            <div class="tarjeta" th:each="cat : ${categorias}">
+                <div class="nombre" th:text="${cat.categoria}">CATEGORIA</div>
+                <div th:text="${cat.promedio} + ' / 100'">— / 100</div>
+            </div>
+        </div>
+
+        <h2>Chequeos y recomendaciones</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Código</th>
+                <th>Categoría</th>
+                <th>Estado</th>
+                <th>Puntaje</th>
+                <th>Mensaje</th>
+                <th>Recomendación</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="chequeo : ${ultimo.chequeos}">
+                <td><code th:text="${chequeo.codigo}">-</code></td>
+                <td th:text="${chequeo.categoria}">-</td>
+                <td><span class="badge" th:classappend="${chequeo.estado}" th:text="${chequeo.estado}">-</span></td>
+                <td th:text="${chequeo.puntaje} ?: '—'">-</td>
+                <td th:text="${chequeo.mensaje}">-</td>
+                <td><code th:if="${chequeo.recomendacion}" th:text="${chequeo.recomendacion}">-</code>
+                    <span th:unless="${chequeo.recomendacion}">—</span></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${!#lists.isEmpty(tablasConHallazgos)}">
+            <h2>Tablas con hallazgos</h2>
+            <table>
+                <thead>
+                <tr><th>Esquema</th><th>Tabla</th><th>Hinchamiento</th><th>Tuplas muertas</th><th>Detalle</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${tablasConHallazgos}">
+                    <td th:text="${t.esquema}">-</td>
+                    <td th:text="${t.tabla}">-</td>
+                    <td th:text="${t.porcentajeHinchamiento} ?: '—'">-</td>
+                    <td th:text="${t.tuplasMuertas} ?: '—'">-</td>
+                    <td><a th:href="@{/fuentes/{id}/tablas/{tabla}(id=${fuente.id},tabla=${t.tabla})}">Ver detalle</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="datos-tendencia" th:utext="${tendenciaJson}">[]</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:if="${!#lists.isEmpty(salud.tendencia7d)}">
+    const datosTendencia = JSON.parse(document.getElementById('datos-tendencia').textContent);
+    new Chart(document.getElementById('graficoTendencia'), {
+        type: 'line',
+        data: {
+            labels: datosTendencia.map(d => d.analizadoEn),
+            datasets: [{
+                label: 'Puntuación de salud',
+                data: datosTendencia.map(d => d.puntajeSalud),
+                borderColor: '#7aa2f7',
+                backgroundColor: 'rgba(122,162,247,0.15)',
+                tension: 0.25,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
+                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+            },
+            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+        }
+    });
+</script>
+</body>
+</html>
