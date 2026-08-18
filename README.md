@@ -55,6 +55,14 @@ Para recorrer el flujo completo (probar conexión → analizar → ver salud →
 .\scripts\demo.ps1         # Windows PowerShell
 ```
 
+Para ver el motor detectar hallazgos, aplicar las recomendaciones SQL sugeridas y re-analizar
+mostrando la mejora real de puntaje (docs/SPECS.md §17):
+
+```bash
+./scripts/remediar-demo.sh    # Linux/macOS/CI (requiere jq)
+.\scripts\remediar-demo.ps1   # Windows PowerShell
+```
+
 ---
 
 ## 🩺 Los 8 chequeos
@@ -134,6 +142,9 @@ Autenticación Básica en todas las rutas salvo `/actuator/health`. Referencia c
 - **CSRF** activo en el panel de control (Thymeleaf); `/api/v1/**` exento para clientes no interactivos.
 - **Timeouts agresivos** hacia la BD objetivo (conexión 5s, statement 30s, máx. 4 conexiones por
   fuente) para no afectar el sistema que se está analizando.
+- **Aviso al arrancar** si `PULSE_ADMIN_USER`/`PASSWORD`, `PULSE_CRYPTO_KEY` o `PULSE_DB_PASSWORD`
+  siguen en su valor de desarrollo por defecto — relevante porque el repositorio es público.
+- Divulgación responsable de vulnerabilidades: [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -144,6 +155,8 @@ Autenticación Básica en todas las rutas salvo `/actuator/health`. Referencia c
 | [docs/SPECS.md](docs/SPECS.md) | Especificación técnica y funcional completa, ADRs, criterios de aceptación |
 | [docs/API.md](docs/API.md) | Referencia de API con ejemplos `cURL` |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Variables de entorno, despliegue, operación, troubleshooting |
+| [SECURITY.md](SECURITY.md) | Política de seguridad y divulgación responsable de vulnerabilidades |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo levantar el entorno, correr pruebas y proponer cambios |
 | [ROADMAP.md](ROADMAP.md) | Alcance post-v1.0 (RBAC, alertas, Prometheus, multi-motor) |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de versiones |
 

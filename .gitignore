@@ -35,5 +35,8 @@ logs/
 postgres-data/
 pgdata/
 
+# Respaldos generados por scripts/respaldar.*
+backups/
+
 # Reportes de cobertura
 coverage/

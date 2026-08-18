@@ -28,6 +28,7 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_ADMIN_USER` | `admin` | Usuario administrador API/Panel de control |
 | `PULSE_ADMIN_PASSWORD` | `admin` | Contraseña administrador |
 | `PULSE_DEMO_SEED` | `true` en `docker-compose.yml`, `false` por defecto en la app | Registra automáticamente la fuente `Ventas Demo` contra `target-demo` al arrancar. Solo tiene sentido con la infraestructura de `docker-compose.yml`; en un despliegue real contra fuentes de producción, déjalo en `false` |
+| `PULSE_LOG_FORMAT` | *(vacía = consola legible)* | `ecs` activa logs estructurados JSON por consola, para agregadores de logs (ver §4) |
 
 Copia `.env.example` → `.env` para desarrollo local. `.env` está excluido del repositorio (`.gitignore`).
 
@@ -100,10 +101,20 @@ por defecto. El reporte HTML exportado queda en `target/demo-reporte-<id>.html`.
 3. Configurar **todas** las variables de entorno, en especial:
    - `PULSE_CRYPTO_KEY` — clave fuerte generada con un gestor de secretos
    - `PULSE_ADMIN_USER` / `PULSE_ADMIN_PASSWORD` — credenciales fuertes
+   - `PULSE_DB_PASSWORD` — contraseña propia, no la de desarrollo
    - `PULSE_DEMO_SEED=false` — contra fuentes de producción reales, no se debe sembrar la fuente de demostración
-4. `SPRING_PROFILES_ACTIVE=docker` activa logs estructurados en formato ECS (JSON) por consola, pensado
-   para agregadores de logs (ya viene seteado en `docker-compose.yml`).
-5. Respaldar el volumen `pulse_data` (contiene fuentes registradas + historial de capturas instantáneas).
+
+   Como el repositorio es público, estos valores por defecto (`admin`/`admin`, la clave AES de
+   ejemplo, `pulse`) son conocidos por cualquiera. Si alguno sigue sin cambiar al arrancar, la
+   aplicación lo registra en el log como `WARN` (`AvisoDefaultsInseguros`) — no falla el arranque
+   (para no romper el demo de un comando), así que revisa los logs de inicio antes de exponer la
+   instancia fuera de tu propia máquina.
+4. `PULSE_LOG_FORMAT=ecs` activa logs estructurados en formato ECS (JSON) por consola, pensado para
+   agregadores de logs (ya viene seteado en `docker-compose.yml`). No depende de correr dentro de
+   Docker: sirve igual para un jar suelto o en Kubernetes — sin la variable, la consola usa el
+   formato legible por defecto de Spring Boot.
+5. Respaldar el volumen `pulse_data` (contiene fuentes registradas + historial de capturas instantáneas)
+   — ver §5.3 para el script de respaldo y restauración.
 
 ---
 

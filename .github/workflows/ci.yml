@@ -44,8 +44,17 @@ jobs:
           path: target/site/jacoco/
           retention-days: 7
 
+      - name: Publicar reporte de analisis estatico (SpotBugs, no bloqueante)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: target/spotbugsXml.xml
+          retention-days: 7
+          if-no-files-found: ignore
+
   docker:
-    name: Construir y publicar imagen Docker
+    name: Construir, escanear y publicar imagen Docker
     needs: build
     if: >
       github.event_name == 'push' &&
@@ -76,6 +85,23 @@ jobs:
             echo "TAGS_EOF"
           } >> "$GITHUB_ENV"
 
+      - name: Construir imagen (sin publicar todavia)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.TAGS }}
+
+      - name: Escanear vulnerabilidades con Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGEN }}:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
       - name: Iniciar sesion en GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -83,7 +109,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Construir y publicar imagen
+      - name: Publicar imagen (ya escaneada; reutiliza la cache de la construccion anterior)
         uses: docker/build-push-action@v6
         with:
           context: .

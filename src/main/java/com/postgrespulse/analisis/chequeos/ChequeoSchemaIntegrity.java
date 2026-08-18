@@ -48,7 +48,13 @@ public class ChequeoSchemaIntegrity implements ChequeoAnalisis {
               AND NOT EXISTS (
                   SELECT 1 FROM pg_index i
                   WHERE i.indrelid = con.conrelid
-                    AND (i.indkey::int2[])[1:array_length(con.conkey, 1)] = con.conkey::int2[]
+                    -- pg_index.indkey es un int2vector con subindices base-0; el
+                    -- cast a int2[] conserva ese lower bound (no lo renumera a
+                    -- base-1 como un array normal), asi que el slice tambien debe
+                    -- empezar en 0. Con [1:N] este slice siempre devolvia {} y la
+                    -- condicion nunca coincidia -- todo FK se reportaba "sin
+                    -- indice" incluso cuando SI tenia uno cubriendolo.
+                    AND (i.indkey::int2[])[0:array_length(con.conkey, 1) - 1] = con.conkey::int2[]
               )
             ORDER BY t.relname
             """;

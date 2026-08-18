@@ -357,6 +357,10 @@ push/PR → trabajos:
 Verificado en la sesión de cierre de v1.0 (2026-08-18): `./mvnw -B verify` (60 pruebas, 0 fallos) +
 `docker compose up -d --build` con los 3 servicios reales + `scripts/demo.ps1` contra `target-demo`.
 
+Los 2 criterios que quedaban pendientes se cerraron en la sesión de hardening de v1.1.0
+(2026-08-18): `./mvnw -B verify` (106 pruebas, 0 fallos) + `docker compose up -d --build` +
+`scripts/remediar-demo.ps1` contra `target-demo` real (evidencia abajo).
+
 - [x] Registrar 3 fuentes (2 en línea + 1 fuera de línea) sin reiniciar la aplicación — pools por fuente
       en tiempo de ejecución (ADR-1) sin reinicio, cubierto por `FuenteApiIntegracionTest` (transiciones
       `EN_LINEA`/`FUERA_LINEA`/`ERROR`)
@@ -367,12 +371,18 @@ Verificado en la sesión de cierre de v1.0 (2026-08-18): `./mvnw -B verify` (60 
 - [x] Puntuación global y por categoría correctas contra BD de referencia conocida — `target-demo` dio
       53.00 `CRITICO` con desglose coherente por categoría; fórmula de ponderación en
       `PuntuacionCalculadoraTest`
-- [ ] Recomendaciones SQL ejecutables mejoran la puntuación al aplicarse (demostración) — **pendiente**:
-      no se aplicaron las recomendaciones (`VACUUM`, `CREATE INDEX`, `DROP INDEX`) sobre `target-demo`
-      ni se re-analizó para confirmar la mejora del puntaje
-- [ ] Historial de tendencia muestra degradación/reparación — el mecanismo funciona (`/salud` y
-      `/historial` muestran los 2 análisis con su tendencia), pero **no se demostró** un cambio real de
-      puntaje entre capturas (la BD objetivo no se modificó entre los 2 análisis de esta sesión)
+- [x] Recomendaciones SQL ejecutables mejoran la puntuación al aplicarse (demostración) —
+      `scripts/remediar-demo.ps1`/`.sh` aplican exactamente las recomendaciones del motor
+      (`CREATE INDEX`, `ALTER TABLE ... ADD PRIMARY KEY`, `DROP INDEX`, `VACUUM FULL`) sobre
+      `target-demo` fuera de banda (nunca a través de PostgresPulse), y re-analizan. Corrida real
+      contra el stack de `docker compose`: **53.00 CRÍTICO → 66.20 ADVERTENCIA**. Cubierto además de
+      forma permanente por `RemediacionMejoraPuntajeIntegracionTest` (falla el build si una regresión
+      hace que el puntaje deje de mejorar). Esta demostración encontró y corrigió un bug real en
+      `ChequeoSchemaIntegrity` (`indkey::int2[]` es base-0, no base-1 — el chequeo de "FK sin índice"
+      nunca reconocía un índice existente); ver `CHANGELOG.md`
+- [x] Historial de tendencia muestra degradación/reparación — los 2 análisis de
+      `scripts/remediar-demo.*` quedan en `/salud` y `/historial` con la subida real de puntaje
+      visible en el gráfico del panel (`/fuentes/{id}/historial`)
 - [x] Credenciales cifradas en BD, enmascaradas en API, ausentes en registros — `CifradoServicioTest` +
       `FuenteApiIntegracionTest.ningunaRespuestaDeFuentesExponeElCampoContrasenaEnTextoPlano` + logs JSON
       de la sesión sin el campo `contrasena`

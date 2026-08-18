@@ -13,7 +13,7 @@
 
     <groupId>com.postgrespulse</groupId>
     <artifactId>postgrespulse</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>PostgresPulse</name>
     <description>Plataforma enterprise de monitoreo, analisis y salud de bases de datos PostgreSQL</description>
 
@@ -108,6 +108,32 @@
                     <execution>
                         <goals>
                             <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!--
+                    Analisis estatico en modo reporte (no bloqueante): genera
+                    target/spotbugsXml.xml/spotbugs.html en cada `mvnw verify`
+                    sin fallar el build. Empieza asi para no romper CI con
+                    hallazgos preexistentes; se puede endurecer a <failOnError>
+                    true una vez que el reporte salga limpio.
+                -->
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.8.6.6</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Medium</threshold>
+                    <failOnError>false</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>

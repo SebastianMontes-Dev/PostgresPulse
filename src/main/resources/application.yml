@@ -75,12 +75,12 @@ app:
   demo:
     sembrar: ${PULSE_DEMO_SEED:false}
 
----
-spring:
-  config:
-    activate:
-      on-profile: docker
 logging:
   structured:
     format:
-      console: ecs
+      # ECS estructurado (JSON) por consola, para agregadores de logs;
+      # vacio = formato de consola legible por defecto de Spring Boot.
+      # No se ata al perfil "docker": PULSE_LOG_FORMAT=ecs funciona igual
+      # corriendo el jar suelto, en Kubernetes, etc. docker-compose.yml lo
+      # activa por defecto (docs/DEPLOYMENT.md #4).
+      console: ${PULSE_LOG_FORMAT:}
