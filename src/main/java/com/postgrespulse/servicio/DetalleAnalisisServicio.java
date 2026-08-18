@@ -61,6 +61,13 @@ public class DetalleAnalisisServicio {
         return porClave.values().stream().map(this::aTablaDto).toList();
     }
 
+    /** Panel de control: detalle de una tabla puntual por nombre (ver /fuentes/{id}/tablas/{tabla}). */
+    public Optional<TablaDto> tabla(Long fuenteId, String tabla) {
+        return tablas(fuenteId).stream()
+                .filter(t -> tabla.equals(t.tabla()))
+                .findFirst();
+    }
+
     @SuppressWarnings("unchecked")
     public IndicesRespuestaDto indices(Long fuenteId) {
         List<ResultadoChequeo> chequeos = chequeosDelUltimoAnalisis(fuenteId);

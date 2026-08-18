@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AnalisisServicio {
@@ -68,6 +69,12 @@ public class AnalisisServicio {
                 analisis.getDuracionMs(),
                 analisis.getDisparadoPor(),
                 chequeos);
+    }
+
+    /** Panel de control: detalle completo del ultimo analisis de una fuente, si existe. */
+    public Optional<AnalisisDetalleDto> ultimoDetalle(Long fuenteId) {
+        return analisisRepositorio.findFirstByFuenteIdOrderByAnalizadoEnDesc(fuenteId)
+                .map(a -> detalle(a.getId()));
     }
 
     public SaludDto salud(Long fuenteId) {
