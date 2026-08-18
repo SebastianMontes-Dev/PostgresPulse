@@ -2,6 +2,7 @@
   <h1>⚡ PostgresPulse</h1>
   <p><strong>Plataforma de Monitoreo y Salud de PostgreSQL a Nivel Empresarial</strong></p>
   
+  [![CI](https://github.com/SebastianMontes-Dev/PostgresPulse/actions/workflows/ci.yml/badge.svg)](https://github.com/SebastianMontes-Dev/PostgresPulse/actions/workflows/ci.yml)
   [![Java Version](https://img.shields.io/badge/Java-21-blue.svg?style=for-the-badge&logo=openjdk)](#)
   [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg?style=for-the-badge&logo=springboot)](#)
   [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](#)
