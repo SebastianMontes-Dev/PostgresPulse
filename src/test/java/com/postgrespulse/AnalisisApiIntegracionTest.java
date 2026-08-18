@@ -15,6 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -111,6 +113,26 @@ class AnalisisApiIntegracionTest {
         mockMvc.perform(get("/api/v1/fuentes/{id}/consultas", fuenteId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("EXTENSION_AUSENTE"));
+
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "json"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
+                .andExpect(content().string(org.hamcrest.Matchers.startsWith("codigo_chequeo,estado,puntaje,mensaje,recomendacion")));
+
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "html"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Objetivo Vacio Analisis")));
+
+        mockMvc.perform(get("/api/v1/analisis/{id}/exportar", analisisId).param("formato", "xml"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"));
     }
 
     @Test

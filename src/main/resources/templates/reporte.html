@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'PostgresPulse - Analisis #' + ${analisis.id}">Reporte PostgresPulse</title>
+    <style>
+        :root { color-scheme: dark; }
+        body { background:#0f1115; color:#e6e6e6; font-family:-apple-system,'Segoe UI',Roboto,sans-serif; margin:0; padding:2.5rem; }
+        h1 { margin:0 0 0.25rem; font-size:1.5rem; }
+        .meta { color:#9aa0a6; margin-bottom:1.5rem; font-size:0.9rem; }
+        .resumen { display:flex; align-items:baseline; gap:1rem; margin-bottom:2rem; }
+        .puntaje { font-size:3rem; font-weight:700; }
+        .SANO { color:#4caf50; }
+        .ADVERTENCIA { color:#ffb300; }
+        .CRITICO, .ERROR { color:#f44336; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { text-align:left; padding:0.6rem 0.8rem; border-bottom:1px solid #2a2d34; vertical-align:top; font-size:0.9rem; }
+        th { color:#9aa0a6; font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.03em; }
+        code { background:#1c1f26; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.85rem; }
+        .badge { display:inline-block; padding:0.15rem 0.7rem; border-radius:999px; font-size:0.78rem; font-weight:600; }
+        .badge.SANO { background:#1b3a20; }
+        .badge.ADVERTENCIA { background:#3a2f10; }
+        .badge.CRITICO, .badge.ERROR { background:#3a1414; }
+        @media print { body { padding:1rem; background:#fff; color:#000; } }
+    </style>
+</head>
+<body>
+    <h1>PostgresPulse — Reporte de análisis</h1>
+    <p class="meta">
+        Fuente: <strong th:text="${analisis.nombreFuente}">-</strong> ·
+        Analizado: <span th:text="${analisis.analizadoEn}">-</span> ·
+        Disparado por: <span th:text="${analisis.disparadoPor}">-</span> ·
+        Duración: <span th:text="${analisis.duracionMs} + ' ms'">-</span>
+    </p>
+
+    <div class="resumen">
+        <span class="puntaje" th:classappend="${analisis.estado}"
+              th:text="(${analisis.puntajeSalud} ?: '—') + ' / 100'">— / 100</span>
+        <span class="badge" th:classappend="${analisis.estado}" th:text="${analisis.estado}">ESTADO</span>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Código</th>
+            <th>Categoría</th>
+            <th>Estado</th>
+            <th>Puntaje</th>
+            <th>Mensaje</th>
+            <th>Recomendación</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="chequeo : ${analisis.chequeos}">
+            <td><code th:text="${chequeo.codigo}">-</code></td>
+            <td th:text="${chequeo.categoria}">-</td>
+            <td><span class="badge" th:classappend="${chequeo.estado}" th:text="${chequeo.estado}">-</span></td>
+            <td th:text="${chequeo.puntaje} ?: '—'">-</td>
+            <td th:text="${chequeo.mensaje}">-</td>
+            <td th:text="${chequeo.recomendacion} ?: '—'">-</td>
+        </tr>
+        </tbody>
+    </table>
+</body>
+</html>

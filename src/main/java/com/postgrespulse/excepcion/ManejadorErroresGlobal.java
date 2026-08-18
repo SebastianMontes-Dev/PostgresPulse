@@ -48,6 +48,11 @@ public class ManejadorErroresGlobal {
         return construir(ex.getMessage(), HttpStatus.BAD_REQUEST, "EXTENSION_AUSENTE", peticion, List.of());
     }
 
+    @ExceptionHandler(FormatoExportacionInvalidoException.class)
+    public ResponseEntity<ApiError> formatoExportacionInvalido(FormatoExportacionInvalidoException ex, HttpServletRequest peticion) {
+        return construir(ex.getMessage(), HttpStatus.BAD_REQUEST, "SOLICITUD_INVALIDA", peticion, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> validacion(MethodArgumentNotValidException ex, HttpServletRequest peticion) {
         List<String> detalles = ex.getBindingResult().getFieldErrors().stream()
