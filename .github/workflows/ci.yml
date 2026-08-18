@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -46,7 +47,9 @@ jobs:
   docker:
     name: Construir y publicar imagen Docker
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,6 +60,21 @@ jobs:
 
       - name: Normalizar nombre de imagen (GHCR exige minusculas)
         run: echo "IMAGEN=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Calcular tags de la imagen (latest + sha; version semver en push de tag vX.Y.Z)
+        run: |
+          IMAGE_TAGS=("${IMAGEN}:latest" "${IMAGEN}:${{ github.sha }}")
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+            MINOR="${VERSION%.*}"
+            IMAGE_TAGS+=("${IMAGEN}:${VERSION}" "${IMAGEN}:${MINOR}")
+          fi
+          {
+            echo "TAGS<<TAGS_EOF"
+            printf '%s\n' "${IMAGE_TAGS[@]}"
+            echo "TAGS_EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Iniciar sesion en GitHub Container Registry
         uses: docker/login-action@v3
@@ -70,6 +88,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.IMAGEN }}:latest
-            ${{ env.IMAGEN }}:${{ github.sha }}
+          tags: ${{ env.TAGS }}
