@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
+        <version>3.5.16</version>
         <relativePath/>
     </parent>
 
     <groupId>com.postgrespulse</groupId>
     <artifactId>postgrespulse</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <name>PostgresPulse</name>
     <description>Plataforma enterprise de monitoreo, analisis y salud de bases de datos PostgreSQL</description>
 
@@ -22,6 +22,10 @@
         <springdoc.version>2.7.0</springdoc.version>
         <resilience4j.version>2.2.0</resilience4j.version>
         <testcontainers.version>1.21.4</testcontainers.version>
+        <!-- CVE-2026-54291 (bypass de proteccion MITM via downgrade de
+             SCRAM-SHA-256-PLUS): fijado por encima del 42.7.11 que trae
+             spring-boot-dependencies:3.5.16. -->
+        <postgresql.version>42.7.12</postgresql.version>
     </properties>
 
     <dependencies>
@@ -40,6 +44,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <!-- Expone /actuator/prometheus (formato de texto Prometheus)
+                 para las metricas de MetricasConfig y las de Micrometer. -->
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

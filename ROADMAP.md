@@ -14,7 +14,8 @@ Este documento describe la visión **posterior a la v1.0** de **PostgresPulse**.
 ## 📡 Integraciones externas
 
 - **Alertas (Email / Slack / PagerDuty):** notificaciones cuando la puntuación de salud cruce un umbral configurado.
-- **Exportador Prometheus + tableros Grafana:** métricas nativas para ecosistemas de observabilidad externos.
+- **Tableros Grafana:** dashboards de ejemplo listos para importar. El exportador ya está disponible
+  desde v1.2.0 (`/actuator/prometheus`, ver [docs/DEPLOYMENT.md §5.4](docs/DEPLOYMENT.md)).
 
 ---
 

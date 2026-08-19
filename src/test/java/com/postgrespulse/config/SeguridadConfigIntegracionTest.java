@@ -3,6 +3,7 @@ package com.postgrespulse.config;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
@@ -14,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,7 +30,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * SeguridadConfig.
  */
 @Testcontainers
+// @AutoConfigureObservability: @SpringBootTest desactiva la exportacion de
+// metricas por defecto (ObservabilityContextCustomizerFactory, para no pagar
+// el costo de instrumentacion real en cada test); sin esto
+// actuatorPrometheusRequiereAutenticacionYExponeLasMetricasPropias no
+// registraria el endpoint /actuator/prometheus.
 @SpringBootTest
+@AutoConfigureObservability
 @AutoConfigureMockMvc
 class SeguridadConfigIntegracionTest {
 
@@ -92,6 +100,25 @@ class SeguridadConfigIntegracionTest {
     void apiV1RequiereAutenticacion() throws Exception {
         mockMvc.perform(get("/api/v1/fuentes"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void actuatorPrometheusRequiereAutenticacionYExponeLasMetricasPropias() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus"))
+                .andExpect(status().isUnauthorized());
+
+        String cuerpo = mockMvc.perform(get("/actuator/prometheus").with(admin()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // Formato texto de Prometheus (# HELP/# TYPE por metrica).
+        assertThat(cuerpo).contains("# TYPE");
+        // postgrespulse.fuentes.registradas (MetricasConfig) es un Gauge
+        // registrado siempre al arrancar; postgrespulse.analisis.total/
+        // .duracion (AnalisisPersistenciaServicio) recien se crean con el
+        // primer analisis real, por eso no se verifican aqui (si se
+        // necesitara, ver la corrida real documentada en docs/DEPLOYMENT.md #5.4).
+        assertThat(cuerpo).contains("postgrespulse_fuentes_registradas");
     }
 
     @Test

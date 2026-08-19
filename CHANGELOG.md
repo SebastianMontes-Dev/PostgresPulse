@@ -3,6 +3,35 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.0] — 2026-08-19
+
+Exportador Prometheus, más una actualización de seguridad de Spring Boot que surgió al activar el
+escaneo Trivy de v1.1.0 contra la imagen real.
+
+### Añadido
+
+- **`/actuator/prometheus`**: expone las métricas propias y las estándar de JVM/HTTP/Hikari en
+  formato texto Prometheus (`io.micrometer:micrometer-registry-prometheus`), protegido por Basic
+  Auth igual que el resto de `/actuator/**`. Deja el terreno listo para tableros Grafana (pendiente
+  en `ROADMAP.md`). Documentado en `docs/DEPLOYMENT.md` §5.4 con un ejemplo de `scrape_config`.
+- **Test**: `SeguridadConfigIntegracionTest` verifica que el endpoint exige autenticación y devuelve
+  formato Prometheus válido.
+
+### Corregido — seguridad
+
+- **Spring Boot 3.4.1 → 3.5.16**: el primer escaneo Trivy real contra la imagen de v1.1.0 encontró
+  **41 vulnerabilidades** en dependencias transitivas del framework (12 CRITICAL, 29 HIGH),
+  incluyendo una RCE conocida en Tomcat embebido (CVE-2025-24813) y varias en `jackson-databind`.
+  3.5.16 trae exactamente las versiones parcheadas (Tomcat 10.1.55, Jackson 2.21.4, Micrometer
+  1.15.12) vía su propio BOM — sin overrides manuales. Las 107 pruebas existentes pasan sin cambios.
+- **`org.postgresql:postgresql` 42.7.11 → 42.7.12** (fijado explícitamente en `pom.xml`,
+  independiente del Spring Boot BOM): CVE-2026-54291, bypass de la protección MITM del driver JDBC
+  vía downgrade de SCRAM-SHA-256-PLUS.
+- Tras ambos fixes, el escaneo de la imagen real quedó en **0 CRITICAL, 3 HIGH** — los 3 restantes
+  son paquetes del sistema base Alpine (`libexpat`, `p11-kit`) que el runtime de la app ni siquiera
+  invoca, no dependencias de la aplicación; quedan fuera del control de `pom.xml` y se resolverán
+  cuando la imagen base upstream los republique (Dependabot ya vigila `Dockerfile`).
+
 ## [1.1.0] — 2026-08-18
 
 Hardening de seguridad y CI, más el cierre de los 2 criterios de aceptación de `docs/SPECS.md` §17
@@ -84,5 +113,6 @@ panel de control, programador y exportación de reportes, seguridad y despliegue
   Actions (Testcontainers + JaCoCo + publicación de imagen a GHCR).
 - **Pruebas**: cobertura JaCoCo con gate ≥80% en el motor de análisis y ≥70% en servicios/programador.
 
+[1.2.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/releases/tag/v1.0.0

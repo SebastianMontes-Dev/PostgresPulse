@@ -104,7 +104,7 @@ Panel de control (Thymeleaf + Chart.js) + API REST ──HTTPS──▶ Postgres
 | **Persistencia** | Spring Data JPA, driver PostgreSQL, Flyway |
 | **Resiliencia** | Resilience4j (circuit breaker por fuente + reintento en fallos transitorios) |
 | **Seguridad** | Spring Security (Basic Auth), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
-| **Observabilidad** | Actuator + Micrometer (métricas propias), logs estructurados ECS |
+| **Observabilidad** | Actuator + Micrometer (métricas propias), exportador Prometheus, logs estructurados ECS |
 | **UI** | Thymeleaf + Chart.js |
 | **Pruebas** | JUnit 5, Mockito, Testcontainers, JaCoCo |
 

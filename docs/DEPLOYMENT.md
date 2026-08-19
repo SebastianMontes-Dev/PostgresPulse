@@ -138,6 +138,20 @@ Las capturas instantáneas de más de 90 días se compactan automáticamente a u
 ### 5.3 Copias de seguridad
 
 ```bash
+./scripts/respaldar.sh backup          # Linux/macOS/CI
+.\scripts\respaldar.ps1 -Accion Backup # Windows PowerShell
+```
+
+Restauración (detén el servicio `app` antes de correrlo, para evitar escrituras concurrentes):
+
+```bash
+./scripts/respaldar.sh restaurar backups/pulse_db_2026-08-18_120000.sql
+.\scripts\respaldar.ps1 -Accion Restaurar -Archivo backups\pulse_db_2026-08-18_120000.sql
+```
+
+Equivalente manual de un solo comando (lo que hacían internamente los scripts hasta v1.0):
+
+```bash
 docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
 ```
 
@@ -148,6 +162,20 @@ docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
   (timer, solo análisis exitosos) y `postgrespulse.fuentes.registradas` (gauge).
   ```bash
   curl -u admin:admin http://localhost:8080/actuator/metrics/postgrespulse.analisis.total
+  ```
+- **`/actuator/prometheus`** (Basic Auth): las mismas métricas (más las estándar de JVM/HTTP/Hikari
+  que Micrometer expone automáticamente) en formato texto de Prometheus, para que un Prometheus
+  externo las raspe:
+  ```yaml
+  # prometheus.yml del servidor Prometheus (no incluido en este repo)
+  scrape_configs:
+    - job_name: postgrespulse
+      metrics_path: /actuator/prometheus
+      basic_auth:
+        username: admin
+        password: admin   # usa el valor real de PULSE_ADMIN_PASSWORD
+      static_configs:
+        - targets: ["localhost:8080"]
   ```
 - **`/actuator/info`**: expone versión y metadatos de build (`build-info` de Maven).
 - **Reintento ante fallos transitorios**: un análisis que falla por `SQLTransientException`/
