@@ -1,0 +1,14 @@
+# Excepciones documentadas al escaneo de vulnerabilidades de CI
+# (.github/workflows/ci.yml, job "docker"). Cada entrada debe justificar
+# por que se acepta el riesgo -- nunca silenciar sin motivo.
+#
+# Paquetes del sistema base Alpine (eclipse-temurin:21-jre-alpine) que el
+# runtime de la aplicacion (java -jar app.jar) no invoca: libexpat es una
+# libreria XML usada por herramientas de sistema que esta imagen no ejecuta,
+# p11-kit es infraestructura PKCS#11 sin uso en un JRE puro. Sin exploit
+# practico dentro de la superficie de ataque real de PostgresPulse. Se
+# resolveran solos cuando la imagen base upstream los republique (Dependabot
+# vigila el Dockerfile). Revisar si el `HEALTHCHECK`/entrypoint alguna vez
+# empieza a depender de estas librerias.
+CVE-2026-56408
+CVE-2026-2100
