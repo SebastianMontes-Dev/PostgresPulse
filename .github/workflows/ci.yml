@@ -86,7 +86,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Construir imagen (sin publicar todavia)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -110,7 +110,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publicar imagen (ya escaneada; reutiliza la cache de la construccion anterior)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
