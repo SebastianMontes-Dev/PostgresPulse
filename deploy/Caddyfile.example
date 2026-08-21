@@ -1,0 +1,16 @@
+# ============================================================
+# PostgresPulse - Caddyfile de ejemplo (docs/DEPLOYMENT.md §4.6)
+# Copia este archivo a deploy/Caddyfile (gitignored) y ajusta si
+# necesitas mas directivas (cabeceras, rate limiting, etc.).
+#
+# {$PULSE_DOMAIN} la resuelve Caddy desde la variable de entorno del
+# mismo nombre en docker-compose.prod.yml. Al ser un dominio real
+# (no "localhost"), Caddy solicita y renueva automaticamente un
+# certificado Let's Encrypt via ACME HTTP-01 -- requiere DNS
+# apuntando a este host y el puerto 80 accesible publicamente
+# durante el reto de validacion.
+# ============================================================
+
+{$PULSE_DOMAIN} {
+    reverse_proxy app:8080
+}

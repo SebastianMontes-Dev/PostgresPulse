@@ -26,6 +26,7 @@ Thumbs.db
 .env
 *.local
 application-local.yml
+deploy/Caddyfile
 
 # Logs
 *.log
