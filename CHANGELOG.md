@@ -3,6 +3,78 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
+## [No publicado]
+
+Demostrabilidad y hardening tras el cierre de v1.2.0: capturas reales, despliegue con TLS
+documentado, el gate de SpotBugs pasa de reporte a bloqueante, y RBAC + JWT reemplaza la
+Autenticación Básica de un solo administrador.
+
+### Añadido
+
+- **RBAC + JWT** (ROADMAP.md): reemplaza la Autenticación Básica de un solo administrador por
+  usuarios con rol **ADMIN** (todo) o **LECTOR** (solo lectura), en tabla `usuarios` (migración
+  Flyway V3). `JwtServicio` firma/valida tokens HS256 (clave derivada de `PULSE_JWT_SECRET` con
+  SHA-256, mismo criterio que `CifradoServicio`); `JwtAuthenticationFilter` los autentica desde el
+  header `Authorization: Bearer` en `/api/v1/**` o desde una cookie httpOnly `PULSE_JWT` en el
+  panel — nunca desde ambos en la misma ruta, para no reabrir el mismo riesgo de CSRF que ya
+  gestionaba la exención de `/api/v1/**` con Basic Auth (ver `JwtAuthenticationFilter`, javadoc).
+  `SembradorAdminInicialServicio` crea el primer ADMIN desde `PULSE_ADMIN_USER`/`PASSWORD` si la
+  tabla está vacía, tanto en una instalación nueva como al actualizar desde v1.2.x. Nuevos
+  endpoints `POST /api/v1/auth/login`/`logout` y `GET/POST/DELETE /api/v1/usuarios` (ADMIN),
+  página `/login` del panel, botón "Cerrar sesión", y las acciones de escritura del panel
+  (registrar fuente, analizar) ocultas para LECTOR vía `sec:authorize`
+  (`thymeleaf-extras-springsecurity6`). El bloqueo por fuerza bruta ahora se evalúa una vez por
+  intento de login (antes: en cada petición autenticada, acoplado a los eventos de Basic Auth de
+  Spring Security). Documentado en `docs/API.md` §1-3 y `docs/DEPLOYMENT.md`. Los 4 scripts de
+  demo (`demo.sh`/`.ps1`, `remediar-demo.sh`/`.ps1`) ahora inician sesión primero y usan el token
+  en vez de `-u usuario:contrasena`.
+
+- **Capturas reales** (`docs/img/`) del panel contra `target-demo` incrustadas en el README:
+  resumen, detalle de fuente con chequeos/recomendaciones SQL, e historial mostrando la
+  recuperación real de **53.00 CRÍTICO a 71.49 ADVERTENCIA**. Cierra el criterio de "LÉAME final
+  con capturas" de `docs/SPECS.md` §16 Fase 8.
+- **`deploy/docker-compose.prod.yml` + `deploy/Caddyfile.example`**: despliegue de producción con
+  TLS terminado en un reverse proxy (Caddy, certificado Let's Encrypt renovado automáticamente),
+  sin `target-demo` y sin valores por defecto inseguros (cada variable sensible es obligatoria).
+  Documentado en `docs/DEPLOYMENT.md` §4.6. El demo local (`docker-compose.yml`, raíz) sigue
+  sirviendo HTTP plano a propósito, para no requerir certificados en el arranque de 3 comandos.
+- **`spotbugs-exclude.xml`**: filtro con justificación por hallazgo para los falsos positivos
+  estructurales de Spring (inyección por constructor de beans singleton) y JPA (asociaciones
+  `@ManyToOne`), donde SpotBugs no puede distinguir un colaborador administrado por el framework
+  de un objeto mutable expuesto a un llamador externo no confiable.
+
+### Corregido
+
+- **`AccessDeniedException` devolvía 500 en vez de 403** cuando `@PreAuthorize` rechazaba una
+  petición: `AuthorizationDeniedException` (Spring Security 6) la atrapaba `errorInesperado()` de
+  `ManejadorErroresGlobal` porque `@RestControllerAdvice` resuelve excepciones dentro del
+  `DispatcherServlet`, antes de que le llegue a `ExceptionTranslationFilter` (el traductor a 403
+  de Spring Security, que vive fuera, a nivel de filtro). Encontrado probando RBAC manualmente
+  contra la app real, no por ningún test; cubierto ahora por
+  `RbacAutorizacionIntegracionTest.lectorNoPuedeCrearFuenteYRecibe403NoUn500` y un caso unitario en
+  `ManejadorErroresGlobalTest`.
+- **`HttpRequestMethodNotSupportedException` devolvía 500 en vez de 405** (mismo problema de fondo
+  que el anterior) — encontrado navegando a `GET /logout`, una ruta `POST`-only.
+- **SpotBugs de reporte a bloqueante** (`failOnError=true`, `pom.xml`): el reporte inicial (39
+  hallazgos Medium) se resolvió corrigiendo lo real y excluyendo solo los falsos positivos
+  documentados, nunca con una exclusión de paquete completo.
+- **Copia defensiva en records/DTOs y en los campos JSON de entidades JPA** (`EI_EXPOSE_REP` /
+  `EI_EXPOSE_REP2`, 20 hallazgos): 11 records con campos `List`/`Map` (`ResultadoChequeoCalculado`,
+  `ChequeoDto`, `AnalisisDetalleDto`, `ApiError`, `ActualizarFuenteDto`, `CrearFuenteDto`,
+  `FuenteRespuestaDto`, `IndicesRespuestaDto`, `PaginaDto`, `SaludDto`, `CategoriaVistaDto`) ganan
+  un constructor compacto que copia con `List.copyOf`/`Map.copyOf`; `Analisis.detalleJson` y
+  `ResultadoChequeo.detalle` (columnas JSON simples, no asociaciones) hacen lo mismo en su
+  getter/setter — seguro porque Hibernate accede por campo (reflexión), no por estos métodos.
+- **`CifradoServicio` ahora es `final`** (`CT_CONSTRUCTOR_THROW`): su constructor lanza
+  `IllegalStateException` si `PULSE_CRYPTO_KEY` es inválida; sin `final`, un subtipo podría
+  resucitar el objeto a medio construir vía un finalizer y acceder a la clave AES derivada
+  (`claveBytes`) antes de que la validación lo impidiera.
+- **Versión de Spring Boot desactualizada en README y `docs/SPECS.md`** (decían 3.4/3.4.1; el
+  proyecto usa 3.5.16 desde el fix de seguridad de v1.2.0).
+- **`ROADMAP.md` podado**: separados los 3 próximos pasos creíbles (RBAC+JWT, alertas, dashboards
+  Grafana) de las ideas exploratorias sin compromiso de ejecución (multi-motor, SaaS, IA, agente
+  Go/Rust, i18n, fleet management), que antes se leían con el mismo peso.
+
 ## [1.2.0] — 2026-08-19
 
 Exportador Prometheus, más una actualización de seguridad de Spring Boot que surgió al activar el

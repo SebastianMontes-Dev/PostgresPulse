@@ -93,7 +93,8 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 │  ADMINISTRADOR DE BASES (usuario humano)       │
 │  usa Panel de control web + API REST          │
 └───────────────────────┬───────────────────────┘
-                        │ HTTPS
+                        │ HTTPS (producción: TLS terminado
+                        │ en reverse proxy, §13)
 ┌───────────────────────▼───────────────────────┐
 │              POSTGRESPULSE (aplicación)        │
 │  Orquestador de análisis + puntuación + histor.│
@@ -110,7 +111,7 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 
 ```
 Docker Compose:
-├── servicio: app          → Spring Boot 3.4, puerto 8080
+├── servicio: app          → Spring Boot 3.5, puerto 8080
 │     └─ conecta a: pulse-db (propia) + target-demo (objetivo)
 ├── servicio: pulse-db     → PostgreSQL 16 (esquema propio con Flyway)
 └── servicio: target-demo  → PostgreSQL 16 + sample_data.sql
@@ -225,7 +226,7 @@ Cada chequeo devuelve `details` (JSONB): lista de tablas/índices/consultas con 
 
 ## 9. API REST — resumen
 
-Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginación `?page&size` · Autenticación Básica · Swagger en `/swagger-ui.html`. Referencia detallada en [`docs/API.md`](API.md).
+Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginación `?page&size` · JWT (RBAC ADMIN/LECTOR) · Swagger en `/swagger-ui.html`. Referencia detallada en [`docs/API.md`](API.md).
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -264,7 +265,10 @@ Estética: tema oscuro tipo panel de monitoreo, semáforo verde/ámbar/rojo, res
 
 1. **Solo-lectura estricto**: de solo lectura en la fuente de datos de análisis; cláusula de guardia en el orquestador que impide transacciones de escritura hacia BD objetivo.
 2. **Cifrado de credenciales**: AES-256-GCM, clave por variable de entorno; nunca se registra ni expone.
-3. **Autenticación Básica** en API y panel de control: credenciales por variables de entorno, función hash BCrypt, retraso contra fuerza bruta en fallos de inicio de sesión.
+3. **RBAC + JWT** en API y panel de control (reemplaza la Autenticación Básica de v1.0-1.2, ver
+   CHANGELOG.md): múltiples usuarios con rol ADMIN o LECTOR, contraseñas con BCrypt, retraso contra
+   fuerza bruta en el login. El primer ADMIN se siembra desde variables de entorno; el resto se
+   gestiona vía `/api/v1/usuarios`.
 4. **Validación de entrada**: Validación de Beans en todos los DTOs; previene inyección SQL en filtros dinámicos.
 5. **Sin inyección SQL**: todas las consultas dinámicas usan parámetros; nombres de objetos/columnas validados contra `pg_catalog` antes de usarlos.
 6. **Secretos**: `.env.example` documentado, `.gitignore` excluye `.env`; credenciales solo por variables de entorno.
@@ -304,6 +308,13 @@ push/PR → trabajos:
 ```
 
 **LÉAME (README.md)**: insignias de construcción, pila de tecnologías, arquitectura, arranque en 3 comandos, capturas, tabla de chequeos, hoja de ruta.
+
+**TLS en producción**: la aplicación sirve HTTP en el puerto 8080 dentro de la red de contenedores — no
+termina TLS ella misma (evita gestión de keystores/rotación de certificados dentro del JVM). El demo de
+`docker-compose.yml` la expone directamente en HTTP para arranque en 3 comandos sin certificados. Para
+un despliegue real, `deploy/docker-compose.prod.yml` añade un reverse proxy (Caddy) que obtiene y renueva
+certificados Let's Encrypt automáticamente y es el único servicio público (80/443); `app` deja de publicar
+el 8080 al host. Detalle completo en [docs/DEPLOYMENT.md §4.6](docs/DEPLOYMENT.md).
 
 ---
 

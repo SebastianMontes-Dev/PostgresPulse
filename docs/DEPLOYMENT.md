@@ -25,8 +25,10 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_CRYPTO_KEY` | *(vacía)* | Clave AES-256-GCM (**≥32 bytes**) para cifrar credenciales de fuentes. **Obligatoria en producción.** |
 | `PULSE_SCHEDULER_ENABLED` | `false` | Habilita el análisis automático programado |
 | `PULSE_SCHEDULER_CRON` | `0 0 * * * *` | Cron de 6 campos (seg min hora día mes sem) |
-| `PULSE_ADMIN_USER` | `admin` | Usuario administrador API/Panel de control |
-| `PULSE_ADMIN_PASSWORD` | `admin` | Contraseña administrador |
+| `PULSE_ADMIN_USER` | `admin` | Usuario del **primer** administrador (solo se usa una vez, para sembrar la tabla `usuarios` vacía; cambiarlo después no resetea la contraseña ya elegida vía `/api/v1/usuarios`) |
+| `PULSE_ADMIN_PASSWORD` | `admin` | Contraseña del primer administrador |
+| `PULSE_JWT_SECRET` | *(vacía)* | Secreto HMAC (**≥16 caracteres**) para firmar los JWT de sesión. **Obligatoria en producción.** |
+| `PULSE_JWT_EXPIRACION_MINUTOS` | `480` | Minutos de validez del token antes de tener que volver a iniciar sesión |
 | `PULSE_DEMO_SEED` | `true` en `docker-compose.yml`, `false` por defecto en la app | Registra automáticamente la fuente `Ventas Demo` contra `target-demo` al arrancar. Solo tiene sentido con la infraestructura de `docker-compose.yml`; en un despliegue real contra fuentes de producción, déjalo en `false` |
 | `PULSE_LOG_FORMAT` | *(vacía = consola legible)* | `ecs` activa logs estructurados JSON por consola, para agregadores de logs (ver §4) |
 
@@ -116,6 +118,41 @@ por defecto. El reporte HTML exportado queda en `target/demo-reporte-<id>.html`.
 5. Respaldar el volumen `pulse_data` (contiene fuentes registradas + historial de capturas instantáneas)
    — ver §5.3 para el script de respaldo y restauración.
 
+### 4.6 TLS
+
+La aplicación sirve **HTTP en texto plano** en el puerto 8080 — no termina TLS ella misma. Es una
+decisión deliberada, no un descuido: gestionar keystores y renovación de certificados dentro del JVM
+es justo el tipo de complejidad operativa que un reverse proxy resuelve mejor y de forma desacoplada
+del ciclo de vida de la aplicación. `docker-compose.yml` (raíz, entorno de demo) expone ese HTTP
+directamente en `:8080` a propósito, para que el arranque en 3 comandos funcione sin certificados ni
+dominio.
+
+Para un despliegue real, usa `deploy/docker-compose.prod.yml`: agrega un servicio `caddy` que termina
+TLS con un certificado Let's Encrypt renovado automáticamente (protocolo ACME), y dejar de publicar el
+puerto 8080 de `app` — solo Caddy queda expuesto (80/443). Además de TLS, este compose de producción
+**no trae valores por defecto inseguros**: cada variable sensible (`PULSE_DB_PASSWORD`,
+`PULSE_CRYPTO_KEY`, `PULSE_ADMIN_USER`, `PULSE_ADMIN_PASSWORD`, `PULSE_DOMAIN`) es obligatoria y el
+arranque falla si falta alguna, en vez de advertir y continuar como hace el demo
+(`AvisoDefaultsInseguros`). Tampoco incluye `target-demo`: la base de ventas mal modelada a propósito
+es solo para el demo local, no pertenece a un despliegue real.
+
+```bash
+cp deploy/Caddyfile.example deploy/Caddyfile   # ajusta si necesitas mas directivas
+
+PULSE_DOMAIN=pulse.tudominio.com \
+PULSE_DB_PASSWORD=<contraseña fuerte> \
+PULSE_CRYPTO_KEY=<clave AES de ≥32 caracteres, de un gestor de secretos> \
+PULSE_ADMIN_USER=<usuario admin> \
+PULSE_ADMIN_PASSWORD=<contraseña admin fuerte> \
+  docker compose -f deploy/docker-compose.prod.yml up -d --build
+```
+
+Requiere DNS de `PULSE_DOMAIN` apuntando a este host y los puertos 80/443 accesibles públicamente —
+Caddy los usa para el reto ACME HTTP-01 y para servir HTTPS. Si tu equipo ya estandariza en
+nginx+certbot o Traefik, el patrón es el mismo (reverse proxy delante de `app`, TLS terminado ahí,
+`app` sin puerto público); Caddy se eligió aquí por renovar certificados automáticamente con una
+configuración de dos líneas (`Caddyfile.example`).
+
 ---
 
 ## 5. Operación
@@ -157,23 +194,32 @@ docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
 
 ### 5.4 Observabilidad y resiliencia
 
-- **Métricas** (`/actuator/metrics`, Basic Auth): `postgrespulse.analisis.total` (contador, tags
+- **Métricas** (`/actuator/metrics`, requiere JWT): `postgrespulse.analisis.total` (contador, tags
   `resultado=exito|error` y `disparado_por=MANUAL|PROGRAMADO`), `postgrespulse.analisis.duracion`
   (timer, solo análisis exitosos) y `postgrespulse.fuentes.registradas` (gauge).
   ```bash
-  curl -u admin:admin http://localhost:8080/actuator/metrics/postgrespulse.analisis.total
+  TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+    -H "Content-Type: application/json" -d '{"usuario":"admin","contrasena":"admin"}' \
+    | jq -r .token)
+  curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/actuator/metrics/postgrespulse.analisis.total
   ```
-- **`/actuator/prometheus`** (Basic Auth): las mismas métricas (más las estándar de JVM/HTTP/Hikari
+- **`/actuator/prometheus`** (requiere JWT): las mismas métricas (más las estándar de JVM/HTTP/Hikari
   que Micrometer expone automáticamente) en formato texto de Prometheus, para que un Prometheus
-  externo las raspe:
+  externo las raspe. A diferencia de la Autenticación Básica de v1.0-1.2 (credenciales que nunca
+  expiraban), un JWT expira (`PULSE_JWT_EXPIRACION_MINUTOS`, 480 por defecto) — Prometheus no
+  reautentica solo, así que un token estático en `scrape_configs` deja de funcionar al expirar.
+  Dos formas de resolverlo:
+  - **Usuario LECTOR dedicado** con `PULSE_JWT_EXPIRACION_MINUTOS` alto (p.ej. semanas) solo para
+    monitoreo, token generado una vez y rotado manualmente.
+  - **`authorization.credentials_file`**: apuntar Prometheus a un archivo con el token, refrescado
+    por un cron externo que vuelve a llamar `/api/v1/auth/login` antes de que expire.
   ```yaml
   # prometheus.yml del servidor Prometheus (no incluido en este repo)
   scrape_configs:
     - job_name: postgrespulse
       metrics_path: /actuator/prometheus
-      basic_auth:
-        username: admin
-        password: admin   # usa el valor real de PULSE_ADMIN_PASSWORD
+      authorization:
+        credentials_file: /etc/prometheus/postgrespulse.token   # solo el JWT, sin "Bearer "
       static_configs:
         - targets: ["localhost:8080"]
   ```
@@ -191,8 +237,9 @@ docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
 | Problema | Causa probable | Solución |
 |---|---|---|
 | `FlywayException` al arrancar | BD propia sin migraciones o esquema corrupto | Verificar que `pulse-db` esté arriba y vacía; eliminar volumen si se corrompió (`docker compose down -v` — pierde datos) |
-| `401` en Swagger | Falta la cabecera de Basic Auth | Usar `PULSE_ADMIN_USER` / `PULSE_ADMIN_PASSWORD` |
-| `429` al autenticar | Bloqueo por fuerza bruta tras varios intentos fallidos recientes | Esperar los segundos indicados en `Retry-After` |
+| `401` en Swagger o `/api/v1/**` | Falta la cabecera `Authorization: Bearer` | Iniciar sesión en `POST /api/v1/auth/login` con `PULSE_ADMIN_USER`/`PASSWORD` (o cualquier usuario creado luego vía `/api/v1/usuarios`) y usar el `token` de la respuesta |
+| `403 ACCESO_DENEGADO` | El usuario autenticado tiene rol `LECTOR` | Las mutaciones (registrar/analizar/gestionar usuarios) exigen rol `ADMIN` — ver tabla de RBAC en `docs/API.md §1` |
+| `429` al autenticar | Bloqueo por fuerza bruta tras varios intentos fallidos recientes en `/api/v1/auth/login` | Esperar los segundos indicados en `Retry-After` |
 | `CONEXION_FALLIDA` al registrar fuente | BD objetivo inalcanzable | Verificar host/puerto desde la red del contenedor (si la app corre en Docker, usar `host.docker.internal` para BDs locales) |
 | `EXTENSION_AUSENTE` | `pg_stat_statements` no habilitada | En la BD objetivo: `CREATE EXTENSION IF NOT EXISTS pg_stat_statements;` (requiere rol superusuario) |
 | Análisis muy lento | BD enorme o sin índices de catálogo | Los chequeos operan sobre catálogos del sistema; ajustar tiempos de espera vía propiedades de conexión |

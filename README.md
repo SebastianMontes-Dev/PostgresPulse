@@ -65,6 +65,22 @@ mostrando la mejora real de puntaje (docs/SPECS.md §17):
 
 ---
 
+## 📸 Capturas
+
+Panel real contra `target-demo`: puntuación de salud, tendencia recuperándose de **53.00 CRÍTICO**
+a **71.49 ADVERTENCIA** tras aplicar las recomendaciones SQL del propio motor, y el detalle de
+chequeos con hallazgos + SQL listo para ejecutar.
+
+| Resumen | Detalle de fuente (chequeos + SQL) |
+|---|---|
+| ![Resumen del panel](docs/img/resumen.png) | ![Detalle de fuente con chequeos y recomendaciones](docs/img/fuente-detalle.png) |
+
+| Historial de tendencia |
+|---|
+| ![Historial de puntuación de salud](docs/img/historial.png) |
+
+---
+
 ## 🩺 Los 8 chequeos
 
 | # | Chequeo | Categoría (peso) | Qué detecta | Umbrales | Recomendación |
@@ -87,23 +103,27 @@ mostrando la mejora real de puntaje (docs/SPECS.md §17):
 ## 🏗️ Arquitectura
 
 ```
-Panel de control (Thymeleaf + Chart.js) + API REST ──HTTPS──▶ PostgresPulse (Spring Boot 3.4 / Java 21)
-                                                                       │
-                                          ┌────────────────────────────┴───────────────────────┐
-                                          │ conexiones en tiempo de ejecución (solo lectura)     │
-                                    ┌─────▼──────┐                                    ┌──────────▼─────────┐
-                                    │  pulse-db  │  BD propia (Flyway)                │ BD objetivo #1..N   │
-                                    │ fuentes,   │                                    │ (PostgreSQL 12–17)  │
-                                    │ análisis   │                                    └──────────────────────┘
-                                    └────────────┘
+Cliente (panel + API REST) ──HTTPS──▶ Reverse proxy (Caddy, TLS)──HTTP interno──▶ PostgresPulse (Spring Boot 3.5 / Java 21)
+                                                                                          │
+                                                             ┌────────────────────────────┴───────────────────────┐
+                                                             │ conexiones en tiempo de ejecución (solo lectura)     │
+                                                       ┌─────▼──────┐                                    ┌──────────▼─────────┐
+                                                       │  pulse-db  │  BD propia (Flyway)                │ BD objetivo #1..N   │
+                                                       │ fuentes,   │                                    │ (PostgreSQL 12–17)  │
+                                                       │ análisis   │                                    └──────────────────────┘
+                                                       └────────────┘
 ```
+
+El demo local (`docker compose up`) expone la app en HTTP plano en `:8080` para arranque en 3 comandos
+sin certificados; el reverse proxy solo entra en juego en producción — ver
+[docs/DEPLOYMENT.md §4.6](docs/DEPLOYMENT.md).
 
 | Categoría | Tecnología |
 | :--- | :--- |
-| **Framework** | Spring Boot 3.4.1, Java 21 |
+| **Framework** | Spring Boot 3.5.16, Java 21 |
 | **Persistencia** | Spring Data JPA, driver PostgreSQL, Flyway |
 | **Resiliencia** | Resilience4j (circuit breaker por fuente + reintento en fallos transitorios) |
-| **Seguridad** | Spring Security (Basic Auth), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
+| **Seguridad** | Spring Security (JWT + RBAC), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
 | **Observabilidad** | Actuator + Micrometer (métricas propias), exportador Prometheus, logs estructurados ECS |
 | **UI** | Thymeleaf + Chart.js |
 | **Pruebas** | JUnit 5, Mockito, Testcontainers, JaCoCo |
@@ -117,18 +137,21 @@ estricto (nunca se exponen entidades JPA). Detalle de ADRs en [docs/SPECS.md §6
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET/POST | `/fuentes` | Listar / registrar fuentes |
-| GET/PUT/DELETE | `/fuentes/{id}` | Detalle / actualizar / eliminar |
-| POST | `/fuentes/{id}/probar` | Probar conexión |
-| POST | `/fuentes/{id}/analizar` | Ejecutar análisis (8 chequeos) |
-| GET | `/fuentes/{id}/analisis` | Historial paginado |
-| GET | `/fuentes/{id}/salud` | Puntaje actual + tendencia 7d |
-| GET | `/fuentes/{id}/tablas` \| `/consultas` \| `/indices` | Hallazgos del último análisis |
-| GET | `/analisis/{id}` | Análisis completo |
-| GET | `/analisis/{id}/exportar?formato=json\|csv\|html` | Reporte exportable |
+| POST | `/auth/login` | Iniciar sesión → JWT |
+| GET/POST | `/fuentes` | Listar (ADMIN/LECTOR) / registrar (ADMIN) fuentes |
+| GET/PUT/DELETE | `/fuentes/{id}` | Detalle (ambos) / actualizar / eliminar (ADMIN) |
+| POST | `/fuentes/{id}/probar` | Probar conexión (ADMIN) |
+| POST | `/fuentes/{id}/analizar` | Ejecutar análisis, 8 chequeos (ADMIN) |
+| GET | `/fuentes/{id}/analisis` | Historial paginado (ambos) |
+| GET | `/fuentes/{id}/salud` | Puntaje actual + tendencia 7d (ambos) |
+| GET | `/fuentes/{id}/tablas` \| `/consultas` \| `/indices` | Hallazgos del último análisis (ambos) |
+| GET | `/analisis/{id}` | Análisis completo (ambos) |
+| GET | `/analisis/{id}/exportar?formato=json\|csv\|html` | Reporte exportable (ambos) |
+| GET/POST/DELETE | `/usuarios` | Gestión de usuarios y roles (solo ADMIN) |
 
-Autenticación Básica en todas las rutas salvo `/actuator/health`. Referencia completa con ejemplos
-`cURL` en [docs/API.md](docs/API.md).
+JWT (`Authorization: Bearer`) en todas las rutas salvo `/actuator/health` y `/auth/**`; roles
+**ADMIN**/**LECTOR** — ver [🔐 Seguridad](#-seguridad). Referencia completa con ejemplos `cURL` en
+[docs/API.md](docs/API.md).
 
 ---
 
@@ -138,12 +161,17 @@ Autenticación Básica en todas las rutas salvo `/actuator/health`. Referencia c
   TRANSACTION READ ONLY`), no solo a nivel de driver — verificado con prueba de integración.
 - **Credenciales cifradas** AES-256-GCM con clave por variable de entorno; nunca se exponen en la API
   ni en logs.
-- **Autenticación Básica** con BCrypt + bloqueo anti-fuerza-bruta (`429` tras varios fallos).
+- **RBAC + JWT**: múltiples usuarios con rol **ADMIN** (todo) o **LECTOR** (solo lectura), BCrypt +
+  bloqueo anti-fuerza-bruta (`429` tras varios fallos) en el login. El panel usa una cookie httpOnly;
+  clientes de la API adjuntan `Authorization: Bearer` — ver [docs/API.md §1](docs/API.md).
 - **CSRF** activo en el panel de control (Thymeleaf); `/api/v1/**` exento para clientes no interactivos.
 - **Timeouts agresivos** hacia la BD objetivo (conexión 5s, statement 30s, máx. 4 conexiones por
   fuente) para no afectar el sistema que se está analizando.
 - **Aviso al arrancar** si `PULSE_ADMIN_USER`/`PASSWORD`, `PULSE_CRYPTO_KEY` o `PULSE_DB_PASSWORD`
   siguen en su valor de desarrollo por defecto — relevante porque el repositorio es público.
+- **TLS terminado en reverse proxy** para producción (`deploy/docker-compose.prod.yml` + Caddy,
+  certificado Let's Encrypt renovado automáticamente) — el demo local sirve HTTP plano a propósito
+  para no requerir certificados. Detalle en [docs/DEPLOYMENT.md §4.6](docs/DEPLOYMENT.md).
 - Divulgación responsable de vulnerabilidades: [SECURITY.md](SECURITY.md).
 
 ---
