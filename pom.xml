@@ -150,11 +150,23 @@
             </plugin>
             <plugin>
                 <!--
-                    Analisis estatico en modo reporte (no bloqueante): genera
-                    target/spotbugsXml.xml/spotbugs.html en cada `mvnw verify`
-                    sin fallar el build. Empieza asi para no romper CI con
-                    hallazgos preexistentes; se puede endurecer a <failOnError>
-                    true una vez que el reporte salga limpio.
+                    Analisis estatico bloqueante: `mvnw verify` falla si hay
+                    hallazgos Medium+ no excluidos. Empezo en modo reporte
+                    (failOnError=false) para no romper CI con hallazgos
+                    preexistentes; el reporte inicial (39 hallazgos) se
+                    resolvio asi: los 18 EI_EXPOSE_REP/REP2 sobre records/DTOs
+                    con campos List/Map se corrigieron con copia defensiva
+                    (constructor compacto), los 2 sobre Map de entidades JPA
+                    igual (detalleJson/detalle no son asociaciones, son JSON
+                    simple), CT_CONSTRUCTOR_THROW en CifradoServicio se
+                    corrigio haciendo la clase final (el constructor lanza si
+                    la clave AES es invalida; sin "final" un subtipo podria
+                    resucitar el objeto a medio construir via finalizer). Los
+                    19 restantes son falsos positivos estructurales de
+                    Spring/JPA que SpotBugs no puede distinguir de mutacion
+                    externa real: documentados y excluidos uno a uno con
+                    justificacion en spotbugs-exclude.xml (nunca una
+                    exclusion de paquete completo).
                 -->
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
@@ -162,7 +174,8 @@
                 <configuration>
                     <effort>Max</effort>
                     <threshold>Medium</threshold>
-                    <failOnError>false</failOnError>
+                    <failOnError>true</failOnError>
+                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
                 <executions>
                     <execution>

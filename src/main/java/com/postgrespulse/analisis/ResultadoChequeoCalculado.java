@@ -19,4 +19,8 @@ public record ResultadoChequeoCalculado(
         String mensaje,
         String recomendacion,
         Map<String, Object> detalle
-) {}
+) {
+    public ResultadoChequeoCalculado {
+        detalle = detalle == null ? null : Map.copyOf(detalle);
+    }
+}

@@ -21,4 +21,8 @@ public record FuenteRespuestaDto(
         OffsetDateTime ultimoAnalizadoEn,
         OffsetDateTime creadoEn,
         OffsetDateTime actualizadoEn
-) {}
+) {
+    public FuenteRespuestaDto {
+        etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);
+    }
+}

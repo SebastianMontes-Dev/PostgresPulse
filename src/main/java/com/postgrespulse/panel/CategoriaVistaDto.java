@@ -16,4 +16,8 @@ public record CategoriaVistaDto(
         CategoriaChequeo categoria,
         BigDecimal promedio,
         List<ChequeoDto> chequeos
-) {}
+) {
+    public CategoriaVistaDto {
+        chequeos = chequeos == null ? null : List.copyOf(chequeos);
+    }
+}

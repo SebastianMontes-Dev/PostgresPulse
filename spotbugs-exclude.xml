@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Exclusiones del gate bloqueante de SpotBugs (pom.xml, umbral Medium).
+    Cada entrada tiene una justificacion: esto NO es un archivo para
+    silenciar hallazgos incomodos, es para los dos patrones donde
+    SpotBugs no entiende el framework y el hallazgo es estructuralmente
+    inevitable con Spring/JPA. Todo lo demas del reporte original se
+    corrigio en el codigo (ver CHANGELOG.md).
+-->
+<FindBugsFilter>
+
+    <!--
+        EI_EXPOSE_REP2 al guardar en el constructor una dependencia
+        inyectada por Spring (bean singleton administrado por el
+        contenedor: MeterRegistry, ObjectMapper, *Propiedades de
+        @ConfigurationProperties). SpotBugs no distingue "objeto mutable
+        que un llamador externo controla" de "singleton inyectado por
+        el framework, con una unica instancia en toda la aplicacion,
+        nunca provista por un actor no confiable". Guardar la referencia
+        es exactamente el patron de inyeccion por constructor recomendado
+        por Spring; clonarla no tendria sentido (romperia la identidad
+        del bean) ni aportaria seguridad real.
+    -->
+    <Match>
+        <Class name="com.postgrespulse.analisis.AnalisisPersistenciaServicio"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.postgrespulse.config.AvisoDefaultsInseguros"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.postgrespulse.config.SembradorAdminInicialServicio"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.postgrespulse.panel.PanelControlador"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.postgrespulse.servicio.ExportacionServicio"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+        EI_EXPOSE_REP/REP2 en los getters/setters de asociaciones JPA
+        (@ManyToOne) entre entidades. Una entidad gestionada por
+        Hibernate no se puede "copiar defensivamente" sin romper su
+        identidad, sus proxies de carga perezosa y el seguimiento de
+        cambios (dirty checking) del contexto de persistencia: la
+        referencia real es exactamente lo que Hibernate necesita.
+        Los campos Map de estas mismas entidades (detalleJson, detalle)
+        SI se corrigieron con copia defensiva en el codigo: son datos
+        JSON simples, no asociaciones administradas.
+    -->
+    <Match>
+        <Class name="com.postgrespulse.dominio.Analisis"/>
+        <Or>
+            <Method name="getFuente"/>
+            <Method name="setFuente"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.postgrespulse.dominio.ResultadoChequeo"/>
+        <Or>
+            <Method name="getAnalisis"/>
+            <Method name="setAnalisis"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+</FindBugsFilter>

@@ -118,10 +118,10 @@ public class ResultadoChequeo {
     }
 
     public Map<String, Object> getDetalle() {
-        return detalle;
+        return detalle == null ? null : Map.copyOf(detalle);
     }
 
     public void setDetalle(Map<String, Object> detalle) {
-        this.detalle = detalle;
+        this.detalle = detalle == null ? null : Map.copyOf(detalle);
     }
 }

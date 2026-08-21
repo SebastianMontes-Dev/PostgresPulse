@@ -42,4 +42,8 @@ public record CrearFuenteDto(
 
         @Size(max = 10, message = "Máximo 10 etiquetas")
         List<@Size(max = 50, message = "Cada etiqueta no puede superar 50 caracteres") String> etiquetas
-) {}
+) {
+    public CrearFuenteDto {
+        etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);
+    }
+}

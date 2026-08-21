@@ -116,10 +116,10 @@ public class Analisis {
     }
 
     public Map<String, Object> getDetalleJson() {
-        return detalleJson;
+        return detalleJson == null ? null : Map.copyOf(detalleJson);
     }
 
     public void setDetalleJson(Map<String, Object> detalleJson) {
-        this.detalleJson = detalleJson;
+        this.detalleJson = detalleJson == null ? null : Map.copyOf(detalleJson);
     }
 }

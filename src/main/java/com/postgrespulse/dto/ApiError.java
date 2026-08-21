@@ -10,4 +10,8 @@ public record ApiError(
         String mensaje,
         String ruta,
         List<String> detalles
-) {}
+) {
+    public ApiError {
+        detalles = detalles == null ? null : List.copyOf(detalles);
+    }
+}

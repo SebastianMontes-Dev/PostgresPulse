@@ -12,4 +12,8 @@ public record SaludDto(
         EstadoAnalisis estadoActual,
         OffsetDateTime ultimoAnalizadoEn,
         List<PuntoTendenciaDto> tendencia7d
-) {}
+) {
+    public SaludDto {
+        tendencia7d = tendencia7d == null ? null : List.copyOf(tendencia7d);
+    }
+}

@@ -12,6 +12,10 @@ public record PaginaDto<T>(
         long totalElements,
         int totalPages
 ) {
+    public PaginaDto {
+        content = content == null ? null : List.copyOf(content);
+    }
+
     public static <E, T> PaginaDto<T> desde(Page<E> pagina, Function<E, T> mapeador) {
         return new PaginaDto<>(
                 pagina.getContent().stream().map(mapeador).toList(),

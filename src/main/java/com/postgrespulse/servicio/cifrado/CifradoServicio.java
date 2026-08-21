@@ -13,7 +13,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 @Service
-public class CifradoServicio {
+public final class CifradoServicio {
 
     private static final String ALGORITMO = "AES/GCM/NoPadding";
     private static final int LONGITUD_IV = 12;

@@ -14,4 +14,8 @@ public record ChequeoDto(
         String mensaje,
         String recomendacion,
         Map<String, Object> detalle
-) {}
+) {
+    public ChequeoDto {
+        detalle = detalle == null ? null : Map.copyOf(detalle);
+    }
+}

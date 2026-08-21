@@ -17,4 +17,8 @@ public record AnalisisDetalleDto(
         Long duracionMs,
         TipoDisparo disparadoPor,
         List<ChequeoDto> chequeos
-) {}
+) {
+    public AnalisisDetalleDto {
+        chequeos = chequeos == null ? null : List.copyOf(chequeos);
+    }
+}

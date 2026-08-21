@@ -36,4 +36,8 @@ public record ActualizarFuenteDto(
         List<@Size(max = 50, message = "Cada etiqueta no puede superar 50 caracteres") String> etiquetas,
 
         Boolean habilitado
-) {}
+) {
+    public ActualizarFuenteDto {
+        etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);
+    }
+}
