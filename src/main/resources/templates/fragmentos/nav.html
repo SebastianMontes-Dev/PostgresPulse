@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav th:fragment="barra" class="barra-nav">
     <a th:href="@{/}" class="marca">⚡ PostgresPulse</a>
     <a th:href="@{/}">Resumen</a>
     <a href="/swagger-ui.html" target="_blank" rel="noopener">API</a>
+    <span class="nav-derecha">
+        <span class="nav-usuario" sec:authentication="name">usuario</span>
+        <form th:action="@{/logout}" method="post" class="form-logout">
+            <button type="submit" class="enlace-boton">Cerrar sesión</button>
+        </form>
+    </span>
 </nav>
 </body>
 </html>

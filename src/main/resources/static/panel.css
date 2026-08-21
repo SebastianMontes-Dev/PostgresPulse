@@ -28,10 +28,44 @@ a:hover { text-decoration: underline; }
     color: #e6e6e6;
 }
 
+.nav-derecha {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-usuario {
+    color: #9aa0a6;
+    font-size: 0.9rem;
+}
+
+.form-logout {
+    display: inline;
+}
+
+.enlace-boton {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: #7aa2f7;
+    cursor: pointer;
+}
+
+.enlace-boton:hover {
+    text-decoration: underline;
+}
+
 .contenido {
     max-width: 1100px;
     margin: 0 auto;
     padding: 2rem;
+}
+
+.contenido-login {
+    max-width: 360px;
+    margin-top: 10vh;
 }
 
 h1 { margin-top: 0; font-size: 1.5rem; }

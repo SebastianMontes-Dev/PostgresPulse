@@ -72,6 +72,9 @@ app:
   seguridad:
     usuario: ${PULSE_ADMIN_USER:admin}
     contrasena: ${PULSE_ADMIN_PASSWORD:admin}
+  jwt:
+    secreto: ${PULSE_JWT_SECRET:secreto-jwt-de-desarrollo-por-defecto!}
+    expiracion-minutos: ${PULSE_JWT_EXPIRACION_MINUTOS:480}
   demo:
     sembrar: ${PULSE_DEMO_SEED:false}
 

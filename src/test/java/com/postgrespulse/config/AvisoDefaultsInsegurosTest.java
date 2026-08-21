@@ -6,8 +6,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -24,8 +22,9 @@ class AvisoDefaultsInsegurosTest {
 
     private PropiedadesSeguridad propiedadesSeguridad;
     private PropiedadesCifrado propiedadesCifrado;
+    private PropiedadesJwt propiedadesJwt;
 
-    private AvisoDefaultsInseguros crear(String usuario, String contrasena, String claveCifrado) {
+    private AvisoDefaultsInseguros crear(String usuario, String contrasena, String claveCifrado, String secretoJwt) {
         propiedadesSeguridad = new PropiedadesSeguridad();
         propiedadesSeguridad.setUsuario(usuario);
         propiedadesSeguridad.setContrasena(contrasena);
@@ -33,7 +32,10 @@ class AvisoDefaultsInsegurosTest {
         propiedadesCifrado = new PropiedadesCifrado();
         propiedadesCifrado.setClave(claveCifrado);
 
-        return new AvisoDefaultsInseguros(propiedadesSeguridad, propiedadesCifrado, environment);
+        propiedadesJwt = new PropiedadesJwt();
+        propiedadesJwt.setSecreto(secretoJwt);
+
+        return new AvisoDefaultsInseguros(propiedadesSeguridad, propiedadesCifrado, propiedadesJwt, environment);
     }
 
     @Test
@@ -44,11 +46,12 @@ class AvisoDefaultsInsegurosTest {
         AvisoDefaultsInseguros aviso = crear(
                 AvisoDefaultsInseguros.USUARIO_DEFECTO,
                 AvisoDefaultsInseguros.CONTRASENA_DEFECTO,
-                AvisoDefaultsInseguros.CLAVE_CIFRADO_DEFECTO);
+                AvisoDefaultsInseguros.CLAVE_CIFRADO_DEFECTO,
+                AvisoDefaultsInseguros.JWT_SECRETO_DEFECTO);
 
         assertThat(aviso.defaultsDetectados())
                 .containsExactlyInAnyOrder("PULSE_ADMIN_USER", "PULSE_ADMIN_PASSWORD",
-                        "PULSE_CRYPTO_KEY", "PULSE_DB_PASSWORD");
+                        "PULSE_CRYPTO_KEY", "PULSE_JWT_SECRET", "PULSE_DB_PASSWORD");
     }
 
     @Test
@@ -56,7 +59,8 @@ class AvisoDefaultsInsegurosTest {
         when(environment.getProperty("spring.datasource.password")).thenReturn("una-clave-de-produccion-real");
 
         AvisoDefaultsInseguros aviso = crear(
-                "operador", "una-contrasena-fuerte-y-larga", "una-clave-aes-de-produccion-de-32-bytes!!");
+                "operador", "una-contrasena-fuerte-y-larga",
+                "una-clave-aes-de-produccion-de-32-bytes!!", "un-secreto-jwt-de-produccion-real");
 
         assertThat(aviso.defaultsDetectados()).isEmpty();
     }
@@ -66,16 +70,29 @@ class AvisoDefaultsInsegurosTest {
         when(environment.getProperty("spring.datasource.password")).thenReturn("otra-clave");
 
         AvisoDefaultsInseguros aviso = crear(
-                "operador", "una-contrasena-fuerte", AvisoDefaultsInseguros.CLAVE_CIFRADO_DEFECTO);
+                "operador", "una-contrasena-fuerte",
+                AvisoDefaultsInseguros.CLAVE_CIFRADO_DEFECTO, "un-secreto-jwt-de-produccion-real");
 
         assertThat(aviso.defaultsDetectados()).containsExactly("PULSE_CRYPTO_KEY");
+    }
+
+    @Test
+    void detectaSoloElSecretoJwtCuandoElRestoFueCambiado() {
+        when(environment.getProperty("spring.datasource.password")).thenReturn("otra-clave");
+
+        AvisoDefaultsInseguros aviso = crear(
+                "operador", "una-contrasena-fuerte",
+                "una-clave-aes-de-produccion-de-32-bytes!!", AvisoDefaultsInseguros.JWT_SECRETO_DEFECTO);
+
+        assertThat(aviso.defaultsDetectados()).containsExactly("PULSE_JWT_SECRET");
     }
 
     @Test
     void noRevientaCuandoLaPropiedadDeDatasourceNoEstaDisponible() {
         when(environment.getProperty("spring.datasource.password")).thenReturn(null);
 
-        AvisoDefaultsInseguros aviso = crear("operador", "una-contrasena-fuerte", "una-clave-aes-de-produccion!!!!");
+        AvisoDefaultsInseguros aviso = crear(
+                "operador", "una-contrasena-fuerte", "una-clave-aes-de-produccion!!!!", "un-secreto-jwt-real");
 
         assertThat(aviso.defaultsDetectados()).isEmpty();
     }

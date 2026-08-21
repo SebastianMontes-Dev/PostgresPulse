@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
 <head>
     <meta charset="UTF-8">
     <title>PostgresPulse — Resumen</title>
@@ -32,7 +32,7 @@
             <div class="meta" th:unless="${item.ultimoAnalisis != null and item.ultimoAnalisis.puntajeSalud != null}">Sin análisis todavía</div>
 
             <div class="acciones">
-                <form th:action="@{/fuentes/{id}/analizar(id=${item.fuente.id})}" method="post">
+                <form th:action="@{/fuentes/{id}/analizar(id=${item.fuente.id})}" method="post" sec:authorize="hasRole('ADMIN')">
                     <button type="submit" class="boton">Analizar ahora</button>
                 </form>
                 <a th:href="@{/fuentes/{id}(id=${item.fuente.id})}" class="boton boton-secundario">Ver detalle</a>
@@ -40,8 +40,8 @@
         </div>
     </div>
 
-    <h2>Registrar fuente</h2>
-    <form class="formulario" th:action="@{/fuentes}" th:object="${formulario}" method="post">
+    <h2 sec:authorize="hasRole('ADMIN')">Registrar fuente</h2>
+    <form class="formulario" th:action="@{/fuentes}" th:object="${formulario}" method="post" sec:authorize="hasRole('ADMIN')">
         <div class="campo">
             <label for="nombre">Nombre</label>
             <input id="nombre" type="text" th:field="*{nombre}" required>

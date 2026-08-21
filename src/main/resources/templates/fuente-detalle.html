@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
 <head>
     <meta charset="UTF-8">
     <title th:text="'PostgresPulse — ' + ${fuente.nombre}">PostgresPulse</title>
@@ -23,7 +23,7 @@
               th:text="${salud.puntajeActual} + ' / 100'" style="font-size:2.5rem; font-weight:700;">— / 100</span>
         <span th:unless="${salud.puntajeActual != null}" class="meta">Sin análisis todavía</span>
 
-        <form th:action="@{/fuentes/{id}/analizar(id=${fuente.id})}" method="post">
+        <form th:action="@{/fuentes/{id}/analizar(id=${fuente.id})}" method="post" sec:authorize="hasRole('ADMIN')">
             <button type="submit" class="boton">Analizar ahora</button>
         </form>
         <a th:href="@{/fuentes/{id}/historial(id=${fuente.id})}" class="boton boton-secundario">Historial</a>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>PostgresPulse — Iniciar sesión</title>
+    <link rel="stylesheet" th:href="@{/panel.css}">
+</head>
+<body>
+<div class="contenido contenido-login">
+    <h1>⚡ PostgresPulse</h1>
+    <p class="meta">Iniciá sesión para continuar.</p>
+
+    <div th:if="${error}" class="banner banner-error" th:text="${error}">Error</div>
+
+    <form class="formulario" th:action="@{/login}" method="post">
+        <div class="campo">
+            <label for="usuario">Usuario</label>
+            <input id="usuario" name="usuario" type="text" required autofocus>
+        </div>
+        <div class="campo">
+            <label for="contrasena">Contraseña</label>
+            <input id="contrasena" name="contrasena" type="password" required>
+        </div>
+        <div class="campo">
+            <button type="submit" class="boton">Entrar</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

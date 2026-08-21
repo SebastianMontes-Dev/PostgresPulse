@@ -25,7 +25,10 @@ USUARIO="${PULSE_ADMIN_USER:-admin}"
 CONTRASENA="${PULSE_ADMIN_PASSWORD:-admin}"
 NOMBRE_FUENTE="${PULSE_DEMO_NOMBRE:-Ventas Demo}"
 CONTENEDOR_OBJETIVO="${PULSE_DEMO_CONTENEDOR:-pulse-target-demo}"
-AUTH="${USUARIO}:${CONTRASENA}"
+TOKEN="$(curl -sf -X POST "$BASE_URL/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"usuario\":\"${USUARIO}\",\"contrasena\":\"${CONTRASENA}\"}" | jq -r .token)"
+AUTH="Authorization: Bearer ${TOKEN}"
 
 paso() { echo; echo "[$1] $2"; }
 
@@ -34,7 +37,7 @@ ejecutar_sql() {
 }
 
 paso 1 "Localizando la fuente '$NOMBRE_FUENTE' en $BASE_URL ..."
-fuentes_json="$(curl -sf -u "$AUTH" "$BASE_URL/api/v1/fuentes")"
+fuentes_json="$(curl -sf -H "$AUTH" "$BASE_URL/api/v1/fuentes")"
 fuente_id="$(echo "$fuentes_json" | jq -r --arg nombre "$NOMBRE_FUENTE" '.[] | select(.nombre == $nombre) | .id' | head -n1)"
 if [ -z "$fuente_id" ] || [ "$fuente_id" = "null" ]; then
   echo "No se encontro la fuente '$NOMBRE_FUENTE'. ¿Esta PULSE_DEMO_SEED=true y target-demo saludable?" >&2
@@ -43,7 +46,7 @@ fi
 echo "  Fuente encontrada: id=$fuente_id"
 
 paso 2 "Analisis base (antes de remediar) ..."
-analisis1_json="$(curl -sf -u "$AUTH" -X POST "$BASE_URL/api/v1/fuentes/$fuente_id/analizar")"
+analisis1_json="$(curl -sf -H "$AUTH" -X POST "$BASE_URL/api/v1/fuentes/$fuente_id/analizar")"
 puntaje1="$(echo "$analisis1_json" | jq -r '.puntajeSalud')"
 estado1="$(echo "$analisis1_json" | jq -r '.estado')"
 echo "  Puntaje base: $puntaje1 ($estado1)"
@@ -79,7 +82,7 @@ END \$\$;
 ejecutar_sql "ANALYZE;"
 
 paso 6 "Re-analizando (despues de remediar) ..."
-analisis2_json="$(curl -sf -u "$AUTH" -X POST "$BASE_URL/api/v1/fuentes/$fuente_id/analizar")"
+analisis2_json="$(curl -sf -H "$AUTH" -X POST "$BASE_URL/api/v1/fuentes/$fuente_id/analizar")"
 puntaje2="$(echo "$analisis2_json" | jq -r '.puntajeSalud')"
 estado2="$(echo "$analisis2_json" | jq -r '.estado')"
 echo "  Puntaje despues: $puntaje2 ($estado2)"

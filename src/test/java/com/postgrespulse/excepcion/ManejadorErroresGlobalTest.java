@@ -147,6 +147,84 @@ class ManejadorErroresGlobalTest {
     }
 
     @Test
+    void accesoDenegadoMapeaA403() {
+        // Regresion real: @PreAuthorize lanza AuthorizationDeniedException
+        // (Spring Security 6, subclase de AccessDeniedException) y sin este
+        // handler explicito caia en errorInesperado() -> 500 en vez de 403
+        // (encontrado probando RBAC manualmente contra la app real).
+        stubRuta("/api/v1/prueba");
+
+        var respuesta = manejador.accesoDenegado(
+                new org.springframework.security.access.AccessDeniedException("Access Denied"), peticion);
+
+        verificar(respuesta, HttpStatus.FORBIDDEN, "ACCESO_DENEGADO");
+    }
+
+    @Test
+    void credencialesInvalidasMapeaA401() {
+        stubRuta("/api/v1/auth/login");
+
+        var respuesta = manejador.credencialesInvalidas(new CredencialesInvalidasException(), peticion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(respuesta.getBody().codigo()).isEqualTo("CREDENCIALES_INVALIDAS");
+    }
+
+    @Test
+    void demasiadosIntentosMapeaA429ConRetryAfter() {
+        stubRuta("/api/v1/auth/login");
+
+        var respuesta = manejador.demasiadosIntentos(new DemasiadosIntentosException(30), peticion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(respuesta.getBody().codigo()).isEqualTo("DEMASIADOS_INTENTOS");
+        assertThat(respuesta.getHeaders().getFirst("Retry-After")).isEqualTo("30");
+    }
+
+    @Test
+    void nombreUsuarioDuplicadoMapeaA409() {
+        stubRuta("/api/v1/usuarios");
+
+        var respuesta = manejador.nombreUsuarioDuplicado(new NombreUsuarioDuplicadoException("admin"), peticion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(respuesta.getBody().codigo()).isEqualTo("CONFLICTO");
+    }
+
+    @Test
+    void usuarioNoEncontradoMapeaA404() {
+        stubRuta("/api/v1/usuarios/99");
+
+        var respuesta = manejador.usuarioNoEncontrado(new UsuarioNoEncontradoException(99L), peticion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(respuesta.getBody().codigo()).isEqualTo("NO_ENCONTRADA");
+    }
+
+    @Test
+    void ultimoAdminMapeaA409() {
+        stubRuta("/api/v1/usuarios/1");
+
+        var respuesta = manejador.ultimoAdmin(new UltimoAdminException(), peticion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(respuesta.getBody().codigo()).isEqualTo("CONFLICTO");
+    }
+
+    @Test
+    void metodoHttpNoSoportadoMapeaA405() {
+        // Regresion real: navegar a GET /logout (ruta POST-only) devolvia
+        // 500 en vez de 405 antes de agregar este handler.
+        stubRuta("/logout");
+
+        var respuesta = manejador.metodoNoSoportado(
+                new org.springframework.web.HttpRequestMethodNotSupportedException("GET"), peticion);
+
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(respuesta.getBody().codigo()).isEqualTo("METODO_NO_SOPORTADO");
+    }
+
+    @Test
     void excepcionNoManejadaMapeaA500SinFiltrarDetalleInterno() {
         stubRuta("/api/v1/prueba");
 

@@ -27,17 +27,21 @@ public class AvisoDefaultsInseguros implements ApplicationListener<ApplicationRe
     static final String USUARIO_DEFECTO = "admin";
     static final String CONTRASENA_DEFECTO = "admin";
     static final String CLAVE_CIFRADO_DEFECTO = "clave-de-desarrollo-por-defecto-32-caracteres!";
+    static final String JWT_SECRETO_DEFECTO = "secreto-jwt-de-desarrollo-por-defecto!";
     static final String DB_PASSWORD_DEFECTO = "pulse";
 
     private final PropiedadesSeguridad propiedadesSeguridad;
     private final PropiedadesCifrado propiedadesCifrado;
+    private final PropiedadesJwt propiedadesJwt;
     private final Environment environment;
 
     public AvisoDefaultsInseguros(PropiedadesSeguridad propiedadesSeguridad,
                                    PropiedadesCifrado propiedadesCifrado,
+                                   PropiedadesJwt propiedadesJwt,
                                    Environment environment) {
         this.propiedadesSeguridad = propiedadesSeguridad;
         this.propiedadesCifrado = propiedadesCifrado;
+        this.propiedadesJwt = propiedadesJwt;
         this.environment = environment;
     }
 
@@ -51,6 +55,9 @@ public class AvisoDefaultsInseguros implements ApplicationListener<ApplicationRe
         }
         if (CLAVE_CIFRADO_DEFECTO.equals(propiedadesCifrado.getClave())) {
             defaults.add("PULSE_CRYPTO_KEY");
+        }
+        if (JWT_SECRETO_DEFECTO.equals(propiedadesJwt.getSecreto())) {
+            defaults.add("PULSE_JWT_SECRET");
         }
         if (DB_PASSWORD_DEFECTO.equals(environment.getProperty("spring.datasource.password"))) {
             defaults.add("PULSE_DB_PASSWORD");

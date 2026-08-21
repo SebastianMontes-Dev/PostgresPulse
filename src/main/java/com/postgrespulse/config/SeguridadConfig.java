@@ -1,58 +1,51 @@
 package com.postgrespulse.config;
 
-import com.postgrespulse.seguridad.BloqueoPorFuerzaBrutaFilter;
-import com.postgrespulse.seguridad.ControlIntentosFallidosServicio;
+import com.postgrespulse.seguridad.JwtAuthenticationFilter;
+import com.postgrespulse.seguridad.JwtServicio;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+import java.util.LinkedHashMap;
 
 /**
- * Autenticacion Basica (docs/SPECS.md #11.3): un unico administrador en
- * memoria desde PULSE_ADMIN_USER/PULSE_ADMIN_PASSWORD, hash BCrypt. Solo
- * /actuator/health queda publico (necesario para el HEALTHCHECK de Docker
- * sin credenciales, docs/DEPLOYMENT.md); Swagger UI y el resto de la API
- * requieren autenticacion, tal como ya documenta la fila de troubleshooting
- * "401 en Swagger" de docs/DEPLOYMENT.md #6.
+ * RBAC + JWT (ROADMAP.md), reemplaza la Autenticación Básica de un solo
+ * administrador de v1.0-v1.2. Los usuarios y roles (ADMIN/LECTOR) viven en
+ * la tabla `usuarios`; JwtAuthenticationFilter autentica leyendo el token de
+ * la cabecera `Authorization` (clientes de /api/v1/**) o de la cookie
+ * httpOnly `PULSE_JWT` (panel Thymeleaf) -- ver su javadoc para el porqué de
+ * esa distinción. Solo /actuator/health, /login y /api/v1/auth/** quedan
+ * públicos; el resto exige un JWT válido, y las mutaciones además exigen rol
+ * ADMIN vía @PreAuthorize en cada controlador (@EnableMethodSecurity abajo).
  *
- * CSRF: el navegador cachea las credenciales de Basic Auth y las reenvia
- * automaticamente a CUALQUIER peticion al mismo origen, sin importar que
- * pagina la origino -- es autoridad ambiental, igual que una cookie de
- * sesion. Un formulario oculto en un sitio de terceros podria disparar
- * POST /fuentes/{id}/analizar sin que el usuario lo note. Por eso CSRF
- * esta activo (CookieCsrfTokenRepository, compatible con STATELESS ya que
- * no depende de HttpSession) para las rutas del panel; Thymeleaf inyecta
- * el token automaticamente en los <form th:action="..."> existentes, sin
- * tocar las plantillas. Queda exento solo /api/v1/**: esos endpoints
- * estan pensados para clientes no-navegador (curl, scripts, CI) que no
- * pueden obtener un token CSRF de sesion; se acepta ese riesgo residual
- * documentado (requiere que un admin autenticado visite una pagina
- * maliciosa con el shape exacto del endpoint) como el mismo trade-off que
- * aplican APIs REST reales aseguradas con Basic Auth o API keys.
+ * CSRF: sigue activo en el panel (mismo razonamiento que con Basic Auth --
+ * la cookie es autoridad ambiental que el navegador reenvía sola) y exento
+ * en /api/v1/**, donde la autenticación exige que el cliente adjunte la
+ * cabecera Authorization a propósito en cada petición.
  *
- * Fuerza bruta: BloqueoPorFuerzaBrutaFilter + ControlIntentosFallidosServicio
- * bloquean una IP con 429 tras varios fallos recientes, antes de intentar
- * autenticar.
+ * Fuerza bruta: el límite se evalúa en AuthControlador/PanelAuthControlador
+ * antes de intentar autenticar (ControlIntentosFallidosServicio), no en un
+ * filtro genérico -- ya no hay un AuthenticationManager de Spring Security
+ * disparando eventos de éxito/fallo por cada petición como con Basic Auth,
+ * porque ahora la autenticación ocurre una sola vez, en el login.
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SeguridadConfig {
-
-    private final PropiedadesSeguridad propiedades;
-
-    public SeguridadConfig(PropiedadesSeguridad propiedades) {
-        this.propiedades = propiedades;
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -60,21 +53,13 @@ public class SeguridadConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        return new InMemoryUserDetailsManager(
-                User.withUsername(propiedades.getUsuario())
-                        .password(passwordEncoder.encode(propiedades.getContrasena()))
-                        .roles("ADMIN")
-                        .build());
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtServicio jwtServicio) {
+        return new JwtAuthenticationFilter(jwtServicio);
     }
 
     @Bean
-    public BloqueoPorFuerzaBrutaFilter bloqueoPorFuerzaBrutaFilter(ControlIntentosFallidosServicio control) {
-        return new BloqueoPorFuerzaBrutaFilter(control);
-    }
-
-    @Bean
-    public SecurityFilterChain cadenaFiltros(HttpSecurity http, BloqueoPorFuerzaBrutaFilter bloqueoFilter) throws Exception {
+    public SecurityFilterChain cadenaFiltros(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter)
+            throws Exception {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -82,9 +67,28 @@ public class SeguridadConfig {
                 .sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(peticiones -> peticiones
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/login", "/logout", "/panel.css").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults())
-                .addFilterBefore(bloqueoFilter, BasicAuthenticationFilter.class);
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPointPorRuta()))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    /**
+     * /api/v1/** y /actuator/**: 401 sin cuerpo -- ambos los llaman scripts,
+     * curl o herramientas de monitoreo, que no pueden "seguir" un redirect a
+     * una página de login. El resto (panel): redirect a /login, para que un
+     * humano en el navegador vea el formulario en vez de una respuesta JSON
+     * o una pantalla en blanco.
+     */
+    private DelegatingAuthenticationEntryPoint entryPointPorRuta() {
+        AuthenticationEntryPoint sin401 = (request, response, authException) -> response.sendError(401);
+        var entryPoints = new LinkedHashMap<RequestMatcher, AuthenticationEntryPoint>();
+        entryPoints.put(new AntPathRequestMatcher("/api/v1/**"), sin401);
+        entryPoints.put(new AntPathRequestMatcher("/actuator/**"), sin401);
+        DelegatingAuthenticationEntryPoint delegating = new DelegatingAuthenticationEntryPoint(entryPoints);
+        delegating.setDefaultEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
+        return delegating;
     }
 }

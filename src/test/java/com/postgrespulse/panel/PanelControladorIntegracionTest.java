@@ -1,6 +1,7 @@
 package com.postgrespulse.panel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.postgrespulse.seguridad.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,8 +68,36 @@ class PanelControladorIntegracionTest {
     @Value("${app.seguridad.contrasena}")
     String contrasenaAdmin;
 
-    private RequestPostProcessor admin() {
-        return SecurityMockMvcRequestPostProcessors.httpBasic(usuarioAdmin, contrasenaAdmin);
+    private String tokenAdmin;
+
+    private String tokenAdmin() throws Exception {
+        if (tokenAdmin == null) {
+            String cuerpo = mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"usuario\":\"" + usuarioAdmin + "\",\"contrasena\":\"" + contrasenaAdmin + "\"}"))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            tokenAdmin = objectMapper.readTree(cuerpo).get("token").asText();
+        }
+        return tokenAdmin;
+    }
+
+    /** Para /api/v1/** (registrarFuenteViaApi): el filtro solo lee el header ahí. */
+    private RequestPostProcessor admin() throws Exception {
+        String token = tokenAdmin();
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + token);
+            return request;
+        };
+    }
+
+    /** Para rutas del panel: el filtro solo lee la cookie ahí (ver JwtAuthenticationFilter). */
+    private RequestPostProcessor adminCookie() throws Exception {
+        String token = tokenAdmin();
+        return request -> {
+            request.setCookies(new jakarta.servlet.http.Cookie(JwtAuthenticationFilter.COOKIE_NOMBRE, token));
+            return request;
+        };
     }
 
     private long registrarFuenteViaApi(String nombre) throws Exception {
@@ -88,7 +117,7 @@ class PanelControladorIntegracionTest {
     void resumenMuestraLasFuentesRegistradas() throws Exception {
         registrarFuenteViaApi("Panel Resumen");
 
-        mockMvc.perform(get("/").with(admin()))
+        mockMvc.perform(get("/").with(adminCookie()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("index"))
                 .andExpect(model().attributeExists("fuentes"))
@@ -101,7 +130,7 @@ class PanelControladorIntegracionTest {
                 "nombre=SinCSRF&host=localhost&puerto=%d&baseDeDatos=objetivo_panel&usuario=demo&contrasena=demo",
                 BD_OBJETIVO.getMappedPort(5432));
 
-        mockMvc.perform(post("/fuentes").with(admin())
+        mockMvc.perform(post("/fuentes").with(adminCookie())
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(cuerpo))
                 .andExpect(status().isForbidden());
@@ -113,7 +142,7 @@ class PanelControladorIntegracionTest {
                 "nombre=ConCSRF&host=localhost&puerto=%d&baseDeDatos=objetivo_panel&usuario=demo&contrasena=demo",
                 BD_OBJETIVO.getMappedPort(5432));
 
-        mockMvc.perform(post("/fuentes").with(admin()).with(SecurityMockMvcRequestPostProcessors.csrf())
+        mockMvc.perform(post("/fuentes").with(adminCookie()).with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(cuerpo))
                 .andExpect(status().is3xxRedirection())
@@ -125,7 +154,7 @@ class PanelControladorIntegracionTest {
     void analizarConTokenCsrfRedirigeAlDetalleDeLaFuente() throws Exception {
         long id = registrarFuenteViaApi("Panel Analizar");
 
-        mockMvc.perform(post("/fuentes/{id}/analizar", id).with(admin()).with(SecurityMockMvcRequestPostProcessors.csrf()))
+        mockMvc.perform(post("/fuentes/{id}/analizar", id).with(adminCookie()).with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/fuentes/" + id));
     }
@@ -134,7 +163,7 @@ class PanelControladorIntegracionTest {
     void detalleDeFuenteSinAnalisisMuestraEstadoVacio() throws Exception {
         long id = registrarFuenteViaApi("Panel Sin Analisis");
 
-        mockMvc.perform(get("/fuentes/{id}", id).with(admin()))
+        mockMvc.perform(get("/fuentes/{id}", id).with(adminCookie()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("fuente-detalle"))
                 .andExpect(model().attribute("ultimo", org.hamcrest.Matchers.nullValue()));
@@ -142,7 +171,7 @@ class PanelControladorIntegracionTest {
 
     @Test
     void detalleDeFuenteInexistenteRedirigeConBannerSinFugaDeJson() throws Exception {
-        mockMvc.perform(get("/fuentes/99999").with(admin()))
+        mockMvc.perform(get("/fuentes/99999").with(adminCookie()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(flash().attribute("error", org.hamcrest.Matchers.containsString("99999")));
@@ -152,7 +181,7 @@ class PanelControladorIntegracionTest {
     void detalleDeTablaInexistenteNoRompe() throws Exception {
         long id = registrarFuenteViaApi("Panel Tabla");
 
-        mockMvc.perform(get("/fuentes/{id}/tablas/{tabla}", id, "tabla_que_no_existe").with(admin()))
+        mockMvc.perform(get("/fuentes/{id}/tablas/{tabla}", id, "tabla_que_no_existe").with(adminCookie()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("tabla-detalle"))
                 .andExpect(model().attribute("tabla", org.hamcrest.Matchers.nullValue()));
@@ -162,7 +191,7 @@ class PanelControladorIntegracionTest {
     void historialSinAnalisisMuestraPaginaVacia() throws Exception {
         long id = registrarFuenteViaApi("Panel Historial");
 
-        mockMvc.perform(get("/fuentes/{id}/historial", id).with(admin()))
+        mockMvc.perform(get("/fuentes/{id}/historial", id).with(adminCookie()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("historial"))
                 .andExpect(model().attributeExists("pagina"));

@@ -73,6 +73,7 @@ services:
       PULSE_SCHEDULER_CRON: ${PULSE_SCHEDULER_CRON:-0 0 * * * *}
       PULSE_ADMIN_USER: ${PULSE_ADMIN_USER:-admin}
       PULSE_ADMIN_PASSWORD: ${PULSE_ADMIN_PASSWORD:-admin}
+      PULSE_JWT_SECRET: ${PULSE_JWT_SECRET:-secreto-jwt-de-desarrollo-por-defecto!}
       PULSE_DEMO_SEED: ${PULSE_DEMO_SEED:-true}
     ports:
       - "8080:8080"

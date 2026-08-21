@@ -26,6 +26,7 @@
              SCRAM-SHA-256-PLUS): fijado por encima del 42.7.11 que trae
              spring-boot-dependencies:3.5.16. -->
         <postgresql.version>42.7.12</postgresql.version>
+        <jjwt.version>0.12.6</jjwt.version>
     </properties>
 
     <dependencies>
@@ -85,6 +86,31 @@
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-spring-boot3</artifactId>
             <version>${resilience4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <!-- RBAC + JWT (ROADMAP.md): firma/validacion de tokens HS256. -->
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <!-- sec:authorize en las plantillas Thymeleaf del panel (oculta
+                 acciones de ADMIN a usuarios con rol LECTOR). -->
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
         </dependency>
 
         <dependency>

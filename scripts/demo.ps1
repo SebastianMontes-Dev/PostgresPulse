@@ -20,8 +20,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$credencial = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${Usuario}:${Contrasena}"))
-$headers = @{ Authorization = "Basic $credencial" }
+$loginBody = @{ usuario = $Usuario; contrasena = $Contrasena } | ConvertTo-Json
+$login = Invoke-RestMethod -Uri "$BaseUrl/api/v1/auth/login" -Method Post -Body $loginBody -ContentType "application/json"
+$headers = @{ Authorization = "Bearer $($login.token)" }
 
 function Paso($numero, $texto) {
     Write-Host ""

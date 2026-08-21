@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -70,8 +69,22 @@ class FuenteApiIntegracionTest {
     @Value("${app.seguridad.contrasena}")
     String contrasenaAdmin;
 
-    private RequestPostProcessor admin() {
-        return SecurityMockMvcRequestPostProcessors.httpBasic(usuarioAdmin, contrasenaAdmin);
+    private String tokenAdmin;
+
+    private RequestPostProcessor admin() throws Exception {
+        if (tokenAdmin == null) {
+            String cuerpo = mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"usuario\":\"" + usuarioAdmin + "\",\"contrasena\":\"" + contrasenaAdmin + "\"}"))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            tokenAdmin = objectMapper.readTree(cuerpo).get("token").asText();
+        }
+        String token = tokenAdmin;
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + token);
+            return request;
+        };
     }
 
     private int puertoObjetivo() {
