@@ -77,6 +77,8 @@ app:
     expiracion-minutos: ${PULSE_JWT_EXPIRACION_MINUTOS:480}
   demo:
     sembrar: ${PULSE_DEMO_SEED:false}
+  limite-tasa:
+    peticiones-por-minuto: ${PULSE_API_RATE_LIMIT:60}
 
 logging:
   structured:

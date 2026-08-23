@@ -19,6 +19,9 @@ URL Base: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva
   internas que un LECTOR no necesita.
 - **Fuerza bruta**: varios intentos fallidos en `/auth/login` desde la misma IP devuelven `429` con
   cabecera `Retry-After` (segundos) antes de intentar validar credenciales.
+- **Límite de tasa general**: el resto de `/api/v1/**` (fuera de `/auth/**`) admite
+  `PULSE_API_RATE_LIMIT` peticiones por minuto por IP (60 por defecto, configurable). Al superarlo,
+  `429` con cabecera `Retry-After` y `"codigo": "LIMITE_TASA_EXCEDIDO"`, incluso sin autenticar.
 - **CSRF**: solo aplica a las rutas del panel de control (formularios Thymeleaf); `/api/v1/**` está exento — pensado para clientes no interactivos (curl, scripts, CI) sin token de sesión.
 - **Credenciales**: el campo `contrasena` **nunca** se devuelve en las respuestas; solo `"contrasenaEnmascarada": true`.
 - **Errores**: todas las respuestas 4xx/5xx usan el formato `ApiError` (sección 7).

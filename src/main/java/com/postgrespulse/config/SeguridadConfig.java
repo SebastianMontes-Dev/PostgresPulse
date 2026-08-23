@@ -1,7 +1,10 @@
 package com.postgrespulse.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.postgrespulse.seguridad.JwtAuthenticationFilter;
 import com.postgrespulse.seguridad.JwtServicio;
+import com.postgrespulse.seguridad.LimiteTasaApiFilter;
+import com.postgrespulse.seguridad.LimiteTasaApiServicio;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -42,6 +45,10 @@ import java.util.LinkedHashMap;
  * filtro genérico -- ya no hay un AuthenticationManager de Spring Security
  * disparando eventos de éxito/fallo por cada petición como con Basic Auth,
  * porque ahora la autenticación ocurre una sola vez, en el login.
+ *
+ * Límite de tasa general: LimiteTasaApiFilter cubre el resto de /api/v1/**
+ * (fuera de /auth/**) por IP, antes incluso de JwtAuthenticationFilter --
+ * también protege peticiones sin autenticar, no solo login.
  */
 @Configuration
 @EnableWebSecurity
@@ -72,7 +79,14 @@ public class SeguridadConfig {
     }
 
     @Bean
-    public SecurityFilterChain cadenaFiltros(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter)
+    public LimiteTasaApiFilter limiteTasaApiFilter(LimiteTasaApiServicio limiteTasaApiServicio,
+                                                    ObjectMapper objectMapper) {
+        return new LimiteTasaApiFilter(limiteTasaApiServicio, objectMapper);
+    }
+
+    @Bean
+    public SecurityFilterChain cadenaFiltros(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
+                                              LimiteTasaApiFilter limiteTasaApiFilter)
             throws Exception {
         http
                 .csrf(csrf -> csrf
@@ -90,7 +104,8 @@ public class SeguridadConfig {
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPointPorRuta()))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(limiteTasaApiFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 

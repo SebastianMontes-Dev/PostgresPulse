@@ -14,6 +14,16 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 - **Gate de cobertura JaCoCo para `seguridad`/`config`/`controlador`** (`pom.xml`, mínimo 80% línea):
   esos paquetes ya tenían tests (JWT, filtros, endpoints REST) pero ningún gate exigía mantenerlos.
   Cobertura real medida al agregar la regla: seguridad ~94%, config 100%, controlador ~85%.
+- **Límite de tasa general de API** (`LimiteTasaApiFilter`, `PULSE_API_RATE_LIMIT`, 60 peticiones/min
+  por IP por defecto): antes solo `/auth/login` tenía algún control (fuerza bruta); el resto de
+  `/api/v1/**` no tenía ningún límite. Corre antes que `JwtAuthenticationFilter` en la cadena, así que
+  también protege peticiones sin autenticar.
+
+### Corregido
+
+- **`spotbugs-exclude.xml`**: la entrada de `PanelControlador` (inyección de `ObjectMapper`) quedó
+  huérfana al eliminar ese campo en el commit de auto-refresh — reemplazada por la de
+  `LimiteTasaApiFilter`, que sí lo inyecta ahora.
 
 - **Headers de seguridad HTTP** (`SeguridadConfig`): `X-Frame-Options: DENY`,
   `Content-Security-Policy` (permite el CDN de Chart.js y los `<script>` inline de inicialización

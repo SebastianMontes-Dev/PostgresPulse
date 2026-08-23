@@ -37,12 +37,12 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.postgrespulse.panel.PanelControlador"/>
+        <Class name="com.postgrespulse.servicio.ExportacionServicio"/>
         <Method name="&lt;init&gt;"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.postgrespulse.servicio.ExportacionServicio"/>
+        <Class name="com.postgrespulse.seguridad.LimiteTasaApiFilter"/>
         <Method name="&lt;init&gt;"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
