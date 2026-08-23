@@ -5,6 +5,14 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+### Añadido
+
+- **Headers de seguridad HTTP** (`SeguridadConfig`): `X-Frame-Options: DENY`,
+  `Content-Security-Policy` (permite el CDN de Chart.js y los `<script>` inline de inicialización
+  de gráfico existentes, sin abrir el resto) y `Strict-Transport-Security`.
+- **RBAC en actuator**: `/actuator/prometheus`, `/actuator/metrics` y `/actuator/info` ahora exigen
+  rol ADMIN (antes cualquier usuario autenticado, incluido LECTOR, podía leerlos).
+
 ## [1.3.0] — 2026-08-22
 
 Demostrabilidad y hardening tras el cierre de v1.2.0: capturas reales, despliegue con TLS

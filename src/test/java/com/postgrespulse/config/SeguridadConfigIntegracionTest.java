@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -90,6 +91,25 @@ class SeguridadConfigIntegracionTest {
         String token = tokenAdmin();
         return request -> {
             request.setCookies(new jakarta.servlet.http.Cookie("PULSE_JWT", token));
+            return request;
+        };
+    }
+
+    private RequestPostProcessor lector() throws Exception {
+        // La creacion puede fallar con 409 si un test anterior de esta misma
+        // clase ya sembro este usuario -- se ignora, el login de abajo igual
+        // funciona con las credenciales fijas.
+        mockMvc.perform(post("/api/v1/usuarios").with(admin())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombreUsuario\":\"lector-prueba\",\"contrasena\":\"lector1234\",\"rol\":\"LECTOR\"}"));
+        String cuerpo = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"usuario\":\"lector-prueba\",\"contrasena\":\"lector1234\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String token = objectMapper.readTree(cuerpo).get("token").asText();
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + token);
             return request;
         };
     }
@@ -178,6 +198,25 @@ class SeguridadConfigIntegracionTest {
         // primer analisis real, por eso no se verifican aqui (si se
         // necesitara, ver la corrida real documentada en docs/DEPLOYMENT.md #5.4).
         assertThat(cuerpo).contains("postgrespulse_fuentes_registradas");
+    }
+
+    @Test
+    void actuatorPrometheusMetricsInfoRequierenRolAdminNoSoloAutenticacion() throws Exception {
+        RequestPostProcessor lector = lector();
+        mockMvc.perform(get("/actuator/prometheus").with(lector))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/actuator/metrics").with(lector))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/actuator/info").with(lector))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void respuestasIncluyenHeadersDeSeguridad() throws Exception {
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().exists("Content-Security-Policy"));
     }
 
     @Test

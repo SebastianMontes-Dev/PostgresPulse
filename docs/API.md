@@ -14,7 +14,9 @@ URL Base: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva
 - **RBAC**: dos roles. **ADMIN** puede todo; **LECTOR** solo los endpoints `GET` — cualquier
   `POST`/`PUT`/`DELETE` (registrar, actualizar, eliminar, probar, analizar, gestionar usuarios)
   exige ADMIN. Una petición de LECTOR a un endpoint de ADMIN devuelve `403` con
-  `"codigo": "ACCESO_DENEGADO"`.
+  `"codigo": "ACCESO_DENEGADO"`. `/actuator/prometheus`, `/actuator/metrics` y `/actuator/info`
+  también exigen ADMIN (no basta con estar autenticado) — exponen metadatos de build y métricas
+  internas que un LECTOR no necesita.
 - **Fuerza bruta**: varios intentos fallidos en `/auth/login` desde la misma IP devuelven `429` con
   cabecera `Retry-After` (segundos) antes de intentar validar credenciales.
 - **CSRF**: solo aplica a las rutas del panel de control (formularios Thymeleaf); `/api/v1/**` está exento — pensado para clientes no interactivos (curl, scripts, CI) sin token de sesión.

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,6 +48,19 @@ import java.util.LinkedHashMap;
 @EnableMethodSecurity
 public class SeguridadConfig {
 
+    /**
+     * Las plantillas del panel usan &lt;script&gt; inline (inicializacion de
+     * Chart.js) y cargan Chart.js desde jsdelivr, asi que script-src no puede
+     * ser estricto sin nonces; se documenta como concesion deliberada, no
+     * como descuido.
+     */
+    private static final String POLITICA_CSP = "default-src 'self'; "
+            + "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+            + "style-src 'self' 'unsafe-inline'; "
+            + "img-src 'self' data:; "
+            + "object-src 'none'; "
+            + "frame-ancestors 'none'";
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -65,10 +79,15 @@ public class SeguridadConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/api/v1/**"))
                 .sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .frameOptions(FrameOptionsConfig::deny)
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(POLITICA_CSP))
+                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)))
                 .authorizeHttpRequests(peticiones -> peticiones
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/login", "/logout", "/panel.css").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPointPorRuta()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
