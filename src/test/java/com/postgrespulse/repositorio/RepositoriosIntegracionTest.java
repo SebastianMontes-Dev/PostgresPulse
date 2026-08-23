@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Las consultas derivadas y @Query propias de repositorio/ solo se
@@ -89,12 +90,16 @@ class RepositoriosIntegracionTest {
     }
 
     private ResultadoChequeo resultado(Analisis analisis, String codigo) {
+        return resultado(analisis, codigo, new BigDecimal("100.00"));
+    }
+
+    private ResultadoChequeo resultado(Analisis analisis, String codigo, BigDecimal puntaje) {
         ResultadoChequeo r = new ResultadoChequeo();
         r.setAnalisis(analisis);
         r.setCodigoChequeo(codigo);
         r.setCategoria(CategoriaChequeo.RENDIMIENTO);
         r.setEstado(EstadoAnalisis.SANO);
-        r.setPuntaje(new BigDecimal("100.00"));
+        r.setPuntaje(puntaje);
         r.setMensaje("ok");
         r.setDetalle(Map.of());
         return resultadoChequeoRepositorio.save(r);
@@ -237,6 +242,37 @@ class RepositoriosIntegracionTest {
         assertThat(resultadoChequeoRepositorio.findByAnalisisIdOrderByIdAsc(reciente.getId())).hasSize(1);
         // El Analisis en si se conserva (docs/SPECS.md #7): solo se borra el detalle granular.
         assertThat(analisisRepositorio.findById(viejo.getId())).isPresent();
+    }
+
+    @Test
+    void buscarTendenciaPorChequeoFiltraPorFuenteYCodigoOrdenadoDescendente() {
+        FuenteDatos fuente = fuente("Fuente Tendencia Chequeo", true);
+        FuenteDatos otraFuente = fuente("Otra Fuente Tendencia", true);
+        OffsetDateTime base = OffsetDateTime.now();
+
+        Analisis a1 = analisis(fuente, new BigDecimal("50.00"), base.minusDays(2));
+        resultado(a1, "CACHE_HIT", new BigDecimal("40.00"));
+        resultado(a1, "SEQ_SCAN", new BigDecimal("90.00"));
+        Analisis a2 = analisis(fuente, new BigDecimal("60.00"), base.minusDays(1));
+        resultado(a2, "CACHE_HIT", new BigDecimal("55.00"));
+        Analisis a3 = analisis(fuente, new BigDecimal("70.00"), base);
+        resultado(a3, "CACHE_HIT", new BigDecimal("70.00"));
+        // De otra fuente: no deberia aparecer en la tendencia de "fuente".
+        Analisis deOtraFuente = analisis(otraFuente, new BigDecimal("99.00"), base);
+        resultado(deOtraFuente, "CACHE_HIT", new BigDecimal("99.00"));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<ResultadoChequeo> tendencia = resultadoChequeoRepositorio.buscarTendenciaPorChequeo(
+                fuente.getId(), "CACHE_HIT", PageRequest.of(0, 30));
+
+        assertThat(tendencia).extracting(ResultadoChequeo::getPuntaje)
+                .containsExactly(new BigDecimal("70.00"), new BigDecimal("55.00"), new BigDecimal("40.00"));
+        // JOIN FETCH: no deberia lanzar LazyInitializationException al leer el analisis padre.
+        // isEqualTo exacto fallaria por la precision de TIMESTAMPTZ (microsegundos en Postgres
+        // vs. nanosegundos en OffsetDateTime.now()); alcanza con el mismo instante hasta el milisegundo.
+        assertThat(tendencia.get(0).getAnalisis().getAnalizadoEn())
+                .isCloseTo(a3.getAnalizadoEn(), within(1, java.time.temporal.ChronoUnit.MILLIS));
     }
 
     @Test

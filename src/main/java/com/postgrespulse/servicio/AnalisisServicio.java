@@ -9,6 +9,7 @@ import com.postgrespulse.dto.AnalisisDetalleDto;
 import com.postgrespulse.dto.AnalisisResumenDto;
 import com.postgrespulse.dto.ChequeoDto;
 import com.postgrespulse.dto.PaginaDto;
+import com.postgrespulse.dto.PuntoTendenciaChequeoDto;
 import com.postgrespulse.dto.PuntoTendenciaDto;
 import com.postgrespulse.dto.SaludDto;
 import com.postgrespulse.excepcion.AnalisisNoEncontradoException;
@@ -16,6 +17,7 @@ import com.postgrespulse.excepcion.FuenteNoEncontradaException;
 import com.postgrespulse.repositorio.AnalisisRepositorio;
 import com.postgrespulse.repositorio.FuenteDatosRepositorio;
 import com.postgrespulse.repositorio.ResultadoChequeoRepositorio;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -115,6 +117,19 @@ public class AnalisisServicio {
                 actual == null ? null : actual.getEstado(),
                 fuente.getUltimoAnalizadoEn(),
                 tendencia);
+    }
+
+    /** Panel de control: selector de chequeo en fuente-detalle (tendencia por metrica individual). */
+    public List<PuntoTendenciaChequeoDto> tendenciaChequeo(Long fuenteId, String codigoChequeo, int limite) {
+        if (!fuenteDatosRepositorio.existsById(fuenteId)) {
+            throw new FuenteNoEncontradaException(fuenteId);
+        }
+        List<ResultadoChequeo> resultados = resultadoChequeoRepositorio.buscarTendenciaPorChequeo(
+                fuenteId, codigoChequeo, PageRequest.of(0, limite));
+        return resultados.stream()
+                .sorted(Comparator.comparing(r -> r.getAnalisis().getAnalizadoEn()))
+                .map(r -> new PuntoTendenciaChequeoDto(r.getAnalisis().getAnalizadoEn(), r.getPuntaje(), r.getEstado()))
+                .toList();
     }
 
     private AnalisisResumenDto aResumen(Analisis analisis) {

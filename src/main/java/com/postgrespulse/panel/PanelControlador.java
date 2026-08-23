@@ -8,6 +8,7 @@ import com.postgrespulse.dto.ChequeoDto;
 import com.postgrespulse.dto.CrearFuenteDto;
 import com.postgrespulse.dto.FuenteRespuestaDto;
 import com.postgrespulse.dto.PaginaDto;
+import com.postgrespulse.dto.PuntoTendenciaChequeoDto;
 import com.postgrespulse.dto.SaludDto;
 import com.postgrespulse.dto.TablaDto;
 import com.postgrespulse.excepcion.AnalisisEnCursoException;
@@ -54,6 +55,8 @@ import java.util.stream.Collectors;
  */
 @Controller
 public class PanelControlador {
+
+    private static final int LIMITE_TENDENCIA_CHEQUEO = 30;
 
     private final FuenteServicio fuenteServicio;
     private final AnalisisServicio analisisServicio;
@@ -160,6 +163,13 @@ public class PanelControlador {
     @ResponseBody
     public SaludDto saludPanel(@PathVariable Long id) {
         return analisisServicio.salud(id);
+    }
+
+    /** Selector de chequeo en fuente-detalle: tendencia de una metrica individual, no solo el score agregado. */
+    @GetMapping(value = "/fuentes/{id}/chequeos/{codigo}/tendencia", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<PuntoTendenciaChequeoDto> tendenciaChequeo(@PathVariable Long id, @PathVariable String codigo) {
+        return analisisServicio.tendenciaChequeo(id, codigo, LIMITE_TENDENCIA_CHEQUEO);
     }
 
     @GetMapping("/fuentes/{id}/tablas/{tabla}")

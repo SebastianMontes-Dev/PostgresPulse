@@ -225,4 +225,16 @@ class PanelControladorIntegracionTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.fuenteId").value(id));
     }
+
+    @Test
+    void tendenciaDeChequeoDevuelveLosPuntosDelChequeoSeleccionado() throws Exception {
+        long id = registrarFuenteViaApi("Panel Tendencia Chequeo");
+        mockMvc.perform(post("/fuentes/{id}/analizar", id).with(adminCookie()).with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(get("/fuentes/{id}/chequeos/{codigo}/tendencia", id, "CACHE_HIT").with(adminCookie()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].puntaje").exists());
+    }
 }

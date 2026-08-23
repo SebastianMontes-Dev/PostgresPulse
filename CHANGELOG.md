@@ -23,6 +23,9 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
   periódico de datos que ya existen; para tener datos nuevos sigue haciendo falta "Analizar ahora"
   o el programador por cron. Los endpoints nuevos viven fuera de `/api/v1/**` a propósito: la
   cookie JWT del panel no autentica ahí (ver `JwtAuthenticationFilter`).
+- **Gráfico de tendencia por chequeo individual** (`fuente-detalle`, selector + `/fuentes/{id}/chequeos/{codigo}/tendencia`):
+  antes el único gráfico era el score agregado; ahora se puede ver la evolución de una métrica
+  puntual (`CACHE_HIT`, `BLOAT`, etc.) en las últimas 30 corridas.
 
 ### Eliminado
 

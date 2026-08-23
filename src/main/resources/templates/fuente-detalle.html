@@ -76,6 +76,17 @@
             </tbody>
         </table>
 
+        <h2>Tendencia por chequeo</h2>
+        <div class="grafico-caja">
+            <div class="campo" style="margin-bottom:1rem;">
+                <label for="selectorChequeo">Chequeo</label>
+                <select id="selectorChequeo">
+                    <option th:each="chequeo : ${ultimo.chequeos}" th:value="${chequeo.codigo}" th:text="${chequeo.codigo}"></option>
+                </select>
+            </div>
+            <canvas id="graficoChequeo" height="70"></canvas>
+        </div>
+
         <div th:if="${!#lists.isEmpty(tablasConHallazgos)}">
             <h2>Tablas con hallazgos</h2>
             <table>
@@ -155,6 +166,52 @@
         actualizarPuntaje(salud);
         actualizarGrafico(salud);
     });
+
+    const selectorChequeo = document.getElementById('selectorChequeo');
+    let graficoChequeo = null;
+
+    function cargarTendenciaChequeo(codigo) {
+        const url = window.location.pathname + '/chequeos/' + encodeURIComponent(codigo) + '/tendencia';
+        fetch(url, { headers: { Accept: 'application/json' } })
+            .then(respuesta => respuesta.ok ? respuesta.json() : [])
+            .then(puntos => {
+                const etiquetas = puntos.map(p => p.analizadoEn);
+                const datos = puntos.map(p => p.puntaje);
+                if (!graficoChequeo) {
+                    graficoChequeo = new Chart(document.getElementById('graficoChequeo'), {
+                        type: 'line',
+                        data: {
+                            labels: etiquetas,
+                            datasets: [{
+                                label: codigo,
+                                data: datos,
+                                borderColor: '#9d7aec',
+                                backgroundColor: 'rgba(157,122,236,0.15)',
+                                tension: 0.25,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
+                                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+                            },
+                            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+                        }
+                    });
+                    return;
+                }
+                graficoChequeo.data.labels = etiquetas;
+                graficoChequeo.data.datasets[0].data = datos;
+                graficoChequeo.data.datasets[0].label = codigo;
+                graficoChequeo.update();
+            });
+    }
+
+    if (selectorChequeo) {
+        cargarTendenciaChequeo(selectorChequeo.value);
+        selectorChequeo.addEventListener('change', () => cargarTendenciaChequeo(selectorChequeo.value));
+    }
 </script>
 </body>
 </html>
