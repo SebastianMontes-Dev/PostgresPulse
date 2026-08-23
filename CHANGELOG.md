@@ -5,6 +5,8 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+## [1.3.0] — 2026-08-22
+
 Demostrabilidad y hardening tras el cierre de v1.2.0: capturas reales, despliegue con TLS
 documentado, el gate de SpotBugs pasa de reporte a bloqueante, y RBAC + JWT reemplaza la
 Autenticación Básica de un solo administrador.
@@ -185,6 +187,7 @@ panel de control, programador y exportación de reportes, seguridad y despliegue
   Actions (Testcontainers + JaCoCo + publicación de imagen a GHCR).
 - **Pruebas**: cobertura JaCoCo con gate ≥80% en el motor de análisis y ≥70% en servicios/programador.
 
+[1.3.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/releases/tag/v1.0.0

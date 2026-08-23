@@ -1,4 +1,4 @@
-# PostgresPulse — Especificación Técnica y Funcional v1.0
+# PostgresPulse — Especificación Técnica y Funcional
 
 **Plataforma Empresarial de Análisis y Salud de Bases de Datos PostgreSQL**
 
@@ -6,9 +6,9 @@
 |---|---|
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
-| **Estado** | v1.0 completada — fases 0–8 ejecutadas y verificadas (ver §17) |
-| **Versión** | 1.0.0 |
-| **Última actualización** | 2026-08-18 |
+| **Estado** | v1.0 completada (fases 0–8, ver §17); RBAC+JWT, exportador Prometheus y despliegue TLS añadidos después — ver CHANGELOG.md |
+| **Versión** | 1.3.0 |
+| **Última actualización** | 2026-08-22 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
 
 ---
