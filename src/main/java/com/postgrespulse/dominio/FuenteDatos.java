@@ -53,6 +53,10 @@ public class FuenteDatos {
     @Column(nullable = false, length = 20)
     private EstadoFuente estado = EstadoFuente.FUERA_LINEA;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ssl_modo", nullable = false, length = 20)
+    private SslModo sslModo = SslModo.PREFER;
+
     @Column(name = "ultimo_error", columnDefinition = "TEXT")
     private String ultimoError;
 
@@ -163,6 +167,14 @@ public class FuenteDatos {
 
     public void setEstado(EstadoFuente estado) {
         this.estado = estado;
+    }
+
+    public SslModo getSslModo() {
+        return sslModo;
+    }
+
+    public void setSslModo(SslModo sslModo) {
+        this.sslModo = sslModo;
     }
 
     public String getUltimoError() {

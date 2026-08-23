@@ -67,6 +67,7 @@ public class RegistroConexionesServicio {
     private String armarUrlJdbc(FuenteDatos fuente) {
         return "jdbc:postgresql://" + fuente.getHost() + ":" + fuente.getPuerto() + "/" + fuente.getNombreBd()
                 + "?connectTimeout=" + TIEMPO_CONEXION_SEGUNDOS
-                + "&socketTimeout=" + TIEMPO_SOCKET_SEGUNDOS;
+                + "&socketTimeout=" + TIEMPO_SOCKET_SEGUNDOS
+                + "&sslmode=" + fuente.getSslModo().parametroJdbc();
     }
 }

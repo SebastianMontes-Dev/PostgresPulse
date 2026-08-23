@@ -1,6 +1,7 @@
 package com.postgrespulse.demo;
 
 import com.postgrespulse.dominio.EstadoFuente;
+import com.postgrespulse.dominio.SslModo;
 import com.postgrespulse.dto.CrearFuenteDto;
 import com.postgrespulse.dto.FuenteRespuestaDto;
 import com.postgrespulse.excepcion.NombreDuplicadoException;
@@ -66,7 +67,7 @@ class SembradorFuenteDemoServicioTest {
     void ejecutarDosVecesSoloIntentaCrearDosVeces() {
         FuenteRespuestaDto creada = new FuenteRespuestaDto(
                 1L, SembradorFuenteDemoServicio.NOMBRE_FUENTE_DEMO, "target-demo", 5432, "ventas_db",
-                "demo", true, "public,ventas", List.of("demo"), true, EstadoFuente.FUERA_LINEA,
+                "demo", true, "public,ventas", List.of("demo"), true, EstadoFuente.FUERA_LINEA, SslModo.PREFER,
                 null, null, null, null);
         when(fuenteServicio.crear(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(creada)

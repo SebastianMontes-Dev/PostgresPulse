@@ -1,6 +1,7 @@
 package com.postgrespulse.dto;
 
 import com.postgrespulse.dominio.EstadoFuente;
+import com.postgrespulse.dominio.SslModo;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -17,6 +18,7 @@ public record FuenteRespuestaDto(
         List<String> etiquetas,
         boolean habilitado,
         EstadoFuente estado,
+        SslModo sslModo,
         String ultimoError,
         OffsetDateTime ultimoAnalizadoEn,
         OffsetDateTime creadoEn,

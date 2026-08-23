@@ -12,6 +12,11 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
   de gráfico existentes, sin abrir el resto) y `Strict-Transport-Security`.
 - **RBAC en actuator**: `/actuator/prometheus`, `/actuator/metrics` y `/actuator/info` ahora exigen
   rol ADMIN (antes cualquier usuario autenticado, incluido LECTOR, podía leerlos).
+- **Modo SSL/TLS al conectar con la base objetivo** (`SslModo`: `DISABLE`/`PREFER`/`REQUIRE`/
+  `VERIFY_FULL`, migración `V4`, campo nuevo en `fuentes`): antes la URL JDBC nunca incluía
+  `sslmode`, dependiendo del default silencioso de pgjdbc (`prefer`, que sigue siendo el default de
+  las fuentes ya registradas). Necesario para empresas que conectan bases remotas, no solo
+  `localhost`. Configurable al registrar una fuente (API y formulario del panel).
 
 ## [1.3.0] — 2026-08-22
 

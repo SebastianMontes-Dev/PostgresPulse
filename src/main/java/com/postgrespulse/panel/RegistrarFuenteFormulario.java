@@ -1,5 +1,6 @@
 package com.postgrespulse.panel;
 
+import com.postgrespulse.dominio.SslModo;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -34,6 +35,8 @@ public class RegistrarFuenteFormulario {
     private String contrasena;
 
     private String filtroEsquema;
+
+    private SslModo sslModo = SslModo.PREFER;
 
     public String getNombre() {
         return nombre;
@@ -89,5 +92,13 @@ public class RegistrarFuenteFormulario {
 
     public void setFiltroEsquema(String filtroEsquema) {
         this.filtroEsquema = filtroEsquema;
+    }
+
+    public SslModo getSslModo() {
+        return sslModo;
+    }
+
+    public void setSslModo(SslModo sslModo) {
+        this.sslModo = sslModo;
     }
 }

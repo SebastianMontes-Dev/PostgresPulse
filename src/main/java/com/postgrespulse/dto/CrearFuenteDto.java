@@ -1,5 +1,6 @@
 package com.postgrespulse.dto;
 
+import com.postgrespulse.dominio.SslModo;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -41,9 +42,12 @@ public record CrearFuenteDto(
         String filtroEsquema,
 
         @Size(max = 10, message = "Máximo 10 etiquetas")
-        List<@Size(max = 50, message = "Cada etiqueta no puede superar 50 caracteres") String> etiquetas
+        List<@Size(max = 50, message = "Cada etiqueta no puede superar 50 caracteres") String> etiquetas,
+
+        SslModo sslModo
 ) {
     public CrearFuenteDto {
         etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);
+        sslModo = sslModo == null ? SslModo.PREFER : sslModo;
     }
 }

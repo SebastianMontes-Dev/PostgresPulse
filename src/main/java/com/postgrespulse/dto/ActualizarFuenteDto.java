@@ -1,5 +1,6 @@
 package com.postgrespulse.dto;
 
+import com.postgrespulse.dominio.SslModo;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
@@ -35,7 +36,9 @@ public record ActualizarFuenteDto(
         @Size(max = 10, message = "Máximo 10 etiquetas")
         List<@Size(max = 50, message = "Cada etiqueta no puede superar 50 caracteres") String> etiquetas,
 
-        Boolean habilitado
+        Boolean habilitado,
+
+        SslModo sslModo
 ) {
     public ActualizarFuenteDto {
         etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);

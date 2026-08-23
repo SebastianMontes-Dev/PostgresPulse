@@ -55,6 +55,7 @@ public class FuenteServicio {
         fuente.setFiltroEsquema(dto.filtroEsquema());
         fuente.setEtiquetas(unirEtiquetas(dto.etiquetas()));
         fuente.setHabilitado(Boolean.TRUE);
+        fuente.setSslModo(dto.sslModo());
         return aRespuesta(repositorio.save(fuente));
     }
 
@@ -91,6 +92,9 @@ public class FuenteServicio {
         if (dto.habilitado() != null) {
             fuente.setHabilitado(dto.habilitado());
         }
+        if (dto.sslModo() != null) {
+            fuente.setSslModo(dto.sslModo());
+        }
         FuenteDatos guardada = repositorio.save(fuente);
         registroConexiones.eliminar(id);
         return aRespuesta(guardada);
@@ -120,6 +124,7 @@ public class FuenteServicio {
                 separarEtiquetas(fuente.getEtiquetas()),
                 Boolean.TRUE.equals(fuente.getHabilitado()),
                 fuente.getEstado(),
+                fuente.getSslModo(),
                 fuente.getUltimoError(),
                 fuente.getUltimoAnalizadoEn(),
                 fuente.getCreadoEn(),

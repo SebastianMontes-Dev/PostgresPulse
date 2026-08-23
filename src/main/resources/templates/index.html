@@ -71,6 +71,13 @@
             <input id="filtroEsquema" type="text" th:field="*{filtroEsquema}" placeholder="public,ventas">
         </div>
         <div class="campo">
+            <label for="sslModo">Modo SSL</label>
+            <select id="sslModo" th:field="*{sslModo}">
+                <option th:each="modo : ${T(com.postgrespulse.dominio.SslModo).values()}"
+                        th:value="${modo}" th:text="${modo}"></option>
+            </select>
+        </div>
+        <div class="campo">
             <button type="submit" class="boton">Registrar</button>
         </div>
     </form>

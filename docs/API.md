@@ -138,6 +138,7 @@ GET /api/v1/fuentes
     "etiquetas": ["demo"],
     "habilitado": true,
     "estado": "EN_LINEA",
+    "sslModo": "PREFER",
     "ultimoAnalizadoEn": "2026-08-01T15:04:05Z"
   }
 ]
@@ -160,7 +161,8 @@ Content-Type: application/json
   "usuario": "demo",
   "contrasena": "demo",
   "filtroEsquema": "public,ventas",
-  "etiquetas": ["produccion", "core"]
+  "etiquetas": ["produccion", "core"],
+  "sslModo": "REQUIRE"
 }
 ```
 
@@ -174,6 +176,7 @@ Content-Type: application/json
 | `contrasena` | string | ✅ | 1–255 caracteres (cifrada AES-256-GCM, nunca se devuelve) |
 | `filtroEsquema` | string | ❌ | regex `[a-zA-Z0-9_.,]*` |
 | `etiquetas` | list[string] | ❌ | máx. 10 etiquetas |
+| `sslModo` | enum | ❌ | `DISABLE`\|`PREFER`\|`REQUIRE`\|`VERIFY_FULL`, default `PREFER` (mismo default histórico de pgjdbc) |
 
 **Respuesta 201** — fuente creada con `estado: FUERA_LINEA` (se verifica en la primera prueba/análisis).
 

@@ -1,5 +1,6 @@
 package com.postgrespulse.demo;
 
+import com.postgrespulse.dominio.SslModo;
 import com.postgrespulse.dto.CrearFuenteDto;
 import com.postgrespulse.excepcion.NombreDuplicadoException;
 import com.postgrespulse.servicio.FuenteServicio;
@@ -54,7 +55,8 @@ public class SembradorFuenteDemoServicio implements ApplicationRunner {
                 "demo",
                 "demo",
                 "public,ventas",
-                List.of("demo"));
+                List.of("demo"),
+                SslModo.PREFER);
         try {
             fuenteServicio.crear(dto);
             REGISTRO.info("Fuente de demostración '{}' sembrada automáticamente ({}:{})",

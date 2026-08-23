@@ -2,7 +2,9 @@ package com.postgrespulse.conexion;
 
 import com.postgrespulse.config.PropiedadesCifrado;
 import com.postgrespulse.dominio.FuenteDatos;
+import com.postgrespulse.dominio.SslModo;
 import com.postgrespulse.servicio.cifrado.CifradoServicio;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,5 +71,22 @@ class RegistroConexionesServicioSoloLecturaTest {
                         .hasMessageContaining("read-only");
             }
         }
+    }
+
+    @Test
+    void elModoSslDeLaFuenteSePropagaALaUrlJdbcDelPool() {
+        FuenteDatos fuente = new FuenteDatos();
+        fuente.setId(2L);
+        fuente.setHost("localhost");
+        fuente.setPuerto(BD_OBJETIVO.getMappedPort(5432));
+        fuente.setNombreBd(BD_OBJETIVO.getDatabaseName());
+        fuente.setUsuario(BD_OBJETIVO.getUsername());
+        fuente.setContrasenaCifrada(cifradoServicio.cifrar(BD_OBJETIVO.getPassword()));
+        // DISABLE en vez de PREFER (default) porque el contenedor de prueba no
+        // tiene SSL habilitado -- REQUIRE/VERIFY_FULL fallarian al conectar.
+        fuente.setSslModo(SslModo.DISABLE);
+
+        HikariDataSource pool = registroConexiones.obtenerOCrear(fuente);
+        assertThat(pool.getJdbcUrl()).contains("sslmode=disable");
     }
 }
