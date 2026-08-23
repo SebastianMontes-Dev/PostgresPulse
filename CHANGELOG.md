@@ -11,6 +11,9 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
   ahora se puede cambiar contraseña, rol y habilitado/deshabilitado sin recrear el usuario. Reutiliza
   la misma protección de "último ADMIN habilitado" que ya tenía `eliminar()`, aplicada solo cuando el
   cambio pedido realmente se la quitaría (deshabilitarlo o bajarlo de rol).
+- **Gate de cobertura JaCoCo para `seguridad`/`config`/`controlador`** (`pom.xml`, mínimo 80% línea):
+  esos paquetes ya tenían tests (JWT, filtros, endpoints REST) pero ningún gate exigía mantenerlos.
+  Cobertura real medida al agregar la regla: seguridad ~94%, config 100%, controlador ~85%.
 
 - **Headers de seguridad HTTP** (`SeguridadConfig`): `X-Frame-Options: DENY`,
   `Content-Security-Policy` (permite el CDN de Chart.js y los `<script>` inline de inicialización
