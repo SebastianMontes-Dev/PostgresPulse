@@ -19,7 +19,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -195,5 +197,32 @@ class PanelControladorIntegracionTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("historial"))
                 .andExpect(model().attributeExists("pagina"));
+    }
+
+    /** Endpoints de auto-refresh (panel.js): JSON, autenticados via cookie -- no bajo /api/v1/**. */
+    @Test
+    void resumenPanelDevuelveJsonDeLasFuentesAutenticadoConCookie() throws Exception {
+        registrarFuenteViaApi("Panel Auto-refresh Resumen");
+
+        mockMvc.perform(get("/resumen-panel"))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(get("/resumen-panel").with(adminCookie()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].fuente.nombre").value("Panel Auto-refresh Resumen"));
+    }
+
+    @Test
+    void saludPanelDevuelveJsonDeLaFuenteAutenticadoConCookie() throws Exception {
+        long id = registrarFuenteViaApi("Panel Auto-refresh Salud");
+
+        mockMvc.perform(get("/fuentes/{id}/salud-panel", id))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(get("/fuentes/{id}/salud-panel", id).with(adminCookie()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.fuenteId").value(id));
     }
 }

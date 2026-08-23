@@ -14,14 +14,17 @@
         <span th:text="${fuente.host} + ':' + ${fuente.puerto} + '/' + ${fuente.baseDeDatos}">host</span> ·
         <span class="badge" th:classappend="${fuente.estado}" th:text="${fuente.estado}">ESTADO</span>
         <span th:if="${fuente.ultimoError}" th:text="'· ' + ${fuente.ultimoError}" style="color:#f44336;">error</span>
+        · <span data-actualizado-hace></span>
     </p>
 
     <div th:if="${error}" class="banner banner-error" th:text="${error}">Error</div>
 
     <div style="display:flex; align-items:center; gap:1rem; margin: 1rem 0 1.5rem;">
-        <span th:if="${salud.puntajeActual != null}" class="puntaje" th:classappend="${salud.estadoActual}"
-              th:text="${salud.puntajeActual} + ' / 100'" style="font-size:2.5rem; font-weight:700;">— / 100</span>
-        <span th:unless="${salud.puntajeActual != null}" class="meta">Sin análisis todavía</span>
+        <div class="js-puntaje-slot">
+            <span th:if="${salud.puntajeActual != null}" class="puntaje" th:classappend="${salud.estadoActual}"
+                  th:text="${salud.puntajeActual} + ' / 100'" style="font-size:2.5rem; font-weight:700;">— / 100</span>
+            <span th:unless="${salud.puntajeActual != null}" class="meta">Sin análisis todavía</span>
+        </div>
 
         <form th:action="@{/fuentes/{id}/analizar(id=${fuente.id})}" method="post" sec:authorize="hasRole('ADMIN')">
             <button type="submit" class="boton">Analizar ahora</button>
@@ -31,7 +34,7 @@
            class="boton boton-secundario" target="_blank" rel="noopener">Reporte imprimible</a>
     </div>
 
-    <div class="grafico-caja" th:if="${!#lists.isEmpty(salud.tendencia7d)}">
+    <div class="grafico-caja">
         <canvas id="graficoTendencia" height="70"></canvas>
     </div>
 
@@ -93,32 +96,64 @@
     </div>
 </div>
 
-<script type="application/json" id="datos-tendencia" th:utext="${tendenciaJson}">[]</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
         integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
         crossorigin="anonymous"></script>
-<script th:if="${!#lists.isEmpty(salud.tendencia7d)}">
-    const datosTendencia = JSON.parse(document.getElementById('datos-tendencia').textContent);
-    new Chart(document.getElementById('graficoTendencia'), {
-        type: 'line',
-        data: {
-            labels: datosTendencia.map(d => d.analizadoEn),
-            datasets: [{
-                label: 'Puntuación de salud',
-                data: datosTendencia.map(d => d.puntajeSalud),
-                borderColor: '#7aa2f7',
-                backgroundColor: 'rgba(122,162,247,0.15)',
-                tension: 0.25,
-                fill: true
-            }]
-        },
-        options: {
-            scales: {
-                y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
-                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
-            },
-            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+<script th:src="@{/panel.js}"></script>
+<script>
+    let grafico = null;
+
+    function actualizarPuntaje(salud) {
+        const slot = document.querySelector('.js-puntaje-slot');
+        slot.innerHTML = '';
+        const nodo = document.createElement('span');
+        if (salud.puntajeActual != null) {
+            nodo.className = 'puntaje ' + salud.estadoActual;
+            nodo.style.fontSize = '2.5rem';
+            nodo.style.fontWeight = '700';
+            nodo.textContent = salud.puntajeActual + ' / 100';
+        } else {
+            nodo.className = 'meta';
+            nodo.textContent = 'Sin análisis todavía';
         }
+        slot.appendChild(nodo);
+    }
+
+    function actualizarGrafico(salud) {
+        const etiquetas = salud.tendencia7d.map(d => d.analizadoEn);
+        const datos = salud.tendencia7d.map(d => d.puntajeSalud);
+        if (!grafico) {
+            grafico = new Chart(document.getElementById('graficoTendencia'), {
+                type: 'line',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Puntuación de salud',
+                        data: datos,
+                        borderColor: '#7aa2f7',
+                        backgroundColor: 'rgba(122,162,247,0.15)',
+                        tension: 0.25,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
+                        x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e6e6e6' } } }
+                }
+            });
+            return;
+        }
+        grafico.data.labels = etiquetas;
+        grafico.data.datasets[0].data = datos;
+        grafico.update();
+    }
+
+    PostgresPulsePanel.iniciarPoll(window.location.pathname + '/salud-panel', (salud) => {
+        actualizarPuntaje(salud);
+        actualizarGrafico(salud);
     });
 </script>
 </body>

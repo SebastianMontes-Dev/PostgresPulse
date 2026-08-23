@@ -15,7 +15,9 @@
 **8 chequeos de diagnóstico profesional** (rendimiento, almacenamiento, integridad, concurrencia,
 conexiones), calcula un **Índice de Salud (0–100)** ponderado por categoría, y entrega
 **recomendaciones con SQL listo para ejecutar** — `CREATE INDEX`, `VACUUM`, `ALTER TABLE ADD PRIMARY KEY`
-— junto con historial de tendencia, API REST documentada y un panel de control web.
+— junto con historial de tendencia, API REST documentada y un panel de control web que se
+actualiza solo cada 30s (polling, no push/WebSocket — sigue haciendo falta "Analizar ahora" o el
+programador por cron para que haya datos nuevos que mostrar).
 
 Multi-fuente en tiempo de ejecución (registra fuentes sin reiniciar), credenciales cifradas
 AES-256-GCM, garantía de solo-lectura a nivel de sesión PostgreSQL (nunca escribe en la BD analizada),

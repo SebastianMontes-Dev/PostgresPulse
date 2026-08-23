@@ -1,6 +1,5 @@
 package com.postgrespulse.panel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.postgrespulse.dominio.CategoriaChequeo;
 import com.postgrespulse.dominio.TipoDisparo;
 import com.postgrespulse.dto.AnalisisDetalleDto;
@@ -20,6 +19,7 @@ import com.postgrespulse.servicio.FuenteServicio;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -57,29 +58,41 @@ public class PanelControlador {
     private final FuenteServicio fuenteServicio;
     private final AnalisisServicio analisisServicio;
     private final DetalleAnalisisServicio detalleAnalisisServicio;
-    private final ObjectMapper objectMapper;
 
     public PanelControlador(FuenteServicio fuenteServicio,
                              AnalisisServicio analisisServicio,
-                             DetalleAnalisisServicio detalleAnalisisServicio,
-                             ObjectMapper objectMapper) {
+                             DetalleAnalisisServicio detalleAnalisisServicio) {
         this.fuenteServicio = fuenteServicio;
         this.analisisServicio = analisisServicio;
         this.detalleAnalisisServicio = detalleAnalisisServicio;
-        this.objectMapper = objectMapper;
     }
 
     @GetMapping("/")
     public String resumen(Model modelo) {
+        modelo.addAttribute("fuentes", construirResumen());
+        modelo.addAttribute("formulario", new RegistrarFuenteFormulario());
+        return "index";
+    }
+
+    /**
+     * Para el auto-refresh de "/" (panel.js): no vive bajo /api/v1/** porque
+     * JwtAuthenticationFilter ignora deliberadamente la cookie del panel ahi
+     * (ver su javadoc) -- un fetch() del navegador solo se autentica en rutas
+     * como esta, no en la API REST.
+     */
+    @GetMapping(value = "/resumen-panel", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<FuenteResumenVista> resumenPanel() {
+        return construirResumen();
+    }
+
+    private List<FuenteResumenVista> construirResumen() {
         List<FuenteRespuestaDto> fuentesDto = fuenteServicio.listar();
         Map<Long, AnalisisResumenDto> ultimos = analisisServicio.ultimosPorFuentes(
                 fuentesDto.stream().map(FuenteRespuestaDto::id).toList());
-        List<FuenteResumenVista> fuentes = fuentesDto.stream()
+        return fuentesDto.stream()
                 .map(f -> new FuenteResumenVista(f, ultimos.get(f.id())))
                 .toList();
-        modelo.addAttribute("fuentes", fuentes);
-        modelo.addAttribute("formulario", new RegistrarFuenteFormulario());
-        return "index";
     }
 
     @PostMapping("/fuentes")
@@ -135,12 +148,18 @@ public class PanelControlador {
 
         modelo.addAttribute("fuente", fuente);
         modelo.addAttribute("salud", salud);
-        modelo.addAttribute("tendenciaJson", aJson(salud.tendencia7d()));
         modelo.addAttribute("ultimo", ultimo.orElse(null));
         modelo.addAttribute("categorias", ultimo.map(this::agruparPorCategoria).orElse(List.of()));
         modelo.addAttribute("tablasConHallazgos",
                 ultimo.map(a -> detalleAnalisisServicio.tablasDesdeChequeos(a.chequeos())).orElse(List.of()));
         return "fuente-detalle";
+    }
+
+    /** Mismo razonamiento que resumenPanel(): auto-refresh del score/gráfico de fuente-detalle e historial. */
+    @GetMapping(value = "/fuentes/{id}/salud-panel", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public SaludDto saludPanel(@PathVariable Long id) {
+        return analisisServicio.salud(id);
     }
 
     @GetMapping("/fuentes/{id}/tablas/{tabla}")
@@ -173,11 +192,9 @@ public class PanelControlador {
         }
         Pageable pageable = PageRequest.of(Math.max(page, 0), 20);
         PaginaDto<AnalisisResumenDto> pagina = analisisServicio.historial(id, pageable);
-        SaludDto salud = analisisServicio.salud(id);
 
         modelo.addAttribute("fuente", fuente);
         modelo.addAttribute("pagina", pagina);
-        modelo.addAttribute("tendenciaJson", aJson(salud.tendencia7d()));
         return "historial";
     }
 
@@ -197,13 +214,5 @@ public class PanelControlador {
         }
         BigDecimal suma = puntajes.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         return suma.divide(BigDecimal.valueOf(puntajes.size()), 2, RoundingMode.HALF_UP);
-    }
-
-    private String aJson(Object valor) {
-        try {
-            return objectMapper.writeValueAsString(valor);
-        } catch (Exception ex) {
-            return "[]";
-        }
     }
 }

@@ -10,6 +10,7 @@
 <div class="contenido">
     <p class="meta"><a th:href="@{/fuentes/{id}(id=${fuente.id})}" th:text="'← ' + ${fuente.nombre}">← Fuente</a></p>
     <h1>Historial</h1>
+    <p class="meta"><span data-actualizado-hace></span></p>
 
     <div class="grafico-caja">
         <canvas id="graficoTendencia" height="70"></canvas>
@@ -42,19 +43,18 @@
     </div>
 </div>
 
-<script type="application/json" id="datos-tendencia" th:utext="${tendenciaJson}">[]</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
         integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
         crossorigin="anonymous"></script>
+<script th:src="@{/panel.js}"></script>
 <script>
-    const datosTendencia = JSON.parse(document.getElementById('datos-tendencia').textContent);
-    new Chart(document.getElementById('graficoTendencia'), {
+    const grafico = new Chart(document.getElementById('graficoTendencia'), {
         type: 'line',
         data: {
-            labels: datosTendencia.map(d => d.analizadoEn),
+            labels: [],
             datasets: [{
                 label: 'Puntuación de salud (últimos 7)',
-                data: datosTendencia.map(d => d.puntajeSalud),
+                data: [],
                 borderColor: '#7aa2f7',
                 backgroundColor: 'rgba(122,162,247,0.15)',
                 tension: 0.25,
@@ -68,6 +68,13 @@
             },
             plugins: { legend: { labels: { color: '#e6e6e6' } } }
         }
+    });
+
+    const urlSalud = window.location.pathname.replace(/\/historial$/, '') + '/salud-panel';
+    PostgresPulsePanel.iniciarPoll(urlSalud, (salud) => {
+        grafico.data.labels = salud.tendencia7d.map(d => d.analizadoEn);
+        grafico.data.datasets[0].data = salud.tendencia7d.map(d => d.puntajeSalud);
+        grafico.update();
     });
 </script>
 </body>

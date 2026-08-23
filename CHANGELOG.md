@@ -17,6 +17,18 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
   `sslmode`, dependiendo del default silencioso de pgjdbc (`prefer`, que sigue siendo el default de
   las fuentes ya registradas). Necesario para empresas que conectan bases remotas, no solo
   `localhost`. Configurable al registrar una fuente (API y formulario del panel).
+- **Auto-refresh del panel** (`panel.js`, endpoints `/resumen-panel` y `/fuentes/{id}/salud-panel`):
+  el resumen, el detalle de fuente y el historial se refrescan solos cada 30s sin recargar la
+  página (score, badges y el gráfico de Chart.js). Sigue sin ser push/tiempo real -- solo pull
+  periódico de datos que ya existen; para tener datos nuevos sigue haciendo falta "Analizar ahora"
+  o el programador por cron. Los endpoints nuevos viven fuera de `/api/v1/**` a propósito: la
+  cookie JWT del panel no autentica ahí (ver `JwtAuthenticationFilter`).
+
+### Eliminado
+
+- `tendenciaJson` (atributo de modelo) y el método privado `aJson()` de `PanelControlador`: el
+  gráfico de tendencia ahora se construye en el cliente a partir del primer poll a `/salud-panel`,
+  no de JSON embebido en el HTML servido.
 
 ## [1.3.0] — 2026-08-22
 
