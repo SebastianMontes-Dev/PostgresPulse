@@ -105,7 +105,29 @@ Content-Type: application/json
 
 **Respuesta 201** — usuario creado. **409** si el nombre ya existe.
 
-### 3.3 Eliminar usuario
+### 3.3 Editar usuario
+
+```
+PUT /api/v1/usuarios/{id}
+Content-Type: application/json
+```
+
+**Cuerpo** (todos los campos opcionales — solo se aplican los presentes)
+```json
+{ "contrasena": "una-contrasena-nueva", "rol": "ADMIN", "habilitado": false }
+```
+
+| Campo | Tipo | Validación |
+|---|---|---|
+| `contrasena` | string | 8–255 caracteres si se envía |
+| `rol` | string | `ADMIN` o `LECTOR` |
+| `habilitado` | boolean | — |
+
+**Respuesta 200** — usuario actualizado. **404** si no existe. **409** si el cambio (deshabilitar o
+bajar de rol) le quitaría la condición de ADMIN habilitado al último administrador
+(`UltimoAdminException`) — mismo criterio que 3.4.
+
+### 3.4 Eliminar usuario
 
 ```
 DELETE /api/v1/usuarios/{id}

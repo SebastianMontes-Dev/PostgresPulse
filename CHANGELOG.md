@@ -7,6 +7,11 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Editar usuario** (`PUT /api/v1/usuarios/{id}`): antes solo se podía crear/listar/eliminar --
+  ahora se puede cambiar contraseña, rol y habilitado/deshabilitado sin recrear el usuario. Reutiliza
+  la misma protección de "último ADMIN habilitado" que ya tenía `eliminar()`, aplicada solo cuando el
+  cambio pedido realmente se la quitaría (deshabilitarlo o bajarlo de rol).
+
 - **Headers de seguridad HTTP** (`SeguridadConfig`): `X-Frame-Options: DENY`,
   `Content-Security-Policy` (permite el CDN de Chart.js y los `<script>` inline de inicialización
   de gráfico existentes, sin abrir el resto) y `Strict-Transport-Security`.

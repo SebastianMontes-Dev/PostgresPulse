@@ -3,6 +3,7 @@ package com.postgrespulse.servicio;
 import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import com.postgrespulse.dto.CrearUsuarioDto;
+import com.postgrespulse.dto.EditarUsuarioDto;
 import com.postgrespulse.dto.UsuarioRespuestaDto;
 import com.postgrespulse.excepcion.NombreUsuarioDuplicadoException;
 import com.postgrespulse.excepcion.UltimoAdminException;
@@ -41,6 +42,36 @@ public class UsuarioServicio {
         usuario.setContrasenaHash(passwordEncoder.encode(dto.contrasena()));
         usuario.setRol(dto.rol());
         usuario.setHabilitado(true);
+        return UsuarioRespuestaDto.desde(usuarioRepositorio.save(usuario));
+    }
+
+    /**
+     * Editar rol/habilitado/contrasena de un usuario existente. La proteccion
+     * de "ultimo admin" (esUltimoAdminHabilitado) solo aplica si el cambio
+     * pedido realmente le quitaria esa condicion (deshabilitarlo o bajarlo de
+     * rol) -- editar solo la contrasena de un admin, por ejemplo, nunca la
+     * dispara.
+     */
+    @Transactional
+    public UsuarioRespuestaDto editar(Long id, EditarUsuarioDto dto) {
+        Usuario usuario = usuarioRepositorio.findById(id)
+                .orElseThrow(() -> new UsuarioNoEncontradoException(id));
+
+        boolean intentaDeshabilitar = dto.habilitado() != null && !dto.habilitado();
+        boolean intentaQuitarRolAdmin = dto.rol() != null && dto.rol() != Rol.ADMIN;
+        if ((intentaDeshabilitar || intentaQuitarRolAdmin) && esUltimoAdminHabilitado(usuario)) {
+            throw new UltimoAdminException();
+        }
+
+        if (dto.contrasena() != null) {
+            usuario.setContrasenaHash(passwordEncoder.encode(dto.contrasena()));
+        }
+        if (dto.rol() != null) {
+            usuario.setRol(dto.rol());
+        }
+        if (dto.habilitado() != null) {
+            usuario.setHabilitado(dto.habilitado());
+        }
         return UsuarioRespuestaDto.desde(usuarioRepositorio.save(usuario));
     }
 

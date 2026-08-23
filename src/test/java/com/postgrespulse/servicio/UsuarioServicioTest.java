@@ -3,6 +3,7 @@ package com.postgrespulse.servicio;
 import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import com.postgrespulse.dto.CrearUsuarioDto;
+import com.postgrespulse.dto.EditarUsuarioDto;
 import com.postgrespulse.dto.UsuarioRespuestaDto;
 import com.postgrespulse.excepcion.NombreUsuarioDuplicadoException;
 import com.postgrespulse.excepcion.UltimoAdminException;
@@ -76,6 +77,78 @@ class UsuarioServicioTest {
                 .isInstanceOf(NombreUsuarioDuplicadoException.class);
 
         verify(usuarioRepositorio, never()).save(any());
+    }
+
+    @Test
+    void editaSoloLaContrasenaDeUnAdminSinDispararProteccionDeUltimoAdmin() {
+        Usuario admin = usuario(4L, Rol.ADMIN, true);
+        when(usuarioRepositorio.findById(4L)).thenReturn(Optional.of(admin));
+        when(passwordEncoder.encode("otra-contrasena")).thenReturn("hash-nuevo");
+        when(usuarioRepositorio.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        servicio.editar(4L, new EditarUsuarioDto("otra-contrasena", null, null));
+
+        assertThat(admin.getContrasenaHash()).isEqualTo("hash-nuevo");
+        assertThat(admin.getRol()).isEqualTo(Rol.ADMIN);
+        assertThat(admin.isHabilitado()).isTrue();
+        // No deberia haber consultado el conteo de admins: ni deshabilita ni cambia de rol.
+        verify(usuarioRepositorio, never()).countByRolAndHabilitadoTrue(any());
+    }
+
+    @Test
+    void editaRolYHabilitadoDeUnLectorSinRestriccion() {
+        Usuario lector = usuario(5L, Rol.LECTOR, true);
+        when(usuarioRepositorio.findById(5L)).thenReturn(Optional.of(lector));
+        when(usuarioRepositorio.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UsuarioRespuestaDto respuesta = servicio.editar(5L, new EditarUsuarioDto(null, Rol.ADMIN, false));
+
+        assertThat(respuesta.rol()).isEqualTo(Rol.ADMIN);
+        assertThat(respuesta.habilitado()).isFalse();
+    }
+
+    @Test
+    void noPermiteDeshabilitarAlUltimoAdminHabilitado() {
+        Usuario ultimoAdmin = usuario(1L, Rol.ADMIN, true);
+        when(usuarioRepositorio.findById(1L)).thenReturn(Optional.of(ultimoAdmin));
+        when(usuarioRepositorio.countByRolAndHabilitadoTrue(Rol.ADMIN)).thenReturn(1L);
+
+        assertThatThrownBy(() -> servicio.editar(1L, new EditarUsuarioDto(null, null, false)))
+                .isInstanceOf(UltimoAdminException.class);
+
+        verify(usuarioRepositorio, never()).save(any());
+    }
+
+    @Test
+    void noPermiteBajarleElRolAlUltimoAdminHabilitado() {
+        Usuario ultimoAdmin = usuario(1L, Rol.ADMIN, true);
+        when(usuarioRepositorio.findById(1L)).thenReturn(Optional.of(ultimoAdmin));
+        when(usuarioRepositorio.countByRolAndHabilitadoTrue(Rol.ADMIN)).thenReturn(1L);
+
+        assertThatThrownBy(() -> servicio.editar(1L, new EditarUsuarioDto(null, Rol.LECTOR, null)))
+                .isInstanceOf(UltimoAdminException.class);
+
+        verify(usuarioRepositorio, never()).save(any());
+    }
+
+    @Test
+    void permiteDeshabilitarUnAdminSiHayOtrosAdminsHabilitados() {
+        Usuario admin = usuario(3L, Rol.ADMIN, true);
+        when(usuarioRepositorio.findById(3L)).thenReturn(Optional.of(admin));
+        when(usuarioRepositorio.countByRolAndHabilitadoTrue(Rol.ADMIN)).thenReturn(2L);
+        when(usuarioRepositorio.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UsuarioRespuestaDto respuesta = servicio.editar(3L, new EditarUsuarioDto(null, null, false));
+
+        assertThat(respuesta.habilitado()).isFalse();
+    }
+
+    @Test
+    void lanzaNoEncontradoAlEditarUnIdInexistente() {
+        when(usuarioRepositorio.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servicio.editar(99L, new EditarUsuarioDto(null, Rol.ADMIN, null)))
+                .isInstanceOf(UsuarioNoEncontradoException.class);
     }
 
     @Test
