@@ -16,11 +16,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.util.LinkedHashMap;
@@ -103,7 +104,9 @@ public class SeguridadConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPointPorRuta()))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(entryPointPorRuta())
+                        .accessDeniedHandler(sin403()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(limiteTasaApiFilter, JwtAuthenticationFilter.class);
         return http.build();
@@ -115,14 +118,40 @@ public class SeguridadConfig {
      * una página de login. El resto (panel): redirect a /login, para que un
      * humano en el navegador vea el formulario en vez de una respuesta JSON
      * o una pantalla en blanco.
+     *
+     * response.setStatus(401), NUNCA response.sendError(401): en un
+     * contenedor real (Tomcat embebido, no MockMvc) sendError() dispara el
+     * reenvio interno del contenedor a /error, que vuelve a pasar por esta
+     * misma cadena de filtros -- pero esa segunda pasada evalua estos
+     * RequestMatcher contra la URI "/error", no la original, asi que nunca
+     * coincide y siempre cae al entry point por defecto (redirect a
+     * /login), incluso para /api/v1/** sin token. setStatus() deja el
+     * mismo resultado visible (401 sin cuerpo) sin disparar ese reenvio.
+     * MockMvc no lo detectaba porque TestDispatcherServlet no reproduce el
+     * reenvio a /error de un contenedor real; encontrado verificando
+     * manualmente contra el contenedor real con curl.
      */
     private DelegatingAuthenticationEntryPoint entryPointPorRuta() {
-        AuthenticationEntryPoint sin401 = (request, response, authException) -> response.sendError(401);
+        AuthenticationEntryPoint sin401 = (request, response, authException) -> response.setStatus(401);
         var entryPoints = new LinkedHashMap<RequestMatcher, AuthenticationEntryPoint>();
-        entryPoints.put(new AntPathRequestMatcher("/api/v1/**"), sin401);
-        entryPoints.put(new AntPathRequestMatcher("/actuator/**"), sin401);
+        entryPoints.put(PathPatternRequestMatcher.withDefaults().matcher("/api/v1/**"), sin401);
+        entryPoints.put(PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"), sin401);
         DelegatingAuthenticationEntryPoint delegating = new DelegatingAuthenticationEntryPoint(entryPoints);
         delegating.setDefaultEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
         return delegating;
+    }
+
+    /**
+     * El unico caso que llega hasta aca (no a ManejadorErroresGlobal) es un
+     * rechazo a nivel de filtro -- hoy solo hasRole("ADMIN") en
+     * /actuator/**, evaluado por AuthorizationFilter, fuera del
+     * DispatcherServlet -- los rechazos de @PreAuthorize se atrapan antes,
+     * dentro del DispatcherServlet (ver javadoc de
+     * ManejadorErroresGlobal#accesoDenegado). El AccessDeniedHandler por
+     * defecto de Spring Security tambien usa sendError() internamente, con
+     * el mismo problema de reenvio a /error que entryPointPorRuta().
+     */
+    private AccessDeniedHandler sin403() {
+        return (request, response, accessDeniedException) -> response.setStatus(403);
     }
 }

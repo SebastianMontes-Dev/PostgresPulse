@@ -7,7 +7,7 @@
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
 | **Estado** | v1.0 completada (fases 0–8, ver §17); RBAC+JWT, exportador Prometheus y despliegue TLS añadidos después — ver CHANGELOG.md |
-| **Versión** | 1.4.0 |
+| **Versión** | 1.4.1 |
 | **Última actualización** | 2026-08-24 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
 

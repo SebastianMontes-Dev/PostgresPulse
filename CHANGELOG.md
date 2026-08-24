@@ -5,6 +5,23 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+## [1.4.1] — 2026-08-24
+
+### Corregido
+
+- **`/api/v1/**` y `/actuator/**` sin token devolvían un redirect a `/login` (302, HTML) en vez del
+  `401` sin cuerpo documentado en `docs/API.md` — y por el mismo motivo, un LECTOR autenticado
+  contra un endpoint de solo-ADMIN de `/actuator/**` recibía el mismo redirect en vez de `403`.
+  Causa: `entryPointPorRuta()`/el `AccessDeniedHandler` por defecto llamaban `response.sendError()`,
+  que en un contenedor real (Tomcat embebido, no `MockMvc`) dispara un reenvío interno a `/error` —
+  esa segunda pasada por la cadena de Spring Security evalúa los `RequestMatcher` contra la URI
+  `/error`, no la original, así que nunca coincide y cae al entry point por defecto (redirect).
+  `MockMvc` no lo detectaba porque `TestDispatcherServlet` no reproduce ese reenvío. Corregido
+  usando `response.setStatus()` en vez de `sendError()`. Encontrado verificando manualmente contra
+  `docker compose up` con `curl` (nunca antes probado contra un contenedor real, solo MockMvc) —
+  agregado `SeguridadContenedorRealIntegracionTest` (`TestRestTemplate` + servidor embebido real)
+  como regresión, ya que ningún test con MockMvc puede cubrir esta clase de bug.
+
 ## [1.4.0] — 2026-08-24
 
 Cierre de los huecos reales identificados en la auditoría multi-audiencia posterior a v1.3.0:
@@ -238,6 +255,7 @@ panel de control, programador y exportación de reportes, seguridad y despliegue
   Actions (Testcontainers + JaCoCo + publicación de imagen a GHCR).
 - **Pruebas**: cobertura JaCoCo con gate ≥80% en el motor de análisis y ≥70% en servicios/programador.
 
+[1.4.1]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.1.0...v1.2.0
