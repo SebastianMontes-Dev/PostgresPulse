@@ -20,7 +20,8 @@ actualiza solo cada 30s (polling, no push/WebSocket — sigue haciendo falta "An
 programador por cron para que haya datos nuevos que mostrar).
 
 Multi-fuente en tiempo de ejecución (registra fuentes sin reiniciar), credenciales cifradas
-AES-256-GCM, garantía de solo-lectura a nivel de sesión PostgreSQL (nunca escribe en la BD analizada),
+AES-256-GCM, modo SSL/TLS configurable por fuente (para bases remotas, no solo `localhost`),
+garantía de solo-lectura a nivel de sesión PostgreSQL (nunca escribe en la BD analizada),
 y despliegue con un solo comando de Docker Compose.
 
 ---

@@ -5,25 +5,13 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+## [1.4.0] — 2026-08-24
+
+Cierre de los huecos reales identificados en la auditoría multi-audiencia posterior a v1.3.0:
+hardening HTTP, SSL/TLS al target, panel más vivo (auto-refresh y gráfico por chequeo), CRUD de
+usuarios completo, gate de cobertura en paquetes de seguridad y límite de tasa general de API.
+
 ### Añadido
-
-- **Editar usuario** (`PUT /api/v1/usuarios/{id}`): antes solo se podía crear/listar/eliminar --
-  ahora se puede cambiar contraseña, rol y habilitado/deshabilitado sin recrear el usuario. Reutiliza
-  la misma protección de "último ADMIN habilitado" que ya tenía `eliminar()`, aplicada solo cuando el
-  cambio pedido realmente se la quitaría (deshabilitarlo o bajarlo de rol).
-- **Gate de cobertura JaCoCo para `seguridad`/`config`/`controlador`** (`pom.xml`, mínimo 80% línea):
-  esos paquetes ya tenían tests (JWT, filtros, endpoints REST) pero ningún gate exigía mantenerlos.
-  Cobertura real medida al agregar la regla: seguridad ~94%, config 100%, controlador ~85%.
-- **Límite de tasa general de API** (`LimiteTasaApiFilter`, `PULSE_API_RATE_LIMIT`, 60 peticiones/min
-  por IP por defecto): antes solo `/auth/login` tenía algún control (fuerza bruta); el resto de
-  `/api/v1/**` no tenía ningún límite. Corre antes que `JwtAuthenticationFilter` en la cadena, así que
-  también protege peticiones sin autenticar.
-
-### Corregido
-
-- **`spotbugs-exclude.xml`**: la entrada de `PanelControlador` (inyección de `ObjectMapper`) quedó
-  huérfana al eliminar ese campo en el commit de auto-refresh — reemplazada por la de
-  `LimiteTasaApiFilter`, que sí lo inyecta ahora.
 
 - **Headers de seguridad HTTP** (`SeguridadConfig`): `X-Frame-Options: DENY`,
   `Content-Security-Policy` (permite el CDN de Chart.js y los `<script>` inline de inicialización
@@ -44,6 +32,23 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 - **Gráfico de tendencia por chequeo individual** (`fuente-detalle`, selector + `/fuentes/{id}/chequeos/{codigo}/tendencia`):
   antes el único gráfico era el score agregado; ahora se puede ver la evolución de una métrica
   puntual (`CACHE_HIT`, `BLOAT`, etc.) en las últimas 30 corridas.
+- **Editar usuario** (`PUT /api/v1/usuarios/{id}`): antes solo se podía crear/listar/eliminar --
+  ahora se puede cambiar contraseña, rol y habilitado/deshabilitado sin recrear el usuario. Reutiliza
+  la misma protección de "último ADMIN habilitado" que ya tenía `eliminar()`, aplicada solo cuando el
+  cambio pedido realmente se la quitaría (deshabilitarlo o bajarlo de rol).
+- **Gate de cobertura JaCoCo para `seguridad`/`config`/`controlador`** (`pom.xml`, mínimo 80% línea):
+  esos paquetes ya tenían tests (JWT, filtros, endpoints REST) pero ningún gate exigía mantenerlos.
+  Cobertura real medida al agregar la regla: seguridad ~94%, config 100%, controlador ~85%.
+- **Límite de tasa general de API** (`LimiteTasaApiFilter`, `PULSE_API_RATE_LIMIT`, 60 peticiones/min
+  por IP por defecto): antes solo `/auth/login` tenía algún control (fuerza bruta); el resto de
+  `/api/v1/**` no tenía ningún límite. Corre antes que `JwtAuthenticationFilter` en la cadena, así que
+  también protege peticiones sin autenticar.
+
+### Corregido
+
+- **`spotbugs-exclude.xml`**: la entrada de `PanelControlador` (inyección de `ObjectMapper`) quedó
+  huérfana al eliminar ese campo en el commit de auto-refresh — reemplazada por la de
+  `LimiteTasaApiFilter`, que sí lo inyecta ahora.
 
 ### Eliminado
 
@@ -233,6 +238,7 @@ panel de control, programador y exportación de reportes, seguridad y despliegue
   Actions (Testcontainers + JaCoCo + publicación de imagen a GHCR).
 - **Pruebas**: cobertura JaCoCo con gate ≥80% en el motor de análisis y ≥70% en servicios/programador.
 
+[1.4.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.0.0...v1.1.0

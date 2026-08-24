@@ -31,6 +31,7 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_JWT_EXPIRACION_MINUTOS` | `480` | Minutos de validez del token antes de tener que volver a iniciar sesión |
 | `PULSE_DEMO_SEED` | `true` en `docker-compose.yml`, `false` por defecto en la app | Registra automáticamente la fuente `Ventas Demo` contra `target-demo` al arrancar. Solo tiene sentido con la infraestructura de `docker-compose.yml`; en un despliegue real contra fuentes de producción, déjalo en `false` |
 | `PULSE_LOG_FORMAT` | *(vacía = consola legible)* | `ecs` activa logs estructurados JSON por consola, para agregadores de logs (ver §4) |
+| `PULSE_API_RATE_LIMIT` | `60` | Peticiones por minuto por IP admitidas en `/api/v1/**` (fuera de `/auth/**`, que tiene su propio control de fuerza bruta). Al superarlo, `429` con `Retry-After` |
 
 Copia `.env.example` → `.env` para desarrollo local. `.env` está excluido del repositorio (`.gitignore`).
 
