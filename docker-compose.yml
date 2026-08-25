@@ -7,6 +7,11 @@
 # Uso: docker compose up -d
 # Variables de entorno: se leen de .env (ver .env.example) si existe;
 # si no, se usan los valores de desarrollo por defecto de abajo.
+#
+# Stack de monitoreo opcional (Prometheus + Grafana, docs/DEPLOYMENT.md
+# #5.6), fuera del "arranque en 3 comandos" por defecto:
+#   ./scripts/generar-token-monitoreo.sh   # o .ps1 en Windows
+#   docker compose --profile monitoring up -d
 # ============================================================
 
 services:
@@ -88,6 +93,37 @@ services:
         limits:
           memory: 768M
           cpus: "1.0"
+
+  # Stack de monitoreo opcional -- no arranca con "docker compose up" solo
+  # (docs/DEPLOYMENT.md #5.6): requiere --profile monitoring.
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: pulse-prometheus
+    profiles: ["monitoring"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus_token.txt:/etc/prometheus/postgrespulse.token:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: pulse-grafana
+    profiles: ["monitoring"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
 
 volumes:
   pulse_data:

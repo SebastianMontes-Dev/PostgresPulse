@@ -14,3 +14,20 @@
 {$PULSE_DOMAIN} {
     reverse_proxy app:8080
 }
+
+# Stack de monitoreo opcional (docs/DEPLOYMENT.md #5.6, requiere levantar
+# los servicios con --profile monitoring). Sin esto, Prometheus y Grafana
+# solo son accesibles dentro de la red interna del host. Descomenta y
+# ajusta los subdominios si quieres exponerlos publicamente -- protegelos
+# con autenticacion adicional (ver la directiva "basicauth" de Caddy) ya
+# que Grafana queda con las credenciales que definas en
+# GF_SECURITY_ADMIN_USER/GF_SECURITY_ADMIN_PASSWORD, no con el RBAC de
+# PostgresPulse.
+#
+# grafana.{$PULSE_DOMAIN} {
+#     reverse_proxy grafana:3000
+# }
+#
+# prometheus.{$PULSE_DOMAIN} {
+#     reverse_proxy prometheus:9090
+# }

@@ -219,8 +219,9 @@ docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
   expiraban), un JWT expira (`PULSE_JWT_EXPIRACION_MINUTOS`, 480 por defecto) — Prometheus no
   reautentica solo, así que un token estático en `scrape_configs` deja de funcionar al expirar.
   Dos formas de resolverlo:
-  - **Usuario LECTOR dedicado** con `PULSE_JWT_EXPIRACION_MINUTOS` alto (p.ej. semanas) solo para
-    monitoreo, token generado una vez y rotado manualmente.
+  - **Usuario ADMIN dedicado** (`/actuator/**` exige rol ADMIN desde v1.4.0, LECTOR no alcanza) con
+    `PULSE_JWT_EXPIRACION_MINUTOS` alto (p.ej. semanas) solo para monitoreo, token generado una vez y
+    rotado manualmente.
   - **`authorization.credentials_file`**: apuntar Prometheus a un archivo con el token, refrescado
     por un cron externo que vuelve a llamar `/api/v1/auth/login` antes de que expire.
   ```yaml
@@ -280,6 +281,44 @@ el mismo incidente, no como un evento nuevo.
 
 Cada canal es opcional e independiente: puedes habilitar solo Slack, solo PagerDuty, los tres, o
 ninguno (comportamiento por defecto).
+
+### 5.6 Grafana (opcional)
+
+Stack de Prometheus + Grafana con un tablero de ejemplo, listo para importar sobre el exportador
+`/actuator/prometheus` disponible desde v1.2.0 (§5.4). Es **opt-in**: no arranca con
+`docker compose up` solo, para no complicar el arranque en 3 comandos del README — requiere
+`--profile monitoring`.
+
+```bash
+# 1. Genera el token JWT que Prometheus usa para raspar /actuator/prometheus.
+#    /actuator/** exige rol ADMIN (§5.4): usa las mismas credenciales que
+#    PULSE_ADMIN_USER/PULSE_ADMIN_PASSWORD (o las que le pases al script).
+./scripts/generar-token-monitoreo.sh          # Linux/macOS
+.\scripts\generar-token-monitoreo.ps1         # Windows PowerShell
+
+# 2. Levanta el stack de monitoreo (ademas de pulse-db/target-demo/app).
+docker compose --profile monitoring up -d
+
+# 3. Abre Grafana: http://localhost:3000 (admin/admin en el demo local,
+#    ver docker-compose.yml). El tablero "PostgresPulse - Vista operativa"
+#    ya esta provisto, sin pasos manuales en la UI.
+```
+
+Si el token expira (`PULSE_JWT_EXPIRACION_MINUTOS`, 480min por defecto) y Prometheus deja de
+raspar, vuelve a correr `generar-token-monitoreo.*` y reinicia el contenedor `prometheus`
+(`docker compose --profile monitoring restart prometheus`).
+
+El tablero de ejemplo (`monitoring/grafana/dashboards/postgrespulse.json`) se construye solo con
+métricas que el exportador ya expone hoy: análisis totales por resultado/disparador, duración
+promedio de análisis exitosos, fuentes registradas, memoria JVM, pool de conexiones Hikari y
+throughput HTTP. **No sustituye al panel propio**: el puntaje de salud por fuente en el tiempo
+(Chart.js) sigue viviendo únicamente ahí — Grafana es una vista operativa complementaria de la
+instancia, no del dominio de negocio de cada fuente.
+
+En producción (`deploy/docker-compose.prod.yml`), ni Prometheus ni Grafana exponen puertos al host
+por defecto (mismo criterio que `app`) — el operador decide si los publica vía Caddy (bloque
+comentado en `Caddyfile.example`) o los deja solo accesibles dentro de la red interna. `GF_SECURITY_ADMIN_USER`/`GF_SECURITY_ADMIN_PASSWORD` son obligatorios ahí (sin default `admin`/`admin`
+como en el demo local).
 
 ---
 

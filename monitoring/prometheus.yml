@@ -1,0 +1,17 @@
+# ============================================================
+# PostgresPulse - configuracion de Prometheus para el stack opcional de
+# monitoreo (docker compose --profile monitoring up, docs/DEPLOYMENT.md
+# #5.6). El token JWT lo genera scripts/generar-token-monitoreo.sh/.ps1
+# (usuario ADMIN: /actuator/** exige ese rol desde v1.4.0) y se monta en
+# este contenedor desde monitoring/prometheus_token.txt (gitignored).
+# ============================================================
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: postgrespulse
+    metrics_path: /actuator/prometheus
+    authorization:
+      credentials_file: /etc/prometheus/postgrespulse.token
+    static_configs:
+      - targets: ["app:8080"]

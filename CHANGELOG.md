@@ -17,6 +17,16 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
   fuera de la transacción de base de datos (mismo principio de "nunca I/O de red bajo transacción
   abierta" que ya regía la conexión a la fuente objetivo). Cierra el primero de los dos ítems de
   "próximos pasos" de `ROADMAP.md`; documentado en `docs/DEPLOYMENT.md` §5.5.
+- **Tableros Grafana (stack opcional)**: `docker compose --profile monitoring up` levanta Prometheus
+  (raspando `/actuator/prometheus`, disponible desde v1.2.0) y Grafana, con el datasource y un
+  tablero de ejemplo ("PostgresPulse - Vista operativa") auto-provistos — sin pasos manuales en la
+  UI. El tablero se construye solo con métricas ya expuestas (análisis por resultado/disparador,
+  duración, fuentes registradas, JVM, pool Hikari, throughput HTTP); el puntaje de salud por fuente
+  en el tiempo sigue viviendo únicamente en el panel propio (Chart.js). Nuevo script
+  `scripts/generar-token-monitoreo.sh`/`.ps1` (usuario ADMIN: `/actuator/**` exige ese rol desde
+  v1.4.0) genera el token que Prometheus usa para autenticarse. Fuera del "arranque en 3 comandos"
+  por defecto — primera vez que `docker-compose.yml` usa `profiles`. Cierra el segundo ítem de
+  "próximos pasos" de `ROADMAP.md`; documentado en `docs/DEPLOYMENT.md` §5.6.
 
 ## [1.4.1] — 2026-08-24
 

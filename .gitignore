@@ -27,6 +27,7 @@ Thumbs.db
 *.local
 application-local.yml
 deploy/Caddyfile
+monitoring/prometheus_token.txt
 
 # Logs
 *.log

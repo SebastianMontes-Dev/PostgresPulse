@@ -31,7 +31,10 @@ y despliegue con un solo comando de Docker Compose.
 Un DBA o backend que hereda una base de datos rara vez sabe por dónde empezar: ¿faltan índices? ¿hay
 hinchamiento? ¿claves foráneas sin indexar arrastrando el rendimiento? PostgresPulse recorre los
 catálogos del sistema (`pg_stat_*`, `pg_catalog`, `information_schema`) y convierte eso en un puntaje
-único, hallazgos accionables y una tendencia histórica — sin instalar nada en la base objetivo.
+único, hallazgos accionables y una tendencia histórica — sin instalar nada en la base objetivo. Un
+umbral de alerta por fuente avisa por Email/Slack/PagerDuty cuando el puntaje cruza ese umbral, y un
+stack Prometheus + Grafana opcional (`docker compose --profile monitoring up`) da la vista operativa
+de la instancia completa.
 
 ---
 
@@ -127,7 +130,7 @@ sin certificados; el reverse proxy solo entra en juego en producción — ver
 | **Persistencia** | Spring Data JPA, driver PostgreSQL, Flyway |
 | **Resiliencia** | Resilience4j (circuit breaker por fuente + reintento en fallos transitorios) |
 | **Seguridad** | Spring Security (JWT + RBAC), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
-| **Observabilidad** | Actuator + Micrometer (métricas propias), exportador Prometheus, logs estructurados ECS |
+| **Observabilidad** | Actuator + Micrometer (métricas propias), exportador Prometheus, tablero Grafana de ejemplo (opcional), logs estructurados ECS |
 | **Alertas** | Umbral por fuente, canales Email (SMTP)/Slack (webhook)/PagerDuty (Events API v2) |
 | **UI** | Thymeleaf + Chart.js |
 | **Pruebas** | JUnit 5, Mockito, Testcontainers, JaCoCo |
@@ -189,7 +192,7 @@ JWT (`Authorization: Bearer`) en todas las rutas salvo `/actuator/health` y `/au
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Variables de entorno, despliegue, operación, troubleshooting |
 | [SECURITY.md](SECURITY.md) | Política de seguridad y divulgación responsable de vulnerabilidades |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo levantar el entorno, correr pruebas y proponer cambios |
-| [ROADMAP.md](ROADMAP.md) | Alcance post-v1.0 (RBAC, tableros Grafana, multi-motor) |
+| [ROADMAP.md](ROADMAP.md) | Alcance post-v1.0 (ideas exploratorias sin compromiso: multi-motor, auditoría, SaaS...) |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de versiones |
 
 ---

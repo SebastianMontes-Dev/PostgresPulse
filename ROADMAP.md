@@ -6,10 +6,9 @@ Este documento describe la visión **posterior a la v1.0** de **PostgresPulse**.
 
 ## Próximos pasos
 
-Los incrementos que siguen, en el orden en que se abordarán. Cada uno encaja en la arquitectura existente sin rediseñarla.
-
-- **Tableros Grafana:** dashboards de ejemplo listos para importar. El exportador ya está disponible
-  desde v1.2.0 (`/actuator/prometheus`, ver [docs/DEPLOYMENT.md §5.4](docs/DEPLOYMENT.md)).
+Sin incrementos comprometidos pendientes por ahora — los tres que se planearon tras la v1.0 ya
+están implementados. Lo que sigue son direcciones sin compromiso de ejecución, ver
+[Ideas exploratorias](#ideas-exploratorias) abajo.
 
 ✅ **RBAC + JWT** (múltiples usuarios y roles ADMIN/LECTOR, reemplazando la Autenticación Básica de
 un solo administrador de v1.0-1.2) ya está implementado — ver [CHANGELOG.md](CHANGELOG.md) y
@@ -18,6 +17,10 @@ un solo administrador de v1.0-1.2) ya está implementado — ver [CHANGELOG.md](
 ✅ **Alertas (Email / Slack / PagerDuty)** ya está implementado — umbral configurable por fuente,
 canales de envío configurables a nivel de instancia — ver [CHANGELOG.md](CHANGELOG.md) y
 [docs/DEPLOYMENT.md §5.5](docs/DEPLOYMENT.md).
+
+✅ **Tableros Grafana** ya está implementado — stack opcional (`docker compose --profile monitoring
+up`) con un tablero de ejemplo sobre el exportador Prometheus disponible desde v1.2.0 — ver
+[CHANGELOG.md](CHANGELOG.md) y [docs/DEPLOYMENT.md §5.6](docs/DEPLOYMENT.md).
 
 ---
 
