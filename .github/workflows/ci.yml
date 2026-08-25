@@ -11,6 +11,47 @@ permissions:
   contents: read
 
 jobs:
+  backup-restore:
+    name: Verificar respaldo y restauracion (scripts/respaldar.sh)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Levantar pulse-db
+        run: |
+          docker run -d --name pulse-db \
+            -e POSTGRES_DB=pulse_db -e POSTGRES_USER=pulse -e POSTGRES_PASSWORD=pulse \
+            postgres:16-alpine
+          for i in $(seq 1 30); do
+            docker exec pulse-db pg_isready -U pulse -d pulse_db && break
+            sleep 1
+          done
+
+      - name: Sembrar un dato de verificacion
+        run: |
+          docker exec pulse-db psql -U pulse -d pulse_db -c \
+            "CREATE TABLE verificacion_respaldo(marca TEXT); INSERT INTO verificacion_respaldo VALUES ('run-${{ github.run_id }}');"
+
+      - name: Respaldar
+        run: |
+          chmod +x scripts/respaldar.sh
+          ./scripts/respaldar.sh backup
+
+      - name: Simular perdida de datos
+        run: docker exec pulse-db psql -U pulse -d pulse_db -c "DROP TABLE verificacion_respaldo;"
+
+      - name: Restaurar desde el respaldo
+        run: |
+          archivo="$(ls -t backups/*.sql | head -1)"
+          echo "restaurar" | ./scripts/respaldar.sh restaurar "$archivo"
+
+      - name: Verificar que el dato volvio intacto
+        run: |
+          valor="$(docker exec pulse-db psql -U pulse -d pulse_db -tAc "SELECT marca FROM verificacion_respaldo;")"
+          echo "Valor restaurado: $valor"
+          [ "$valor" = "run-${{ github.run_id }}" ] || { echo "El respaldo/restauracion no preservo el dato" >&2; exit 1; }
+
   build:
     name: Build y pruebas (Maven + Testcontainers)
     runs-on: ubuntu-latest
@@ -56,9 +97,9 @@ jobs:
   docker:
     name: Construir, escanear y publicar imagen Docker
     needs: build
-    if: >
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    # Se construye y escanea con Trivy en cada PR (gate de seguridad temprano);
+    # publicar a GHCR solo ocurre en push a main o en tags v*, ver el "if" de
+    # los pasos de login/publicacion mas abajo.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -103,6 +144,9 @@ jobs:
           ignore-unfixed: true
 
       - name: Iniciar sesion en GitHub Container Registry
+        if: >
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -110,6 +154,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publicar imagen (ya escaneada; reutiliza la cache de la construccion anterior)
+        if: >
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
         uses: docker/build-push-action@v6
         with:
           context: .
