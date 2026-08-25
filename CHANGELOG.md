@@ -3,7 +3,7 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
-## [No publicado]
+## [2.0.0] — 2026-08-25
 
 ### Eliminado
 
@@ -38,10 +38,11 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
   UI. El tablero se construye solo con métricas ya expuestas (análisis por resultado/disparador,
   duración, fuentes registradas, JVM, pool Hikari, throughput HTTP); el puntaje de salud por fuente
   en el tiempo sigue viviendo únicamente en el panel propio (Chart.js). Nuevo script
-  `scripts/generar-token-monitoreo.sh`/`.ps1` (usuario ADMIN: `/actuator/**` exige ese rol desde
-  v1.4.0) genera el token que Prometheus usa para autenticarse. Fuera del "arranque en 3 comandos"
-  por defecto — primera vez que `docker-compose.yml` usa `profiles`. Cierra el segundo ítem de
-  "próximos pasos" de `ROADMAP.md`; documentado en `docs/DEPLOYMENT.md` §5.6.
+  `scripts/generar-token-monitoreo.sh`/`.ps1`: `/actuator/**` exige estar autenticado (sin rol
+  especial, ver eliminación de RBAC arriba), así que el script genera el token con cualquier cuenta
+  — por convención, la misma cuenta dedicada de `PULSE_ADMIN_USER`/`PULSE_ADMIN_PASSWORD`. Fuera del
+  "arranque en 3 comandos" por defecto — primera vez que `docker-compose.yml` usa `profiles`. Cierra
+  el segundo ítem de "próximos pasos" de `ROADMAP.md`; documentado en `docs/DEPLOYMENT.md` §5.6.
 
 ## [1.4.1] — 2026-08-24
 
