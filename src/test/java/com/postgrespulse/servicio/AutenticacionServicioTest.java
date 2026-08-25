@@ -1,6 +1,5 @@
 package com.postgrespulse.servicio;
 
-import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import com.postgrespulse.dto.LoginDto;
 import com.postgrespulse.dto.TokenRespuestaDto;
@@ -49,7 +48,6 @@ class AutenticacionServicioTest {
         admin.setId(1L);
         admin.setNombreUsuario("ana");
         admin.setContrasenaHash("hash");
-        admin.setRol(Rol.ADMIN);
         admin.setHabilitado(true);
     }
 
@@ -60,12 +58,11 @@ class AutenticacionServicioTest {
         when(jwtServicio.generar(admin)).thenReturn("token-jwt");
         OffsetDateTime expiracion = OffsetDateTime.now().plusHours(8);
         when(jwtServicio.validar("token-jwt"))
-                .thenReturn(Optional.of(new JwtServicio.ClaimsSesion("ana", Rol.ADMIN, expiracion)));
+                .thenReturn(Optional.of(new JwtServicio.ClaimsSesion("ana", expiracion)));
 
         TokenRespuestaDto respuesta = servicio.autenticar(new LoginDto("ana", "secreta"), IP);
 
         assertThat(respuesta.token()).isEqualTo("token-jwt");
-        assertThat(respuesta.rol()).isEqualTo(Rol.ADMIN);
         assertThat(respuesta.expiraEn()).isEqualTo(expiracion);
         verify(controlIntentos).registrarExito(IP);
         verify(controlIntentos, never()).registrarFallo(any());

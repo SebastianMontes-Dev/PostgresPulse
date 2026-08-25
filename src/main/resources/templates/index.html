@@ -34,7 +34,7 @@
             </div>
 
             <div class="acciones">
-                <form th:action="@{/fuentes/{id}/analizar(id=${item.fuente.id})}" method="post" sec:authorize="hasRole('ADMIN')">
+                <form th:action="@{/fuentes/{id}/analizar(id=${item.fuente.id})}" method="post">
                     <button type="submit" class="boton">Analizar ahora</button>
                 </form>
                 <a th:href="@{/fuentes/{id}(id=${item.fuente.id})}" class="boton boton-secundario">Ver detalle</a>
@@ -42,8 +42,8 @@
         </div>
     </div>
 
-    <h2 sec:authorize="hasRole('ADMIN')">Registrar fuente</h2>
-    <form class="formulario" th:action="@{/fuentes}" th:object="${formulario}" method="post" sec:authorize="hasRole('ADMIN')">
+    <h2>Registrar fuente</h2>
+    <form class="formulario" th:action="@{/fuentes}" th:object="${formulario}" method="post">
         <div class="campo">
             <label for="nombre">Nombre</label>
             <input id="nombre" type="text" th:field="*{nombre}" required>

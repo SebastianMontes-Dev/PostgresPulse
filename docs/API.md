@@ -11,12 +11,10 @@ URL Base: `http://localhost:8080/api/v1` · Formato: JSON · Documentación viva
   `Authorization: Bearer <token>`, obtenido en `POST /auth/login` (sección 2). Expira a los
   `PULSE_JWT_EXPIRACION_MINUTOS` (480 por defecto) — sin refresh automático, hay que volver a
   iniciar sesión.
-- **RBAC**: dos roles. **ADMIN** puede todo; **LECTOR** solo los endpoints `GET` — cualquier
-  `POST`/`PUT`/`DELETE` (registrar, actualizar, eliminar, probar, analizar, gestionar usuarios)
-  exige ADMIN. Una petición de LECTOR a un endpoint de ADMIN devuelve `403` con
-  `"codigo": "ACCESO_DENEGADO"`. `/actuator/prometheus`, `/actuator/metrics` y `/actuator/info`
-  también exigen ADMIN (no basta con estar autenticado) — exponen metadatos de build y métricas
-  internas que un LECTOR no necesita.
+- **Sin niveles de permiso**: cualquier cuenta autenticada puede hacer todo (registrar, actualizar,
+  eliminar, probar, analizar, gestionar usuarios, leer `/actuator/prometheus`/`/metrics`/`/info`).
+  PostgresPulse es una herramienta de un solo operador, no un producto multiusuario con jerarquías —
+  ver `CHANGELOG.md`.
 - **Fuerza bruta**: varios intentos fallidos en `/auth/login` desde la misma IP devuelven `429` con
   cabecera `Retry-After` (segundos) antes de intentar validar credenciales.
 - **Límite de tasa general**: el resto de `/api/v1/**` (fuera de `/auth/**`) admite
@@ -49,7 +47,6 @@ Content-Type: application/json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
   "tipo": "Bearer",
-  "rol": "ADMIN",
   "expiraEn": "2026-08-21T14:27:08Z"
 }
 ```
@@ -72,7 +69,8 @@ header `Authorization` — basta con descartar el token.
 
 ## 3. Usuarios (`/usuarios`)
 
-Todos los endpoints exigen rol **ADMIN**.
+Cualquier cuenta autenticada puede gestionar usuarios (crear cuentas adicionales, cambiar
+contraseñas, deshabilitar/eliminar) — no hay un rol distinto que lo restrinja.
 
 ### 3.1 Listar usuarios
 
@@ -83,8 +81,8 @@ GET /api/v1/usuarios
 **Respuesta 200**
 ```json
 [
-  { "id": 1, "nombreUsuario": "admin", "rol": "ADMIN", "habilitado": true, "creadoEn": "2026-08-01T15:04:05Z" },
-  { "id": 2, "nombreUsuario": "lector1", "rol": "LECTOR", "habilitado": true, "creadoEn": "2026-08-01T15:10:00Z" }
+  { "id": 1, "nombreUsuario": "admin", "habilitado": true, "creadoEn": "2026-08-01T15:04:05Z" },
+  { "id": 2, "nombreUsuario": "ana", "habilitado": true, "creadoEn": "2026-08-01T15:10:00Z" }
 ]
 ```
 
@@ -97,14 +95,13 @@ Content-Type: application/json
 
 **Cuerpo**
 ```json
-{ "nombreUsuario": "lector1", "contrasena": "una-contrasena-de-al-menos-8", "rol": "LECTOR" }
+{ "nombreUsuario": "ana", "contrasena": "una-contrasena-de-al-menos-8" }
 ```
 
 | Campo | Tipo | Obligatorio | Validación |
 |---|---|---|---|
 | `nombreUsuario` | string | ✅ | 1–100 caracteres, único (insensible a mayúsculas) |
 | `contrasena` | string | ✅ | 8–255 caracteres (se cifra con BCrypt, nunca se devuelve) |
-| `rol` | string | ✅ | `ADMIN` o `LECTOR` |
 
 **Respuesta 201** — usuario creado. **409** si el nombre ya existe.
 
@@ -117,26 +114,24 @@ Content-Type: application/json
 
 **Cuerpo** (todos los campos opcionales — solo se aplican los presentes)
 ```json
-{ "contrasena": "una-contrasena-nueva", "rol": "ADMIN", "habilitado": false }
+{ "contrasena": "una-contrasena-nueva", "habilitado": false }
 ```
 
 | Campo | Tipo | Validación |
 |---|---|---|
 | `contrasena` | string | 8–255 caracteres si se envía |
-| `rol` | string | `ADMIN` o `LECTOR` |
 | `habilitado` | boolean | — |
 
-**Respuesta 200** — usuario actualizado. **404** si no existe. **409** si el cambio (deshabilitar o
-bajar de rol) le quitaría la condición de ADMIN habilitado al último administrador
-(`UltimoAdminException`) — mismo criterio que 3.4.
+**Respuesta 200** — usuario actualizado. **404** si no existe. **409** si el cambio deshabilitaría
+al último usuario habilitado (`UltimoUsuarioHabilitadoException`) — mismo criterio que 3.4.
 
 ### 3.4 Eliminar usuario
 
 ```
 DELETE /api/v1/usuarios/{id}
 ```
-**Respuesta 204**. **409** si es el último ADMIN habilitado (`UltimoAdminException`) — la
-instancia no puede quedarse sin ningún administrador.
+**Respuesta 204**. **409** si es el último usuario habilitado (`UltimoUsuarioHabilitadoException`) —
+la instancia no puede quedarse sin ninguna cuenta que pueda entrar.
 
 ---
 

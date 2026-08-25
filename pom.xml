@@ -93,7 +93,7 @@
         </dependency>
 
         <dependency>
-            <!-- RBAC + JWT (ROADMAP.md): firma/validacion de tokens HS256. -->
+            <!-- Autenticacion JWT: firma/validacion de tokens HS256. -->
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
@@ -111,8 +111,8 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <!-- sec:authorize en las plantillas Thymeleaf del panel (oculta
-                 acciones de ADMIN a usuarios con rol LECTOR). -->
+            <!-- sec:authentication en las plantillas Thymeleaf del panel
+                 (muestra el nombre del usuario autenticado en la barra de navegacion). -->
             <groupId>org.thymeleaf.extras</groupId>
             <artifactId>thymeleaf-extras-springsecurity6</artifactId>
         </dependency>

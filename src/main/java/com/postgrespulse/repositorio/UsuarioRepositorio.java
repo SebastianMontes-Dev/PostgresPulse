@@ -1,6 +1,5 @@
 package com.postgrespulse.repositorio;
 
-import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,7 +12,7 @@ public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
 
     boolean existsByNombreUsuarioIgnoreCase(String nombreUsuario);
 
-    long countByRolAndHabilitadoTrue(Rol rol);
+    long countByHabilitadoTrue();
 
     List<Usuario> findAllByOrderByNombreUsuarioAsc();
 }

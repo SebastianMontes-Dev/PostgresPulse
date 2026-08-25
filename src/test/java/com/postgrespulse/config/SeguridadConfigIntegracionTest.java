@@ -26,8 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * SeguridadConfig no tenia un test dedicado que fijara, de forma explicita,
  * que rutas quedan publicas vs. autenticadas -- un refactor futuro podria
  * abrir sin querer un endpoint (o exigir auth en /actuator/health, rompiendo
- * el HEALTHCHECK de Docker) sin que ningun test lo detectara. Con RBAC+JWT
- * la autenticacion se obtiene con un login real contra /api/v1/auth/login
+ * el HEALTHCHECK de Docker) sin que ningun test lo detectara. La autenticacion
+ * se obtiene con un login real contra /api/v1/auth/login
  * (el admin inicial lo crea SembradorAdminInicialServicio a partir de
  * PULSE_ADMIN_USER/PASSWORD) y se adjunta como `Authorization: Bearer`.
  * Tambien cubre el limite exacto de la excepcion de CSRF: exenta en
@@ -91,25 +91,6 @@ class SeguridadConfigIntegracionTest {
         String token = tokenAdmin();
         return request -> {
             request.setCookies(new jakarta.servlet.http.Cookie("PULSE_JWT", token));
-            return request;
-        };
-    }
-
-    private RequestPostProcessor lector() throws Exception {
-        // La creacion puede fallar con 409 si un test anterior de esta misma
-        // clase ya sembro este usuario -- se ignora, el login de abajo igual
-        // funciona con las credenciales fijas.
-        mockMvc.perform(post("/api/v1/usuarios").with(admin())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nombreUsuario\":\"lector-prueba\",\"contrasena\":\"lector1234\",\"rol\":\"LECTOR\"}"));
-        String cuerpo = mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"usuario\":\"lector-prueba\",\"contrasena\":\"lector1234\"}"))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        String token = objectMapper.readTree(cuerpo).get("token").asText();
-        return request -> {
-            request.addHeader("Authorization", "Bearer " + token);
             return request;
         };
     }
@@ -198,17 +179,6 @@ class SeguridadConfigIntegracionTest {
         // primer analisis real, por eso no se verifican aqui (si se
         // necesitara, ver la corrida real documentada en docs/DEPLOYMENT.md #5.4).
         assertThat(cuerpo).contains("postgrespulse_fuentes_registradas");
-    }
-
-    @Test
-    void actuatorPrometheusMetricsInfoRequierenRolAdminNoSoloAutenticacion() throws Exception {
-        RequestPostProcessor lector = lector();
-        mockMvc.perform(get("/actuator/prometheus").with(lector))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(get("/actuator/metrics").with(lector))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(get("/actuator/info").with(lector))
-                .andExpect(status().isForbidden());
     }
 
     @Test

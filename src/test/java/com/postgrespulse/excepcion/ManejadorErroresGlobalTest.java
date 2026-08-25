@@ -147,20 +147,6 @@ class ManejadorErroresGlobalTest {
     }
 
     @Test
-    void accesoDenegadoMapeaA403() {
-        // Regresion real: @PreAuthorize lanza AuthorizationDeniedException
-        // (Spring Security 6, subclase de AccessDeniedException) y sin este
-        // handler explicito caia en errorInesperado() -> 500 en vez de 403
-        // (encontrado probando RBAC manualmente contra la app real).
-        stubRuta("/api/v1/prueba");
-
-        var respuesta = manejador.accesoDenegado(
-                new org.springframework.security.access.AccessDeniedException("Access Denied"), peticion);
-
-        verificar(respuesta, HttpStatus.FORBIDDEN, "ACCESO_DENEGADO");
-    }
-
-    @Test
     void credencialesInvalidasMapeaA401() {
         stubRuta("/api/v1/auth/login");
 
@@ -202,10 +188,10 @@ class ManejadorErroresGlobalTest {
     }
 
     @Test
-    void ultimoAdminMapeaA409() {
+    void ultimoUsuarioHabilitadoMapeaA409() {
         stubRuta("/api/v1/usuarios/1");
 
-        var respuesta = manejador.ultimoAdmin(new UltimoAdminException(), peticion);
+        var respuesta = manejador.ultimoUsuarioHabilitado(new UltimoUsuarioHabilitadoException(), peticion);
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(respuesta.getBody().codigo()).isEqualTo("CONFLICTO");

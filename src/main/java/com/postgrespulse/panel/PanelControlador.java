@@ -21,7 +21,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -99,7 +98,6 @@ public class PanelControlador {
     }
 
     @PostMapping("/fuentes")
-    @PreAuthorize("hasRole('ADMIN')")
     public String registrarFuente(@Valid @ModelAttribute("formulario") RegistrarFuenteFormulario formulario,
                                    BindingResult bindingResult,
                                    RedirectAttributes redirectAttributes) {
@@ -124,7 +122,6 @@ public class PanelControlador {
     }
 
     @PostMapping("/fuentes/{id}/analizar")
-    @PreAuthorize("hasRole('ADMIN')")
     public String analizar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             analisisServicio.analizar(id, TipoDisparo.MANUAL);

@@ -1,6 +1,5 @@
 package com.postgrespulse.seguridad;
 
-import com.postgrespulse.dominio.Rol;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +26,8 @@ class JwtAuthenticationFilterTest {
     private JwtServicio jwtServicio;
 
     private JwtAuthenticationFilter filtro;
-    private final JwtServicio.ClaimsSesion claimsAdmin =
-            new JwtServicio.ClaimsSesion("ana", Rol.ADMIN, OffsetDateTime.now().plusHours(1));
+    private final JwtServicio.ClaimsSesion claimsValidas =
+            new JwtServicio.ClaimsSesion("ana", OffsetDateTime.now().plusHours(1));
 
     @BeforeEach
     void configurar() {
@@ -42,7 +41,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void autenticaUnaRutaDeApiConElHeaderAuthorization() throws Exception {
-        when(jwtServicio.validar("token-valido")).thenReturn(Optional.of(claimsAdmin));
+        when(jwtServicio.validar("token-valido")).thenReturn(Optional.of(claimsValidas));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/fuentes");
         request.addHeader("Authorization", "Bearer token-valido");
@@ -52,7 +51,7 @@ class JwtAuthenticationFilterTest {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertThat(auth).isNotNull();
         assertThat(auth.getName()).isEqualTo("ana");
-        assertThat(auth.getAuthorities()).extracting(Object::toString).containsExactly("ROLE_ADMIN");
+        assertThat(auth.getAuthorities()).isEmpty();
     }
 
     @Test
@@ -67,7 +66,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void unaRutaDelPanelSeAutenticaConLaCookie() throws Exception {
-        when(jwtServicio.validar("token-valido")).thenReturn(Optional.of(claimsAdmin));
+        when(jwtServicio.validar("token-valido")).thenReturn(Optional.of(claimsValidas));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/fuentes/1");
         request.setCookies(new Cookie(JwtAuthenticationFilter.COOKIE_NOMBRE, "token-valido"));

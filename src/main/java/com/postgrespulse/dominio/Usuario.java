@@ -2,8 +2,6 @@ package com.postgrespulse.dominio;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,10 +24,6 @@ public class Usuario {
 
     @Column(name = "contrasena_hash", nullable = false)
     private String contrasenaHash;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Rol rol;
 
     @Column(nullable = false)
     private boolean habilitado = true;
@@ -76,14 +70,6 @@ public class Usuario {
 
     public void setContrasenaHash(String contrasenaHash) {
         this.contrasenaHash = contrasenaHash;
-    }
-
-    public Rol getRol() {
-        return rol;
-    }
-
-    public void setRol(Rol rol) {
-        this.rol = rol;
     }
 
     public boolean isHabilitado() {

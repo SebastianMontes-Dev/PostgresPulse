@@ -26,7 +26,7 @@
             <span th:unless="${salud.puntajeActual != null}" class="meta">Sin análisis todavía</span>
         </div>
 
-        <form th:action="@{/fuentes/{id}/analizar(id=${fuente.id})}" method="post" sec:authorize="hasRole('ADMIN')">
+        <form th:action="@{/fuentes/{id}/analizar(id=${fuente.id})}" method="post">
             <button type="submit" class="boton">Analizar ahora</button>
         </form>
         <a th:href="@{/fuentes/{id}/historial(id=${fuente.id})}" class="boton boton-secundario">Historial</a>

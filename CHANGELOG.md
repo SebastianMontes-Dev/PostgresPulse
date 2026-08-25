@@ -5,6 +5,21 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+### Eliminado
+
+- **RBAC (roles ADMIN/LECTOR)**: PostgresPulse es una herramienta pensada para un solo operador
+  monitoreando sus propias bases, no un producto multiusuario con jerarquías de confianza — mantener
+  dos niveles de permiso solo agregaba una fuente de confusión sin resolver un problema real de este
+  caso de uso. Se conserva el login JWT (cualquier cuenta autenticada puede todo: registrar/editar/
+  eliminar fuentes, analizar, gestionar usuarios, leer `/actuator/prometheus`) — la app sigue
+  guardando credenciales reales de las bases que analiza, así que quitar la autenticación por
+  completo no era una opción, solo la diferenciación de roles. Cambios de superficie: `Rol` (enum) y
+  la columna `usuarios.rol` desaparecen (migración `V6`); `CrearUsuarioDto`/`EditarUsuarioDto`/
+  `UsuarioRespuestaDto`/`TokenRespuestaDto` pierden el campo `rol`; todos los `@PreAuthorize` y
+  `sec:authorize` del código se quitan; `UltimoAdminException` se renombra a
+  `UltimoUsuarioHabilitadoException` (protege ahora al último usuario habilitado en general, no solo
+  al último ADMIN). Detalle en `docs/API.md` §1-3.
+
 ### Añadido
 
 - **Alertas de salud (Email / Slack / PagerDuty)**: umbral configurable por fuente (`umbralAlerta`,

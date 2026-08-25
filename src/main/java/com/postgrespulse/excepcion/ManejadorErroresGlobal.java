@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -46,25 +45,9 @@ public class ManejadorErroresGlobal {
         return construir(ex.getMessage(), HttpStatus.NOT_FOUND, "NO_ENCONTRADA", peticion, List.of());
     }
 
-    @ExceptionHandler(UltimoAdminException.class)
-    public ResponseEntity<ApiError> ultimoAdmin(UltimoAdminException ex, HttpServletRequest peticion) {
+    @ExceptionHandler(UltimoUsuarioHabilitadoException.class)
+    public ResponseEntity<ApiError> ultimoUsuarioHabilitado(UltimoUsuarioHabilitadoException ex, HttpServletRequest peticion) {
         return construir(ex.getMessage(), HttpStatus.CONFLICT, "CONFLICTO", peticion, List.of());
-    }
-
-    /**
-     * @PreAuthorize deniega lanzando AuthorizationDeniedException (Spring
-     * Security 6), que extiende esta clase para compatibilidad. Sin este
-     * handler explicito, la excepcion la atrapa errorInesperado() de mas
-     * abajo -- @RestControllerAdvice resuelve excepciones DENTRO del
-     * DispatcherServlet, antes de que le llegue a ExceptionTranslationFilter
-     * (el traductor a 403 de Spring Security, que vive fuera, a nivel de
-     * filtro) -- y un rechazo de autorizacion real terminaba devolviendo 500
-     * en vez de 403.
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiError> accesoDenegado(AccessDeniedException ex, HttpServletRequest peticion) {
-        return construir("No tiene permisos para realizar esta acción", HttpStatus.FORBIDDEN,
-                "ACCESO_DENEGADO", peticion, List.of());
     }
 
     @ExceptionHandler(CredencialesInvalidasException.class)

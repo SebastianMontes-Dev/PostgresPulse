@@ -11,8 +11,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Excluye UserDetailsServiceAutoConfiguration: con RBAC+JWT (ROADMAP.md) la
- * autenticacion no pasa por el AuthenticationManager de Spring Security --
+ * Excluye UserDetailsServiceAutoConfiguration: con autenticacion JWT propia
+ * la autenticacion no pasa por el AuthenticationManager de Spring Security --
  * AutenticacionServicio verifica usuario/contrasena directamente contra
  * UsuarioRepositorio + PasswordEncoder. Sin este exclude, al no encontrar
  * ningun bean UserDetailsService/AuthenticationProvider propio, Spring Boot

@@ -3,9 +3,9 @@
 # PostgresPulse - Genera el token JWT que usa Prometheus para raspar
 # /actuator/prometheus (docs/DEPLOYMENT.md #5.6).
 #
-# /actuator/** exige rol ADMIN (RBAC desde v1.4.0): usa las mismas
-# credenciales de administrador que scripts/demo.sh, o las que pases via
-# PULSE_ADMIN_USER/PULSE_ADMIN_PASSWORD. Vuelve a correr este script para
+# /actuator/** exige estar autenticado: usa las mismas credenciales que
+# scripts/demo.sh, o las que pases via PULSE_ADMIN_USER/PULSE_ADMIN_PASSWORD.
+# Vuelve a correr este script para
 # refrescar el token si expira (PULSE_JWT_EXPIRACION_MINUTOS, 480min por
 # defecto) -- equivalente manual al "cron externo" que docs/DEPLOYMENT.md
 # #5.4 describe para credentials_file. Requiere `jq` instalado.

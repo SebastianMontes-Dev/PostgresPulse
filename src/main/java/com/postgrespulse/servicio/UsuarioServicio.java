@@ -1,12 +1,11 @@
 package com.postgrespulse.servicio;
 
-import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import com.postgrespulse.dto.CrearUsuarioDto;
 import com.postgrespulse.dto.EditarUsuarioDto;
 import com.postgrespulse.dto.UsuarioRespuestaDto;
 import com.postgrespulse.excepcion.NombreUsuarioDuplicadoException;
-import com.postgrespulse.excepcion.UltimoAdminException;
+import com.postgrespulse.excepcion.UltimoUsuarioHabilitadoException;
 import com.postgrespulse.excepcion.UsuarioNoEncontradoException;
 import com.postgrespulse.repositorio.UsuarioRepositorio;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,17 +39,15 @@ public class UsuarioServicio {
         Usuario usuario = new Usuario();
         usuario.setNombreUsuario(dto.nombreUsuario());
         usuario.setContrasenaHash(passwordEncoder.encode(dto.contrasena()));
-        usuario.setRol(dto.rol());
         usuario.setHabilitado(true);
         return UsuarioRespuestaDto.desde(usuarioRepositorio.save(usuario));
     }
 
     /**
-     * Editar rol/habilitado/contrasena de un usuario existente. La proteccion
-     * de "ultimo admin" (esUltimoAdminHabilitado) solo aplica si el cambio
-     * pedido realmente le quitaria esa condicion (deshabilitarlo o bajarlo de
-     * rol) -- editar solo la contrasena de un admin, por ejemplo, nunca la
-     * dispara.
+     * Editar habilitado/contrasena de un usuario existente. La proteccion de
+     * "ultimo usuario habilitado" (esUltimoUsuarioHabilitado) solo aplica si
+     * el cambio pedido realmente deshabilitaria al unico usuario que puede
+     * entrar -- editar solo la contrasena nunca la dispara.
      */
     @Transactional
     public UsuarioRespuestaDto editar(Long id, EditarUsuarioDto dto) {
@@ -58,16 +55,12 @@ public class UsuarioServicio {
                 .orElseThrow(() -> new UsuarioNoEncontradoException(id));
 
         boolean intentaDeshabilitar = dto.habilitado() != null && !dto.habilitado();
-        boolean intentaQuitarRolAdmin = dto.rol() != null && dto.rol() != Rol.ADMIN;
-        if ((intentaDeshabilitar || intentaQuitarRolAdmin) && esUltimoAdminHabilitado(usuario)) {
-            throw new UltimoAdminException();
+        if (intentaDeshabilitar && esUltimoUsuarioHabilitado(usuario)) {
+            throw new UltimoUsuarioHabilitadoException();
         }
 
         if (dto.contrasena() != null) {
             usuario.setContrasenaHash(passwordEncoder.encode(dto.contrasena()));
-        }
-        if (dto.rol() != null) {
-            usuario.setRol(dto.rol());
         }
         if (dto.habilitado() != null) {
             usuario.setHabilitado(dto.habilitado());
@@ -79,15 +72,13 @@ public class UsuarioServicio {
     public void eliminar(Long id) {
         Usuario usuario = usuarioRepositorio.findById(id)
                 .orElseThrow(() -> new UsuarioNoEncontradoException(id));
-        if (esUltimoAdminHabilitado(usuario)) {
-            throw new UltimoAdminException();
+        if (esUltimoUsuarioHabilitado(usuario)) {
+            throw new UltimoUsuarioHabilitadoException();
         }
         usuarioRepositorio.delete(usuario);
     }
 
-    private boolean esUltimoAdminHabilitado(Usuario usuario) {
-        return usuario.getRol() == Rol.ADMIN
-                && usuario.isHabilitado()
-                && usuarioRepositorio.countByRolAndHabilitadoTrue(Rol.ADMIN) <= 1;
+    private boolean esUltimoUsuarioHabilitado(Usuario usuario) {
+        return usuario.isHabilitado() && usuarioRepositorio.countByHabilitadoTrue() <= 1;
     }
 }

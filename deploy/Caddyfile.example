@@ -21,7 +21,7 @@
 # ajusta los subdominios si quieres exponerlos publicamente -- protegelos
 # con autenticacion adicional (ver la directiva "basicauth" de Caddy) ya
 # que Grafana queda con las credenciales que definas en
-# GF_SECURITY_ADMIN_USER/GF_SECURITY_ADMIN_PASSWORD, no con el RBAC de
+# GF_SECURITY_ADMIN_USER/GF_SECURITY_ADMIN_PASSWORD, no con el login de
 # PostgresPulse.
 #
 # grafana.{$PULSE_DOMAIN} {

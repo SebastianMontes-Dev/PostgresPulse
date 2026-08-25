@@ -6,8 +6,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -16,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Autentica por JWT en vez de Basic Auth (ROADMAP.md "RBAC + JWT").
+ * Autentica por JWT en vez de Basic Auth.
  *
  * Dos formas de portar el token, según quién llama, replicando el mismo
  * límite de confianza que antes trazaba la exención de CSRF en SeguridadConfig:
@@ -44,8 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         extraerToken(request).flatMap(jwtServicio::validar).ifPresent(claims -> {
-            List<GrantedAuthority> autoridades = List.of(new SimpleGrantedAuthority("ROLE_" + claims.rol().name()));
-            var autenticacion = new UsernamePasswordAuthenticationToken(claims.usuario(), null, autoridades);
+            var autenticacion = new UsernamePasswordAuthenticationToken(claims.usuario(), null, List.of());
             SecurityContextHolder.getContext().setAuthentication(autenticacion);
         });
         chain.doFilter(request, response);

@@ -1,7 +1,6 @@
 package com.postgrespulse.seguridad;
 
 import com.postgrespulse.config.PropiedadesJwt;
-import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -45,7 +44,6 @@ public final class JwtServicio {
         Instant expiracion = ahora.plusSeconds(expiracionMinutos * 60);
         return Jwts.builder()
                 .subject(usuario.getNombreUsuario())
-                .claim("rol", usuario.getRol().name())
                 .issuedAt(Date.from(ahora))
                 .expiration(Date.from(expiracion))
                 .signWith(clave)
@@ -56,15 +54,14 @@ public final class JwtServicio {
     public Optional<ClaimsSesion> validar(String token) {
         try {
             Claims claims = Jwts.parser().verifyWith(clave).build().parseSignedClaims(token).getPayload();
-            Rol rol = Rol.valueOf(claims.get("rol", String.class));
             OffsetDateTime expiraEn = claims.getExpiration().toInstant().atOffset(ZoneOffset.UTC);
-            return Optional.of(new ClaimsSesion(claims.getSubject(), rol, expiraEn));
+            return Optional.of(new ClaimsSesion(claims.getSubject(), expiraEn));
         } catch (JwtException | IllegalArgumentException ex) {
             return Optional.empty();
         }
     }
 
-    public record ClaimsSesion(String usuario, Rol rol, OffsetDateTime expiraEn) {
+    public record ClaimsSesion(String usuario, OffsetDateTime expiraEn) {
     }
 
     private static byte[] derivarClave256(String secreto) {

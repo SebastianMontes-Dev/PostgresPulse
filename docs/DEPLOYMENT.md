@@ -219,7 +219,7 @@ docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
   expiraban), un JWT expira (`PULSE_JWT_EXPIRACION_MINUTOS`, 480 por defecto) — Prometheus no
   reautentica solo, así que un token estático en `scrape_configs` deja de funcionar al expirar.
   Dos formas de resolverlo:
-  - **Usuario ADMIN dedicado** (`/actuator/**` exige rol ADMIN desde v1.4.0, LECTOR no alcanza) con
+  - **Usuario dedicado** (`/actuator/**` exige estar autenticado, cualquier cuenta alcanza) con
     `PULSE_JWT_EXPIRACION_MINUTOS` alto (p.ej. semanas) solo para monitoreo, token generado una vez y
     rotado manualmente.
   - **`authorization.credentials_file`**: apuntar Prometheus a un archivo con el token, refrescado
@@ -291,8 +291,8 @@ Stack de Prometheus + Grafana con un tablero de ejemplo, listo para importar sob
 
 ```bash
 # 1. Genera el token JWT que Prometheus usa para raspar /actuator/prometheus.
-#    /actuator/** exige rol ADMIN (§5.4): usa las mismas credenciales que
-#    PULSE_ADMIN_USER/PULSE_ADMIN_PASSWORD (o las que le pases al script).
+#    /actuator/** exige estar autenticado (§5.4): usa las mismas credenciales
+#    que PULSE_ADMIN_USER/PULSE_ADMIN_PASSWORD (o las que le pases al script).
 ./scripts/generar-token-monitoreo.sh          # Linux/macOS
 .\scripts\generar-token-monitoreo.ps1         # Windows PowerShell
 
@@ -328,7 +328,6 @@ como en el demo local).
 |---|---|---|
 | `FlywayException` al arrancar | BD propia sin migraciones o esquema corrupto | Verificar que `pulse-db` esté arriba y vacía; eliminar volumen si se corrompió (`docker compose down -v` — pierde datos) |
 | `401` en Swagger o `/api/v1/**` | Falta la cabecera `Authorization: Bearer` | Iniciar sesión en `POST /api/v1/auth/login` con `PULSE_ADMIN_USER`/`PASSWORD` (o cualquier usuario creado luego vía `/api/v1/usuarios`) y usar el `token` de la respuesta |
-| `403 ACCESO_DENEGADO` | El usuario autenticado tiene rol `LECTOR` | Las mutaciones (registrar/analizar/gestionar usuarios) exigen rol `ADMIN` — ver tabla de RBAC en `docs/API.md §1` |
 | `429` al autenticar | Bloqueo por fuerza bruta tras varios intentos fallidos recientes en `/api/v1/auth/login` | Esperar los segundos indicados en `Retry-After` |
 | `CONEXION_FALLIDA` al registrar fuente | BD objetivo inalcanzable | Verificar host/puerto desde la red del contenedor (si la app corre en Docker, usar `host.docker.internal` para BDs locales) |
 | `EXTENSION_AUSENTE` | `pg_stat_statements` no habilitada | En la BD objetivo: `CREATE EXTENSION IF NOT EXISTS pg_stat_statements;` (requiere rol superusuario) |

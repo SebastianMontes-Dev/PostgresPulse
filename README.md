@@ -129,7 +129,7 @@ sin certificados; el reverse proxy solo entra en juego en producción — ver
 | **Framework** | Spring Boot 3.5.16, Java 21 |
 | **Persistencia** | Spring Data JPA, driver PostgreSQL, Flyway |
 | **Resiliencia** | Resilience4j (circuit breaker por fuente + reintento en fallos transitorios) |
-| **Seguridad** | Spring Security (JWT + RBAC), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
+| **Seguridad** | Spring Security (JWT), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
 | **Observabilidad** | Actuator + Micrometer (métricas propias), exportador Prometheus, tablero Grafana de ejemplo (opcional), logs estructurados ECS |
 | **Alertas** | Umbral por fuente, canales Email (SMTP)/Slack (webhook)/PagerDuty (Events API v2) |
 | **UI** | Thymeleaf + Chart.js |
@@ -145,20 +145,20 @@ estricto (nunca se exponen entidades JPA). Detalle de ADRs en [docs/SPECS.md §6
 | Método | Ruta | Descripción |
 |---|---|---|
 | POST | `/auth/login` | Iniciar sesión → JWT |
-| GET/POST | `/fuentes` | Listar (ADMIN/LECTOR) / registrar (ADMIN) fuentes |
-| GET/PUT/DELETE | `/fuentes/{id}` | Detalle (ambos) / actualizar / eliminar (ADMIN) |
-| POST | `/fuentes/{id}/probar` | Probar conexión (ADMIN) |
-| POST | `/fuentes/{id}/analizar` | Ejecutar análisis, 8 chequeos (ADMIN) |
-| GET | `/fuentes/{id}/analisis` | Historial paginado (ambos) |
-| GET | `/fuentes/{id}/salud` | Puntaje actual + tendencia 7d (ambos) |
-| GET | `/fuentes/{id}/tablas` \| `/consultas` \| `/indices` | Hallazgos del último análisis (ambos) |
-| GET | `/analisis/{id}` | Análisis completo (ambos) |
-| GET | `/analisis/{id}/exportar?formato=json\|csv\|html` | Reporte exportable (ambos) |
-| GET/POST/DELETE | `/usuarios` | Gestión de usuarios y roles (solo ADMIN) |
+| GET/POST | `/fuentes` | Listar / registrar fuentes |
+| GET/PUT/DELETE | `/fuentes/{id}` | Detalle / actualizar / eliminar |
+| POST | `/fuentes/{id}/probar` | Probar conexión |
+| POST | `/fuentes/{id}/analizar` | Ejecutar análisis, 8 chequeos |
+| GET | `/fuentes/{id}/analisis` | Historial paginado |
+| GET | `/fuentes/{id}/salud` | Puntaje actual + tendencia 7d |
+| GET | `/fuentes/{id}/tablas` \| `/consultas` \| `/indices` | Hallazgos del último análisis |
+| GET | `/analisis/{id}` | Análisis completo |
+| GET | `/analisis/{id}/exportar?formato=json\|csv\|html` | Reporte exportable |
+| GET/POST/DELETE | `/usuarios` | Gestión de usuarios |
 
-JWT (`Authorization: Bearer`) en todas las rutas salvo `/actuator/health` y `/auth/**`; roles
-**ADMIN**/**LECTOR** — ver [🔐 Seguridad](#-seguridad). Referencia completa con ejemplos `cURL` en
-[docs/API.md](docs/API.md).
+JWT (`Authorization: Bearer`) en todas las rutas salvo `/actuator/health` y `/auth/**`; cualquier
+cuenta autenticada puede todo — ver [🔐 Seguridad](#-seguridad). Referencia completa con ejemplos
+`cURL` en [docs/API.md](docs/API.md).
 
 ---
 
@@ -168,9 +168,11 @@ JWT (`Authorization: Bearer`) en todas las rutas salvo `/actuator/health` y `/au
   TRANSACTION READ ONLY`), no solo a nivel de driver — verificado con prueba de integración.
 - **Credenciales cifradas** AES-256-GCM con clave por variable de entorno; nunca se exponen en la API
   ni en logs.
-- **RBAC + JWT**: múltiples usuarios con rol **ADMIN** (todo) o **LECTOR** (solo lectura), BCrypt +
-  bloqueo anti-fuerza-bruta (`429` tras varios fallos) en el login. El panel usa una cookie httpOnly;
-  clientes de la API adjuntan `Authorization: Bearer` — ver [docs/API.md §1](docs/API.md).
+- **Autenticación JWT**: múltiples usuarios, sin niveles de permiso — cualquier cuenta autenticada
+  puede todo (PostgresPulse es una herramienta de un solo operador, no un producto multiusuario con
+  jerarquías). BCrypt + bloqueo anti-fuerza-bruta (`429` tras varios fallos) en el login. El panel usa
+  una cookie httpOnly; clientes de la API adjuntan `Authorization: Bearer` — ver
+  [docs/API.md §1](docs/API.md).
 - **CSRF** activo en el panel de control (Thymeleaf); `/api/v1/**` exento para clientes no interactivos.
 - **Timeouts agresivos** hacia la BD objetivo (conexión 5s, statement 30s, máx. 4 conexiones por
   fuente) para no afectar el sistema que se está analizando.

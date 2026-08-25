@@ -7,7 +7,6 @@ import com.postgrespulse.seguridad.LimiteTasaApiFilter;
 import com.postgrespulse.seguridad.LimiteTasaApiServicio;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
@@ -27,14 +26,15 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import java.util.LinkedHashMap;
 
 /**
- * RBAC + JWT (ROADMAP.md), reemplaza la Autenticación Básica de un solo
- * administrador de v1.0-v1.2. Los usuarios y roles (ADMIN/LECTOR) viven en
- * la tabla `usuarios`; JwtAuthenticationFilter autentica leyendo el token de
- * la cabecera `Authorization` (clientes de /api/v1/**) o de la cookie
- * httpOnly `PULSE_JWT` (panel Thymeleaf) -- ver su javadoc para el porqué de
- * esa distinción. Solo /actuator/health, /login y /api/v1/auth/** quedan
- * públicos; el resto exige un JWT válido, y las mutaciones además exigen rol
- * ADMIN vía @PreAuthorize en cada controlador (@EnableMethodSecurity abajo).
+ * Autenticación JWT, reemplaza la Autenticación Básica de un solo
+ * administrador de v1.0-v1.2. Los usuarios viven en la tabla `usuarios`, sin
+ * niveles de permiso: cualquier cuenta autenticada puede todo (decisión
+ * deliberada -- PostgresPulse es una herramienta de un solo operador, no un
+ * producto multiusuario con jerarquías; ver CHANGELOG.md). JwtAuthenticationFilter
+ * autentica leyendo el token de la cabecera `Authorization` (clientes de
+ * /api/v1/**) o de la cookie httpOnly `PULSE_JWT` (panel Thymeleaf) -- ver su
+ * javadoc para el porqué de esa distinción. Solo /actuator/health, /login y
+ * /api/v1/auth/** quedan públicos; el resto exige un JWT válido.
  *
  * CSRF: sigue activo en el panel (mismo razonamiento que con Basic Auth --
  * la cookie es autoridad ambiental que el navegador reenvía sola) y exento
@@ -53,7 +53,6 @@ import java.util.LinkedHashMap;
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SeguridadConfig {
 
     /**
@@ -102,7 +101,6 @@ public class SeguridadConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/login", "/logout", "/panel.css").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(entryPointPorRuta())
@@ -142,14 +140,12 @@ public class SeguridadConfig {
     }
 
     /**
-     * El unico caso que llega hasta aca (no a ManejadorErroresGlobal) es un
-     * rechazo a nivel de filtro -- hoy solo hasRole("ADMIN") en
-     * /actuator/**, evaluado por AuthorizationFilter, fuera del
-     * DispatcherServlet -- los rechazos de @PreAuthorize se atrapan antes,
-     * dentro del DispatcherServlet (ver javadoc de
-     * ManejadorErroresGlobal#accesoDenegado). El AccessDeniedHandler por
-     * defecto de Spring Security tambien usa sendError() internamente, con
-     * el mismo problema de reenvio a /error que entryPointPorRuta().
+     * Unico caso que dispara este handler hoy: un rechazo de CSRF en el
+     * panel (CsrfFilter lanza InvalidCsrfTokenException/MissingCsrfTokenException,
+     * ambas subclase de AccessDeniedException), evaluado a nivel de filtro,
+     * fuera del DispatcherServlet. El AccessDeniedHandler por defecto de
+     * Spring Security tambien usa sendError() internamente, con el mismo
+     * problema de reenvio a /error que entryPointPorRuta().
      */
     private AccessDeniedHandler sin403() {
         return (request, response, accessDeniedException) -> response.setStatus(403);

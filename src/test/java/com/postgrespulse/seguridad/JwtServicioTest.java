@@ -1,7 +1,6 @@
 package com.postgrespulse.seguridad;
 
 import com.postgrespulse.config.PropiedadesJwt;
-import com.postgrespulse.dominio.Rol;
 import com.postgrespulse.dominio.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,27 +24,25 @@ class JwtServicioTest {
         servicio = new JwtServicio(propiedades);
     }
 
-    private Usuario usuario(String nombre, Rol rol) {
+    private Usuario usuario(String nombre) {
         Usuario usuario = new Usuario();
         usuario.setNombreUsuario(nombre);
-        usuario.setRol(rol);
         return usuario;
     }
 
     @Test
-    void generaUnTokenQueSeValidaConElUsuarioYRolCorrectos() {
-        String token = servicio.generar(usuario("ana", Rol.ADMIN));
+    void generaUnTokenQueSeValidaConElUsuarioCorrecto() {
+        String token = servicio.generar(usuario("ana"));
 
         JwtServicio.ClaimsSesion claims = servicio.validar(token).orElseThrow();
 
         assertThat(claims.usuario()).isEqualTo("ana");
-        assertThat(claims.rol()).isEqualTo(Rol.ADMIN);
         assertThat(claims.expiraEn()).isAfter(OffsetDateTime.now());
     }
 
     @Test
     void rechazaUnTokenAlteradoEnCualquierCaracter() {
-        String token = servicio.generar(usuario("ana", Rol.LECTOR));
+        String token = servicio.generar(usuario("ana"));
         String alterado = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
 
         assertThat(servicio.validar(alterado)).isEmpty();
@@ -58,7 +55,7 @@ class JwtServicioTest {
         otras.setExpiracionMinutos(60);
         JwtServicio otroServicio = new JwtServicio(otras);
 
-        String token = otroServicio.generar(usuario("ana", Rol.ADMIN));
+        String token = otroServicio.generar(usuario("ana"));
 
         assertThat(servicio.validar(token)).isEmpty();
     }
@@ -70,7 +67,7 @@ class JwtServicioTest {
         expiraYa.setExpiracionMinutos(0);
         JwtServicio servicioQueExpiraAlInstante = new JwtServicio(expiraYa);
 
-        String token = servicioQueExpiraAlInstante.generar(usuario("ana", Rol.ADMIN));
+        String token = servicioQueExpiraAlInstante.generar(usuario("ana"));
 
         assertThat(servicio.validar(token)).isEmpty();
     }

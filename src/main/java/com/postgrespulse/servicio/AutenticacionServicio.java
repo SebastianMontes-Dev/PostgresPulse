@@ -11,8 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
- * Login con usuario/contraseña -> JWT firmado (ROADMAP.md "RBAC + JWT",
- * reemplaza la Autenticación Básica de un solo administrador de v1.0-1.2).
+ * Login con usuario/contraseña -> JWT firmado (reemplaza la Autenticación
+ * Básica de un solo administrador de v1.0-1.2).
  * El bloqueo por fuerza bruta se evalúa por IP de origen antes de tocar
  * BCrypt (BloqueoPorFuerzaBrutaFilter, delante de /api/v1/auth/login y
  * /login); aquí solo se registra el resultado del intento.
@@ -48,6 +48,6 @@ public class AutenticacionServicio {
         controlIntentos.registrarExito(claveBloqueo);
         String token = jwtServicio.generar(usuario);
         JwtServicio.ClaimsSesion claims = jwtServicio.validar(token).orElseThrow();
-        return TokenRespuestaDto.de(token, usuario.getRol(), claims.expiraEn());
+        return TokenRespuestaDto.de(token, claims.expiraEn());
     }
 }

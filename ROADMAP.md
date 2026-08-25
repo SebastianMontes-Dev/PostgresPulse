@@ -10,9 +10,10 @@ Sin incrementos comprometidos pendientes por ahora — los tres que se planearon
 están implementados. Lo que sigue son direcciones sin compromiso de ejecución, ver
 [Ideas exploratorias](#ideas-exploratorias) abajo.
 
-✅ **RBAC + JWT** (múltiples usuarios y roles ADMIN/LECTOR, reemplazando la Autenticación Básica de
-un solo administrador de v1.0-1.2) ya está implementado — ver [CHANGELOG.md](CHANGELOG.md) y
-[docs/API.md §1-3](docs/API.md).
+✅ **Autenticación JWT** (múltiples usuarios, reemplazando la Autenticación Básica de un solo
+administrador de v1.0-1.2) ya está implementada — ver [CHANGELOG.md](CHANGELOG.md) y
+[docs/API.md §1-3](docs/API.md). Se probó con roles ADMIN/LECTOR (RBAC) y se simplificó a un solo
+nivel de acceso: la herramienta es de un operador, no un producto multiusuario con jerarquías.
 
 ✅ **Alertas (Email / Slack / PagerDuty)** ya está implementado — umbral configurable por fuente,
 canales de envío configurables a nivel de instancia — ver [CHANGELOG.md](CHANGELOG.md) y
