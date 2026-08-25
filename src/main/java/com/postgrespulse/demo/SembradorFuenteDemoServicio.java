@@ -56,7 +56,8 @@ public class SembradorFuenteDemoServicio implements ApplicationRunner {
                 "demo",
                 "public,ventas",
                 List.of("demo"),
-                SslModo.PREFER);
+                SslModo.PREFER,
+                null);
         try {
             fuenteServicio.crear(dto);
             REGISTRO.info("Fuente de demostración '{}' sembrada automáticamente ({}:{})",

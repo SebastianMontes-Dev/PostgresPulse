@@ -1,5 +1,6 @@
 package com.postgrespulse;
 
+import com.postgrespulse.config.PropiedadesAlertas;
 import com.postgrespulse.config.PropiedadesCifrado;
 import com.postgrespulse.config.PropiedadesJwt;
 import com.postgrespulse.config.PropiedadesSeguridad;
@@ -21,7 +22,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 @EnableScheduling
-@EnableConfigurationProperties({PropiedadesCifrado.class, PropiedadesSeguridad.class, PropiedadesJwt.class})
+@EnableConfigurationProperties({PropiedadesCifrado.class, PropiedadesSeguridad.class, PropiedadesJwt.class,
+        PropiedadesAlertas.class})
 public class PostgresPulseApplication {
 
     public static void main(String[] args) {

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record CrearFuenteDto(
@@ -44,7 +45,11 @@ public record CrearFuenteDto(
         @Size(max = 10, message = "Máximo 10 etiquetas")
         List<@Size(max = 50, message = "Cada etiqueta no puede superar 50 caracteres") String> etiquetas,
 
-        SslModo sslModo
+        SslModo sslModo,
+
+        @Min(value = 0, message = "El umbral de alerta debe estar entre 0 y 100")
+        @Max(value = 100, message = "El umbral de alerta debe estar entre 0 y 100")
+        BigDecimal umbralAlerta
 ) {
     public CrearFuenteDto {
         etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);

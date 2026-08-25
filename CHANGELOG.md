@@ -5,6 +5,19 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+### Añadido
+
+- **Alertas de salud (Email / Slack / PagerDuty)**: umbral configurable por fuente (`umbralAlerta`,
+  migración `V5`) — sin umbral, la fuente no dispara alertas. Los canales de envío
+  (`AlertaServicio`) son configuración de instancia (`PropiedadesAlertas`): habilitar email requiere
+  `spring-boot-starter-mail` + SMTP configurado, Slack solo un webhook entrante, PagerDuty solo una
+  routing key de Events API v2 (dispara `trigger` en degradación, `resolve` en recuperación). Cada
+  canal se despacha de forma independiente — uno caído no bloquea a los otros ni al ciclo de análisis
+  que lo disparó. Se evalúa en `OrquestadorAnalisisServicio`, después de persistir el análisis y
+  fuera de la transacción de base de datos (mismo principio de "nunca I/O de red bajo transacción
+  abierta" que ya regía la conexión a la fuente objetivo). Cierra el primero de los dos ítems de
+  "próximos pasos" de `ROADMAP.md`; documentado en `docs/DEPLOYMENT.md` §5.5.
+
 ## [1.4.1] — 2026-08-24
 
 ### Corregido

@@ -114,7 +114,8 @@ public class PanelControlador {
             FuenteRespuestaDto creada = fuenteServicio.crear(new CrearFuenteDto(
                     formulario.getNombre(), formulario.getHost(), formulario.getPuerto(),
                     formulario.getBaseDeDatos(), formulario.getUsuario(), formulario.getContrasena(),
-                    formulario.getFiltroEsquema(), List.of(), formulario.getSslModo()));
+                    formulario.getFiltroEsquema(), List.of(), formulario.getSslModo(),
+                    formulario.getUmbralAlerta()));
             redirectAttributes.addFlashAttribute("exito", "Fuente registrada: " + creada.nombre());
         } catch (NombreDuplicadoException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());

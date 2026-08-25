@@ -8,14 +8,16 @@ Este documento describe la visión **posterior a la v1.0** de **PostgresPulse**.
 
 Los incrementos que siguen, en el orden en que se abordarán. Cada uno encaja en la arquitectura existente sin rediseñarla.
 
-- **Alertas (Email / Slack / PagerDuty):** notificaciones cuando la puntuación de salud cruce un
-  umbral configurado.
 - **Tableros Grafana:** dashboards de ejemplo listos para importar. El exportador ya está disponible
   desde v1.2.0 (`/actuator/prometheus`, ver [docs/DEPLOYMENT.md §5.4](docs/DEPLOYMENT.md)).
 
 ✅ **RBAC + JWT** (múltiples usuarios y roles ADMIN/LECTOR, reemplazando la Autenticación Básica de
 un solo administrador de v1.0-1.2) ya está implementado — ver [CHANGELOG.md](CHANGELOG.md) y
 [docs/API.md §1-3](docs/API.md).
+
+✅ **Alertas (Email / Slack / PagerDuty)** ya está implementado — umbral configurable por fuente,
+canales de envío configurables a nivel de instancia — ver [CHANGELOG.md](CHANGELOG.md) y
+[docs/DEPLOYMENT.md §5.5](docs/DEPLOYMENT.md).
 
 ---
 

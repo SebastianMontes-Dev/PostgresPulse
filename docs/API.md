@@ -164,6 +164,7 @@ GET /api/v1/fuentes
     "habilitado": true,
     "estado": "EN_LINEA",
     "sslModo": "PREFER",
+    "umbralAlerta": null,
     "ultimoAnalizadoEn": "2026-08-01T15:04:05Z"
   }
 ]
@@ -187,7 +188,8 @@ Content-Type: application/json
   "contrasena": "demo",
   "filtroEsquema": "public,ventas",
   "etiquetas": ["produccion", "core"],
-  "sslModo": "REQUIRE"
+  "sslModo": "REQUIRE",
+  "umbralAlerta": 60.00
 }
 ```
 
@@ -202,6 +204,7 @@ Content-Type: application/json
 | `filtroEsquema` | string | ❌ | regex `[a-zA-Z0-9_.,]*` |
 | `etiquetas` | list[string] | ❌ | máx. 10 etiquetas |
 | `sslModo` | enum | ❌ | `DISABLE`\|`PREFER`\|`REQUIRE`\|`VERIFY_FULL`, default `PREFER` (mismo default histórico de pgjdbc) |
+| `umbralAlerta` | decimal | ❌ | 0–100. Sin valor, la fuente no dispara alertas aunque haya canales configurados (ver [docs/DEPLOYMENT.md §5.5](../docs/DEPLOYMENT.md)) |
 
 **Respuesta 201** — fuente creada con `estado: FUERA_LINEA` (se verifica en la primera prueba/análisis).
 

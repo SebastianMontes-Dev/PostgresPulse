@@ -80,6 +80,11 @@
             </select>
         </div>
         <div class="campo">
+            <label for="umbralAlerta">Umbral de alerta</label>
+            <input id="umbralAlerta" type="number" step="0.01" min="0" max="100"
+                   th:field="*{umbralAlerta}" placeholder="Sin umbral = sin alertas">
+        </div>
+        <div class="campo">
             <button type="submit" class="boton">Registrar</button>
         </div>
     </form>

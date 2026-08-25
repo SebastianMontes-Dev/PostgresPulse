@@ -68,7 +68,7 @@ class SembradorFuenteDemoServicioTest {
         FuenteRespuestaDto creada = new FuenteRespuestaDto(
                 1L, SembradorFuenteDemoServicio.NOMBRE_FUENTE_DEMO, "target-demo", 5432, "ventas_db",
                 "demo", true, "public,ventas", List.of("demo"), true, EstadoFuente.FUERA_LINEA, SslModo.PREFER,
-                null, null, null, null);
+                null, null, null, null, null);
         when(fuenteServicio.crear(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(creada)
                 .thenThrow(new NombreDuplicadoException(SembradorFuenteDemoServicio.NOMBRE_FUENTE_DEMO));

@@ -7,7 +7,9 @@ import com.postgrespulse.dominio.FuenteDatos;
 import com.postgrespulse.dominio.TipoDisparo;
 import com.postgrespulse.excepcion.AnalisisEnCursoException;
 import com.postgrespulse.excepcion.FuenteNoEncontradaException;
+import com.postgrespulse.repositorio.AnalisisRepositorio;
 import com.postgrespulse.repositorio.FuenteDatosRepositorio;
+import com.postgrespulse.servicio.AlertaServicio;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
@@ -61,6 +63,8 @@ public class OrquestadorAnalisisServicio {
     private final RegistroConexionesServicio registroConexiones;
     private final FabricaChequeos fabricaChequeos;
     private final AnalisisPersistenciaServicio persistencia;
+    private final AnalisisRepositorio analisisRepositorio;
+    private final AlertaServicio alertaServicio;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
 
@@ -71,12 +75,16 @@ public class OrquestadorAnalisisServicio {
                                         RegistroConexionesServicio registroConexiones,
                                         FabricaChequeos fabricaChequeos,
                                         AnalisisPersistenciaServicio persistencia,
+                                        AnalisisRepositorio analisisRepositorio,
+                                        AlertaServicio alertaServicio,
                                         CircuitBreakerRegistry circuitBreakerRegistry,
                                         RetryRegistry retryRegistry) {
         this.fuenteDatosRepositorio = fuenteDatosRepositorio;
         this.registroConexiones = registroConexiones;
         this.fabricaChequeos = fabricaChequeos;
         this.persistencia = persistencia;
+        this.analisisRepositorio = analisisRepositorio;
+        this.alertaServicio = alertaServicio;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.retryRegistry = retryRegistry;
     }
@@ -104,6 +112,9 @@ public class OrquestadorAnalisisServicio {
         MDC.put("fuenteId", String.valueOf(fuente.getId()));
         MDC.put("disparadoPor", disparadoPor.name());
         try {
+            Analisis anterior = analisisRepositorio.findFirstByFuenteIdOrderByAnalizadoEnDesc(fuente.getId())
+                    .orElse(null);
+
             CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("fuente-" + fuente.getId());
             Retry retry = retryRegistry.retry("fuente-" + fuente.getId());
 
@@ -126,11 +137,15 @@ public class OrquestadorAnalisisServicio {
                 // getConnection() lanza SQLException en fallos posteriores (auth, timeout);
                 // y el circuit breaker abierto lanza CallNotPermittedException sin ni siquiera
                 // intentar conectar. Mismo criterio amplio que PruebaConexionServicio.
-                return persistencia.registrarFallo(fuente, disparadoPor, ex);
+                Analisis fallo = persistencia.registrarFallo(fuente, disparadoPor, ex);
+                alertaServicio.evaluar(fuente, anterior, fallo);
+                return fallo;
             }
             long duracionMs = (System.nanoTime() - inicio) / 1_000_000;
 
-            return persistencia.registrarExito(fuente, disparadoPor, resultados, duracionMs);
+            Analisis exito = persistencia.registrarExito(fuente, disparadoPor, resultados, duracionMs);
+            alertaServicio.evaluar(fuente, anterior, exito);
+            return exito;
         } finally {
             MDC.remove("fuenteId");
             MDC.remove("disparadoPor");

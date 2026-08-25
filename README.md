@@ -128,6 +128,7 @@ sin certificados; el reverse proxy solo entra en juego en producción — ver
 | **Resiliencia** | Resilience4j (circuit breaker por fuente + reintento en fallos transitorios) |
 | **Seguridad** | Spring Security (JWT + RBAC), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
 | **Observabilidad** | Actuator + Micrometer (métricas propias), exportador Prometheus, logs estructurados ECS |
+| **Alertas** | Umbral por fuente, canales Email (SMTP)/Slack (webhook)/PagerDuty (Events API v2) |
 | **UI** | Thymeleaf + Chart.js |
 | **Pruebas** | JUnit 5, Mockito, Testcontainers, JaCoCo |
 
@@ -188,7 +189,7 @@ JWT (`Authorization: Bearer`) en todas las rutas salvo `/actuator/health` y `/au
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Variables de entorno, despliegue, operación, troubleshooting |
 | [SECURITY.md](SECURITY.md) | Política de seguridad y divulgación responsable de vulnerabilidades |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo levantar el entorno, correr pruebas y proponer cambios |
-| [ROADMAP.md](ROADMAP.md) | Alcance post-v1.0 (RBAC, alertas, Prometheus, multi-motor) |
+| [ROADMAP.md](ROADMAP.md) | Alcance post-v1.0 (RBAC, tableros Grafana, multi-motor) |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de versiones |
 
 ---

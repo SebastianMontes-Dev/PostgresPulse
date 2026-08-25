@@ -32,6 +32,15 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_DEMO_SEED` | `true` en `docker-compose.yml`, `false` por defecto en la app | Registra automáticamente la fuente `Ventas Demo` contra `target-demo` al arrancar. Solo tiene sentido con la infraestructura de `docker-compose.yml`; en un despliegue real contra fuentes de producción, déjalo en `false` |
 | `PULSE_LOG_FORMAT` | *(vacía = consola legible)* | `ecs` activa logs estructurados JSON por consola, para agregadores de logs (ver §4) |
 | `PULSE_API_RATE_LIMIT` | `60` | Peticiones por minuto por IP admitidas en `/api/v1/**` (fuera de `/auth/**`, que tiene su propio control de fuerza bruta). Al superarlo, `429` con `Retry-After` |
+| `PULSE_ALERTS_EMAIL_ENABLED` | `false` | Habilita el envío de alertas por email cuando una fuente cruza su `umbralAlerta` (ver §5.5) |
+| `PULSE_ALERTS_EMAIL_FROM` | *(vacía)* | Dirección remitente de las alertas por email |
+| `PULSE_ALERTS_EMAIL_TO` | *(vacía)* | Dirección destinataria de las alertas por email |
+| `PULSE_SMTP_HOST` | *(vacía)* | Host del servidor SMTP saliente |
+| `PULSE_SMTP_PORT` | `587` | Puerto del servidor SMTP saliente |
+| `PULSE_SMTP_USER` | *(vacía)* | Usuario de autenticación SMTP |
+| `PULSE_SMTP_PASSWORD` | *(vacía)* | Contraseña de autenticación SMTP |
+| `PULSE_ALERTS_SLACK_WEBHOOK_URL` | *(vacía)* | Webhook entrante de Slack para las alertas. Vacío = canal deshabilitado |
+| `PULSE_ALERTS_PAGERDUTY_ROUTING_KEY` | *(vacía)* | Routing key de un servicio de PagerDuty (Events API v2). Vacío = canal deshabilitado |
 
 Copia `.env.example` → `.env` para desarrollo local. `.env` está excluido del repositorio (`.gitignore`).
 
@@ -230,6 +239,47 @@ docker exec pulse-db pg_dump -U pulse pulse_db > backup_$(date +%F).sql
   antes de contarse como fallo; fallos de autenticación o un circuito ya abierto no se reintentan
   (`resilience4j.retry` en `application.yml`).
 - **Circuit breaker por fuente**: sigue activo sin cambios (una fuente inalcanzable no se martillea en cada ciclo del programador).
+
+### 5.5 Alertas de salud
+
+El umbral de alerta es **por fuente** (campo `umbralAlerta` en `POST`/`PUT /api/v1/fuentes`, ver
+[docs/API.md §4.2](API.md)): una fuente sin umbral configurado nunca dispara alertas, sin importar
+qué canales estén habilitados. Los canales de envío (email/Slack/PagerDuty) son configuración de la
+**instancia completa**, no de cada fuente.
+
+Al terminar cada análisis (manual o programado), si la fuente tiene umbral configurado y el puntaje
+de salud cruzó ese umbral respecto al análisis anterior — hacia abajo (degradación) o hacia arriba
+(recuperación) — se despacha una notificación a cada canal habilitado. Un canal caído no bloquea a
+los otros ni al análisis que disparó la alerta.
+
+**Email (Gmail como ejemplo):**
+```bash
+PULSE_ALERTS_EMAIL_ENABLED=true
+PULSE_ALERTS_EMAIL_FROM=alertas@tu-dominio.com
+PULSE_ALERTS_EMAIL_TO=oncall@tu-dominio.com
+PULSE_SMTP_HOST=smtp.gmail.com
+PULSE_SMTP_PORT=587
+PULSE_SMTP_USER=alertas@tu-dominio.com
+# Contraseña de aplicación de Gmail (Cuenta de Google > Seguridad > Contraseñas de aplicaciones),
+# no la contraseña normal de la cuenta.
+PULSE_SMTP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+```
+
+**Slack:** crea un [webhook entrante](https://api.slack.com/messaging/webhooks) en el canal deseado
+y expórtalo:
+```bash
+PULSE_ALERTS_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/<ID-EQUIPO>/<ID-BOT>/<TOKEN>
+```
+
+**PagerDuty:** crea un servicio con integración "Events API v2" y usa su routing key:
+```bash
+PULSE_ALERTS_PAGERDUTY_ROUTING_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+La recuperación (puntaje vuelve a estar sobre el umbral) se envía como `event_action: resolve` sobre
+el mismo incidente, no como un evento nuevo.
+
+Cada canal es opcional e independiente: puedes habilitar solo Slack, solo PagerDuty, los tres, o
+ninguno (comportamiento por defecto).
 
 ---
 

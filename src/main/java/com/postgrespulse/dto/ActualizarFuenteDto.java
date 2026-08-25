@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record ActualizarFuenteDto(
@@ -38,7 +39,11 @@ public record ActualizarFuenteDto(
 
         Boolean habilitado,
 
-        SslModo sslModo
+        SslModo sslModo,
+
+        @Min(value = 0, message = "El umbral de alerta debe estar entre 0 y 100")
+        @Max(value = 100, message = "El umbral de alerta debe estar entre 0 y 100")
+        BigDecimal umbralAlerta
 ) {
     public ActualizarFuenteDto {
         etiquetas = etiquetas == null ? null : List.copyOf(etiquetas);

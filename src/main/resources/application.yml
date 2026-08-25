@@ -19,6 +19,18 @@ spring:
   flyway:
     enabled: true
 
+  mail:
+    host: ${PULSE_SMTP_HOST:}
+    port: ${PULSE_SMTP_PORT:587}
+    username: ${PULSE_SMTP_USER:}
+    password: ${PULSE_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   jackson:
     default-property-inclusion: non_null
 
@@ -33,6 +45,12 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+  health:
+    mail:
+      # El SMTP de alertas es opcional (PULSE_SMTP_HOST vacio por defecto);
+      # sin esto, el HealthIndicator de correo intenta conectar y marca
+      # /actuator/health como DOWN aunque la app este perfectamente sana.
+      enabled: false
   info:
     build:
       enabled: true
@@ -79,6 +97,12 @@ app:
     sembrar: ${PULSE_DEMO_SEED:false}
   limite-tasa:
     peticiones-por-minuto: ${PULSE_API_RATE_LIMIT:60}
+  alertas:
+    email-habilitado: ${PULSE_ALERTS_EMAIL_ENABLED:false}
+    email-desde: ${PULSE_ALERTS_EMAIL_FROM:}
+    email-para: ${PULSE_ALERTS_EMAIL_TO:}
+    slack-webhook-url: ${PULSE_ALERTS_SLACK_WEBHOOK_URL:}
+    pagerduty-routing-key: ${PULSE_ALERTS_PAGERDUTY_ROUTING_KEY:}
 
 logging:
   structured:

@@ -3,6 +3,7 @@ package com.postgrespulse.dto;
 import com.postgrespulse.dominio.EstadoFuente;
 import com.postgrespulse.dominio.SslModo;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public record FuenteRespuestaDto(
         boolean habilitado,
         EstadoFuente estado,
         SslModo sslModo,
+        BigDecimal umbralAlerta,
         String ultimoError,
         OffsetDateTime ultimoAnalizadoEn,
         OffsetDateTime creadoEn,

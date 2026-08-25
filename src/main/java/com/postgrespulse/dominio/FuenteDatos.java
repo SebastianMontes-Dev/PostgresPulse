@@ -12,6 +12,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -56,6 +57,9 @@ public class FuenteDatos {
     @Enumerated(EnumType.STRING)
     @Column(name = "ssl_modo", nullable = false, length = 20)
     private SslModo sslModo = SslModo.PREFER;
+
+    @Column(name = "umbral_alerta", precision = 5, scale = 2)
+    private BigDecimal umbralAlerta;
 
     @Column(name = "ultimo_error", columnDefinition = "TEXT")
     private String ultimoError;
@@ -175,6 +179,14 @@ public class FuenteDatos {
 
     public void setSslModo(SslModo sslModo) {
         this.sslModo = sslModo;
+    }
+
+    public BigDecimal getUmbralAlerta() {
+        return umbralAlerta;
+    }
+
+    public void setUmbralAlerta(BigDecimal umbralAlerta) {
+        this.umbralAlerta = umbralAlerta;
     }
 
     public String getUltimoError() {

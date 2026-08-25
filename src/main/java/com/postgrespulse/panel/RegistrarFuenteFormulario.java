@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 /**
  * Command object mutable para el formulario HTML "Registrar fuente" del
  * panel de control. Separado de CrearFuenteDto (usado por la API JSON):
@@ -37,6 +39,10 @@ public class RegistrarFuenteFormulario {
     private String filtroEsquema;
 
     private SslModo sslModo = SslModo.PREFER;
+
+    @Min(value = 0, message = "El umbral de alerta debe estar entre 0 y 100")
+    @Max(value = 100, message = "El umbral de alerta debe estar entre 0 y 100")
+    private BigDecimal umbralAlerta;
 
     public String getNombre() {
         return nombre;
@@ -100,5 +106,13 @@ public class RegistrarFuenteFormulario {
 
     public void setSslModo(SslModo sslModo) {
         this.sslModo = sslModo;
+    }
+
+    public BigDecimal getUmbralAlerta() {
+        return umbralAlerta;
+    }
+
+    public void setUmbralAlerta(BigDecimal umbralAlerta) {
+        this.umbralAlerta = umbralAlerta;
     }
 }

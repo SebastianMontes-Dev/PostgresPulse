@@ -56,6 +56,7 @@ public class FuenteServicio {
         fuente.setEtiquetas(unirEtiquetas(dto.etiquetas()));
         fuente.setHabilitado(Boolean.TRUE);
         fuente.setSslModo(dto.sslModo());
+        fuente.setUmbralAlerta(dto.umbralAlerta());
         return aRespuesta(repositorio.save(fuente));
     }
 
@@ -95,6 +96,9 @@ public class FuenteServicio {
         if (dto.sslModo() != null) {
             fuente.setSslModo(dto.sslModo());
         }
+        if (dto.umbralAlerta() != null) {
+            fuente.setUmbralAlerta(dto.umbralAlerta());
+        }
         FuenteDatos guardada = repositorio.save(fuente);
         registroConexiones.eliminar(id);
         return aRespuesta(guardada);
@@ -125,6 +129,7 @@ public class FuenteServicio {
                 Boolean.TRUE.equals(fuente.getHabilitado()),
                 fuente.getEstado(),
                 fuente.getSslModo(),
+                fuente.getUmbralAlerta(),
                 fuente.getUltimoError(),
                 fuente.getUltimoAnalizadoEn(),
                 fuente.getCreadoEn(),
