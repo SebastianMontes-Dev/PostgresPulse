@@ -10,11 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * docs/SPECS.md #11.3: "retraso contra fuerza bruta en fallos de inicio de
- * sesion". Basic Auth no tiene un endpoint de login dedicado -- se evalua en
- * cada peticion -- asi que el conteo es por IP de origen (request.getRemoteAddr(),
- * sin soporte de proxy confiable/X-Forwarded-For por ahora). Tras
- * MAX_INTENTOS fallos dentro de VENTANA, la IP queda bloqueada por BLOQUEO
- * sin ni siquiera intentar autenticar (ver BloqueoPorFuerzaBrutaFilter).
+ * sesion". El conteo es por IP de origen (request.getRemoteAddr(), sin
+ * soporte de proxy confiable/X-Forwarded-For por ahora) contra los intentos
+ * fallidos en POST /api/v1/auth/login. Tras MAX_INTENTOS fallos dentro de
+ * VENTANA, la IP queda bloqueada por BLOQUEO sin ni siquiera intentar
+ * autenticar (ver BloqueoPorFuerzaBrutaFilter).
  */
 @Component
 public class ControlIntentosFallidosServicio {

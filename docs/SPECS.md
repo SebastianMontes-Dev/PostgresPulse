@@ -6,9 +6,9 @@
 |---|---|
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
-| **Estado** | v1.0 completada (fases 0–8, ver §17); RBAC+JWT, exportador Prometheus y despliegue TLS añadidos después — ver CHANGELOG.md |
-| **Versión** | 1.4.1 |
-| **Última actualización** | 2026-08-24 |
+| **Estado** | v1.0 completada (fases 0–8, ver §17); JWT multiusuario, exportador Prometheus, despliegue TLS, alertas de salud y tableros Grafana añadidos después — ver CHANGELOG.md. El RBAC (roles ADMIN/LECTOR) introducido junto con JWT se eliminó después en la v2.0.0: hoy cualquier cuenta autenticada tiene el mismo acceso |
+| **Versión** | 2.0.0 |
+| **Última actualización** | 2026-08-25 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
 
 ---
@@ -226,7 +226,7 @@ Cada chequeo devuelve `details` (JSONB): lista de tablas/índices/consultas con 
 
 ## 9. API REST — resumen
 
-Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginación `?page&size` · JWT (RBAC ADMIN/LECTOR) · Swagger en `/swagger-ui.html`. Referencia detallada en [`docs/API.md`](API.md).
+Convenciones: base `/api/v1` · JSON · errores uniformes `ApiError` · paginación `?page&size` · JWT (cualquier cuenta autenticada, sin niveles de permiso) · Swagger en `/swagger-ui.html`. Referencia detallada en [`docs/API.md`](API.md).
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -265,10 +265,11 @@ Estética: tema oscuro tipo panel de monitoreo, semáforo verde/ámbar/rojo, res
 
 1. **Solo-lectura estricto**: de solo lectura en la fuente de datos de análisis; cláusula de guardia en el orquestador que impide transacciones de escritura hacia BD objetivo.
 2. **Cifrado de credenciales**: AES-256-GCM, clave por variable de entorno; nunca se registra ni expone.
-3. **RBAC + JWT** en API y panel de control (reemplaza la Autenticación Básica de v1.0-1.2, ver
-   CHANGELOG.md): múltiples usuarios con rol ADMIN o LECTOR, contraseñas con BCrypt, retraso contra
-   fuerza bruta en el login. El primer ADMIN se siembra desde variables de entorno; el resto se
-   gestiona vía `/api/v1/usuarios`.
+3. **JWT** en API y panel de control (reemplaza la Autenticación Básica de v1.0-1.2, ver
+   CHANGELOG.md): múltiples usuarios, sin niveles de permiso — cualquier cuenta autenticada puede
+   todo (RBAC con roles ADMIN/LECTOR se introdujo junto con JWT y se eliminó en v2.0.0, ver
+   CHANGELOG.md), contraseñas con BCrypt, retraso contra fuerza bruta en el login. El primer usuario
+   se siembra desde variables de entorno; el resto se gestiona vía `/api/v1/usuarios`.
 4. **Validación de entrada**: Validación de Beans en todos los DTOs; previene inyección SQL en filtros dinámicos.
 5. **Sin inyección SQL**: todas las consultas dinámicas usan parámetros; nombres de objetos/columnas validados contra `pg_catalog` antes de usarlos.
 6. **Secretos**: `.env.example` documentado, `.gitignore` excluye `.env`; credenciales solo por variables de entorno.
