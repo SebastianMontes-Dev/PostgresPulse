@@ -3,6 +3,41 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
+## [No publicado]
+
+Auditoría integral del repo (features vs. especificación, seguridad, tests/CI, madurez operacional,
+documentación) tras cerrar el roadmap en 2.0.0: sin brechas funcionales ni hallazgos de seguridad
+críticos/altos, pero surgieron los siguientes puntos de endurecimiento y pulido.
+
+### Añadido
+
+- **Heartbeat externo ("dead man's switch")**: `PULSE_HEARTBEAT_URL` (opcional, vacío por defecto)
+  hace ping periódico a un servicio externo tipo healthchecks.io/Cronitor/Uptime Kuma —
+  independiente de las alertas de umbral, avisa si la propia app se cae en vez de solo una fuente.
+  Ver `docs/DEPLOYMENT.md` §5.7.
+- **Apagado ordenado**: `server.shutdown: graceful` (`PULSE_SHUTDOWN_TIMEOUT_SEGUNDOS`, 30s por
+  defecto) evita que un análisis en curso se corte a mitad ante un `docker stop`/redeploy.
+- **`PULSE_DB_POOL_MAX`**: tamaño máximo configurable del pool Hikari hacia `pulse-db` (antes fijo
+  en el default de Spring Boot).
+- **Swagger "Authorize"**: `OpenApiConfig` ahora declara el esquema JWT Bearer, así que
+  `/swagger-ui.html` puede probar los endpoints autenticados sin herramientas externas; la versión
+  mostrada se lee de `BuildProperties` en vez de estar hardcodeada.
+- **CI**: la imagen Docker ahora se construye y escanea con Trivy en cada PR (antes solo en push a
+  `main`/tags) — publicar a GHCR sigue reservado a push. Nuevo job que verifica de punta a punta que
+  `scripts/respaldar.sh backup` + `restaurar` preservan los datos.
+- Tests dedicados para `ConsultasLentasServicio`, `DetalleAnalisisServicio` y los 4 controladores
+  REST (antes solo cubiertos indirectamente vía integración) — cobertura de esos puntos pasó de
+  37-58% a ~100%.
+- Política de migraciones destructivas documentada en `CONTRIBUTING.md` (Flyway no tiene rollback
+  automático; la única vía de reversión es restaurar desde backup).
+
+### Corregido
+
+- `docs/SPECS.md` y `monitoring/prometheus.yml` seguían describiendo el modelo RBAC (roles
+  ADMIN/LECTOR) eliminado en 2.0.0 — quedaron desincronizados de README/API/DEPLOYMENT en ese
+  commit. Corregido para reflejar que `/actuator/**` y el resto de la API solo exigen estar
+  autenticado, sin rol.
+
 ## [2.0.0] — 2026-08-25
 
 ### Eliminado

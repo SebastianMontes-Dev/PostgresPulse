@@ -37,6 +37,24 @@ Para ver el flujo E2E completo (registrar → probar conexión → analizar → 
 .\scripts\demo.ps1         # Windows PowerShell
 ```
 
+## Migraciones de base de datos (Flyway)
+
+Flyway (edición community, sin *undo* automático) solo aplica migraciones hacia adelante — no hay
+forma de revertir `V{n}` con un simple comando. Política para nuevas migraciones:
+
+1. **Preferí siempre un cambio aditivo**: `ADD COLUMN` nullable (sin `NOT NULL`, como
+   `V1`/`V5`/`filtro_esquema`/`umbral_alerta`) cuando el dato es opcional, o `NOT NULL DEFAULT ...`
+   (como `V4`/`ssl_modo`) cuando no lo es. Nunca edites una migración ya publicada — un cambio
+   posterior siempre es una `V{n+1}` nueva, aunque corrija la anterior.
+2. Si una migración es inevitablemente destructiva (`DROP COLUMN`/`DROP TABLE`, como
+   `V6__eliminar_rol_de_usuarios.sql`): documentá explícitamente en `CHANGELOG.md` qué dato se
+   pierde y por qué es intencional (no accidental).
+3. **No existe rollback automático de una migración destructiva ya aplicada.** Si hace falta
+   revertir en producción, la única vía es restaurar desde un backup tomado *antes* de aplicarla
+   (`scripts/respaldar.sh backup` / `.ps1`, ver [docs/DEPLOYMENT.md §5.3](docs/DEPLOYMENT.md)) — no
+   se intenta reconstruir la columna/tabla borrada a mano. Por eso: tomá un backup fresco
+   inmediatamente antes de desplegar cualquier release que incluya una migración destructiva.
+
 ## Estilo de commits
 
 El historial sigue [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`,

@@ -6,6 +6,8 @@ spring:
     url: ${PULSE_DB_URL:jdbc:postgresql://localhost:5432/pulse_db}
     username: ${PULSE_DB_USER:pulse}
     password: ${PULSE_DB_PASSWORD:pulse}
+    hikari:
+      maximum-pool-size: ${PULSE_DB_POOL_MAX:10}
 
   jpa:
     hibernate:
@@ -34,8 +36,15 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  lifecycle:
+    # Le da tiempo a un analisis en curso (hasta 3 en paralelo, ver
+    # OrquestadorAnalisisServicio) a terminar antes de que el proceso corte
+    # las conexiones, en vez de dejarlo a mitad ante un redeploy/docker stop.
+    timeout-per-shutdown-phase: ${PULSE_SHUTDOWN_TIMEOUT_SEGUNDOS:30}s
+
 server:
   port: 8080
+  shutdown: graceful
 
 management:
   endpoints:
@@ -103,6 +112,9 @@ app:
     email-para: ${PULSE_ALERTS_EMAIL_TO:}
     slack-webhook-url: ${PULSE_ALERTS_SLACK_WEBHOOK_URL:}
     pagerduty-routing-key: ${PULSE_ALERTS_PAGERDUTY_ROUTING_KEY:}
+  heartbeat:
+    url: ${PULSE_HEARTBEAT_URL:}
+    intervalo-minutos: ${PULSE_HEARTBEAT_INTERVALO_MINUTOS:5}
 
 logging:
   structured:

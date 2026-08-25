@@ -22,6 +22,8 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_DB_URL` | `jdbc:postgresql://localhost:5432/pulse_db` | JDBC de la BD propia de la aplicación |
 | `PULSE_DB_USER` | `pulse` | Usuario de la BD propia |
 | `PULSE_DB_PASSWORD` | `pulse` | Contraseña de la BD propia |
+| `PULSE_DB_POOL_MAX` | `10` | Tamaño máximo del pool Hikari hacia la BD propia (`pulse-db`) — no confundir con el pool de 4 conexiones por fuente objetivo, que es un límite fijo (ver §5.4) |
+| `PULSE_SHUTDOWN_TIMEOUT_SEGUNDOS` | `30` | Segundos que espera un apagado ordenado (`server.shutdown: graceful`) antes de cortar conexiones, dando tiempo a que un análisis en curso (hasta 3 en paralelo) termine en vez de quedar a mitad ante un `docker stop`/redeploy |
 | `PULSE_CRYPTO_KEY` | *(vacía)* | Clave AES-256-GCM (**≥32 bytes**) para cifrar credenciales de fuentes. **Obligatoria en producción.** |
 | `PULSE_SCHEDULER_ENABLED` | `false` | Habilita el análisis automático programado |
 | `PULSE_SCHEDULER_CRON` | `0 0 * * * *` | Cron de 6 campos (seg min hora día mes sem) |
@@ -41,6 +43,8 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_SMTP_PASSWORD` | *(vacía)* | Contraseña de autenticación SMTP |
 | `PULSE_ALERTS_SLACK_WEBHOOK_URL` | *(vacía)* | Webhook entrante de Slack para las alertas. Vacío = canal deshabilitado |
 | `PULSE_ALERTS_PAGERDUTY_ROUTING_KEY` | *(vacía)* | Routing key de un servicio de PagerDuty (Events API v2). Vacío = canal deshabilitado |
+| `PULSE_HEARTBEAT_URL` | *(vacía)* | URL de ping periódico tipo "dead man's switch" (ver §5.7). Vacío = deshabilitado |
+| `PULSE_HEARTBEAT_INTERVALO_MINUTOS` | `5` | Frecuencia del ping de heartbeat |
 
 Copia `.env.example` → `.env` para desarrollo local. `.env` está excluido del repositorio (`.gitignore`).
 
@@ -319,6 +323,24 @@ En producción (`deploy/docker-compose.prod.yml`), ni Prometheus ni Grafana expo
 por defecto (mismo criterio que `app`) — el operador decide si los publica vía Caddy (bloque
 comentado en `Caddyfile.example`) o los deja solo accesibles dentro de la red interna. `GF_SECURITY_ADMIN_USER`/`GF_SECURITY_ADMIN_PASSWORD` son obligatorios ahí (sin default `admin`/`admin`
 como en el demo local).
+
+### 5.7 Heartbeat externo (dead man's switch)
+
+Las alertas de §5.5 dependen de que la propia app esté viva para dispararlas — si PostgresPulse se
+cae o queda en crashloop, ningún canal se entera. Como red de seguridad independiente, la app puede
+hacer ping periódico (`GET`) a una URL externa configurada por el operador:
+
+```bash
+PULSE_HEARTBEAT_URL=https://hc-ping.com/<tu-uuid>   # o cualquier servicio equivalente
+PULSE_HEARTBEAT_INTERVALO_MINUTOS=5                  # por defecto
+```
+
+Deliberadamente no se integra un proveedor específico: cualquier servicio de tipo "dead man's
+switch" que acepte un `GET` periódico sirve (p. ej. [healthchecks.io](https://healthchecks.io),
+Cronitor, Uptime Kuma con un monitor "push"). Es ese servicio externo — no PostgresPulse — el que
+avisa (email/Slack/lo que configures ahí) si el ping deja de llegar. Vacío por defecto
+(deshabilitado); un ping fallido solo se loguea como `WARN`, nunca interrumpe el arranque ni ningún
+análisis en curso.
 
 ---
 
