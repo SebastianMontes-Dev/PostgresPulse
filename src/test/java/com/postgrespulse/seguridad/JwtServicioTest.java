@@ -42,8 +42,16 @@ class JwtServicioTest {
 
     @Test
     void rechazaUnTokenAlteradoEnCualquierCaracter() {
+        // Se altera un caracter en el medio del payload, no el ultimo caracter
+        // del token: el ultimo caracter base64url de un segmento cae en los
+        // bits de relleno no usados de ese grupo de 6 bits, asi que a veces
+        // decodifica al mismo byte y la firma sigue validando -- eso hacia
+        // este test intermitente sin relacion con un bug real de JwtServicio.
         String token = servicio.generar(usuario("ana"));
-        String alterado = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
+        int posicion = token.length() / 2;
+        char original = token.charAt(posicion);
+        char reemplazo = original == 'a' ? 'b' : 'a';
+        String alterado = token.substring(0, posicion) + reemplazo + token.substring(posicion + 1);
 
         assertThat(servicio.validar(alterado)).isEmpty();
     }
