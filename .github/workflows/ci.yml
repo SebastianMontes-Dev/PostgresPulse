@@ -23,10 +23,17 @@ jobs:
           docker run -d --name pulse-db \
             -e POSTGRES_DB=pulse_db -e POSTGRES_USER=pulse -e POSTGRES_PASSWORD=pulse \
             postgres:16-alpine
-          for i in $(seq 1 30); do
-            docker exec pulse-db pg_isready -U pulse -d pulse_db && break
+          # La imagen oficial de postgres arranca un servidor temporal para
+          # initdb (acepta conexiones brevemente y se apaga) antes de levantar
+          # el servidor real -- un pg_isready ingenuo puede enganchar esa
+          # ventana falsa. Se espera a que el mensaje de listo aparezca DOS
+          # veces en los logs (temporal + real) antes de seguir.
+          for i in $(seq 1 60); do
+            listo="$(docker logs pulse-db 2>&1 | grep -c 'database system is ready to accept connections')"
+            [ "$listo" -ge 2 ] && break
             sleep 1
           done
+          docker exec pulse-db pg_isready -U pulse -d pulse_db
 
       - name: Sembrar un dato de verificacion
         run: |
