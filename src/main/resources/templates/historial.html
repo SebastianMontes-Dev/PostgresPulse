@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="'PostgresPulse — Historial de ' + ${fuente.nombre}">PostgresPulse</title>
+    <th:block th:replace="~{fragmentos/tema :: script}"></th:block>
     <link rel="stylesheet" th:href="@{/panel.css}">
 </head>
 <body>
@@ -27,7 +28,7 @@
         <tbody>
         <tr th:each="a : ${pagina.content}">
             <td th:text="${a.analizadoEn}">-</td>
-            <td><span class="badge" th:classappend="${a.estado}" th:text="${a.estado}">-</span></td>
+            <td><span class="badge" th:classappend="${a.estado}"><th:block th:replace="~{fragmentos/estado :: etiqueta(${a.estado})}"></th:block></span></td>
             <td th:text="${a.puntajeSalud} ?: '—'">-</td>
             <td th:text="${a.duracionMs} ?: '—'">-</td>
             <td th:text="${a.disparadoPor}">-</td>
@@ -48,6 +49,7 @@
         crossorigin="anonymous"></script>
 <script th:src="@{/panel.js}"></script>
 <script>
+    const coloresIniciales = PostgresPulsePanel.coloresGrafico();
     const grafico = new Chart(document.getElementById('graficoTendencia'), {
         type: 'line',
         data: {
@@ -55,19 +57,32 @@
             datasets: [{
                 label: 'Puntuación de salud (últimos 7)',
                 data: [],
-                borderColor: '#7aa2f7',
-                backgroundColor: 'rgba(122,162,247,0.15)',
+                borderColor: coloresIniciales.linea,
+                backgroundColor: coloresIniciales.relleno,
                 tension: 0.25,
                 fill: true
             }]
         },
         options: {
             scales: {
-                y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
-                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+                y: { min: 0, max: 100, ticks: { color: coloresIniciales.texto }, grid: { color: coloresIniciales.grilla } },
+                x: { ticks: { color: coloresIniciales.texto }, grid: { color: coloresIniciales.grilla } }
             },
-            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+            plugins: { legend: { labels: { color: coloresIniciales.texto } } }
         }
+    });
+
+    PostgresPulsePanel.iniciarTema();
+    document.addEventListener('pulse:tema-cambio', () => {
+        const colores = PostgresPulsePanel.coloresGrafico();
+        grafico.data.datasets[0].borderColor = colores.linea;
+        grafico.data.datasets[0].backgroundColor = colores.relleno;
+        grafico.options.scales.x.ticks.color = colores.texto;
+        grafico.options.scales.x.grid.color = colores.grilla;
+        grafico.options.scales.y.ticks.color = colores.texto;
+        grafico.options.scales.y.grid.color = colores.grilla;
+        grafico.options.plugins.legend.labels.color = colores.texto;
+        grafico.update();
     });
 
     const urlSalud = window.location.pathname.replace(/\/historial$/, '') + '/salud-panel';

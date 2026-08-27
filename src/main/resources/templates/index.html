@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>PostgresPulse — Resumen</title>
+    <th:block th:replace="~{fragmentos/tema :: script}"></th:block>
     <link rel="stylesheet" th:href="@{/panel.css}">
 </head>
 <body>
@@ -24,7 +25,7 @@
                 <a th:href="@{/fuentes/{id}(id=${item.fuente.id})}" th:text="${item.fuente.nombre}">Fuente</a>
             </div>
             <div class="meta" th:text="${item.fuente.host} + ':' + ${item.fuente.puerto} + '/' + ${item.fuente.baseDeDatos}">host</div>
-            <span class="badge js-estado-fuente" th:classappend="${item.fuente.estado}" th:text="${item.fuente.estado}">ESTADO</span>
+            <span class="badge js-estado-fuente" th:classappend="${item.fuente.estado}"><th:block th:replace="~{fragmentos/estado :: etiqueta(${item.fuente.estado})}"></th:block></span>
 
             <div class="js-puntaje-slot">
                 <div class="puntaje" th:if="${item.ultimoAnalisis != null and item.ultimoAnalisis.puntajeSalud != null}"
@@ -92,6 +93,7 @@
 
 <script th:src="@{/panel.js}"></script>
 <script>
+    PostgresPulsePanel.iniciarTema();
     PostgresPulsePanel.iniciarPoll('/resumen-panel', (fuentes) => {
         fuentes.forEach((item) => {
             const tarjeta = document.querySelector('[data-fuente-id="' + item.fuente.id + '"]');
@@ -99,7 +101,7 @@
                 return;
             }
             const badge = tarjeta.querySelector('.js-estado-fuente');
-            badge.textContent = item.fuente.estado;
+            badge.textContent = PostgresPulsePanel.etiquetaEstado(item.fuente.estado);
             badge.className = 'badge js-estado-fuente ' + item.fuente.estado;
 
             const slot = tarjeta.querySelector('.js-puntaje-slot');

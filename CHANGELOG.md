@@ -3,6 +3,28 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
+## [No publicado]
+
+### Añadido
+
+- **Rediseño del panel ("Liquid Glass")**: nuevo lenguaje visual inspirado en iOS 26/macOS 26
+  (vidrio traslúcido con blur, malla de fondo en degradado, tarjetas y botones tipo píldora) en
+  las 4 pantallas autenticadas (`index`, `fuente-detalle`, `historial`, `tabla-detalle`) y en
+  `login`. Tokens de color como custom properties CSS en `panel.css`, sin cambios de backend.
+- **Selector de tema claro/oscuro**: sigue `prefers-color-scheme` del sistema por defecto; el
+  switch de la barra de navegación fuerza el tema y lo persiste en `localStorage`
+  (`pulse-tema`), con un script anti-parpadeo (`fragmentos/tema.html`) incluido en el `<head>`
+  de cada plantilla. Los gráficos Chart.js de `fuente-detalle`/`historial` recolorean en vivo al
+  cambiar de tema (`panel.js` `coloresGrafico()` + evento `pulse:tema-cambio`), sin recrear la
+  instancia del gráfico.
+- Etiquetas de estado humanizadas (`En línea`, `Sano`, `Advertencia`, etc.) en vez del nombre
+  crudo del enum, vía el fragmento reutilizable `fragmentos/estado.html` y
+  `panel.js#etiquetaEstado`.
+
+Fuera de esta pasada, a propósito: el reporte exportable/imprimible (`reporte.html`) no cambia
+— es un documento standalone, no parte del panel; "Registrar fuente" sigue siendo el formulario
+inline de siempre, solo re-estilizado, sin el FAB/hoja flotante que se exploró en el mockup.
+
 ## [2.1.0] — 2026-08-27
 
 Auditoría integral del repo (features vs. especificación, seguridad, tests/CI, madurez operacional,

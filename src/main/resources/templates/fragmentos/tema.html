@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script th:fragment="script">
+        (function () {
+            try {
+                var guardado = localStorage.getItem('pulse-tema');
+                if (guardado === 'light' || guardado === 'dark') {
+                    document.documentElement.dataset.theme = guardado;
+                }
+            } catch (error) {
+                // localStorage inaccesible (modo privado, etc.): se usa prefers-color-scheme.
+            }
+        })();
+    </script>
+</head>
+<body></body>
+</html>

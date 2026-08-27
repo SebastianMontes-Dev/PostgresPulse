@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="'PostgresPulse — ' + ${fuente.nombre}">PostgresPulse</title>
+    <th:block th:replace="~{fragmentos/tema :: script}"></th:block>
     <link rel="stylesheet" th:href="@{/panel.css}">
 </head>
 <body>
@@ -12,7 +13,7 @@
     <h1 th:text="${fuente.nombre}">Fuente</h1>
     <p class="meta">
         <span th:text="${fuente.host} + ':' + ${fuente.puerto} + '/' + ${fuente.baseDeDatos}">host</span> ·
-        <span class="badge" th:classappend="${fuente.estado}" th:text="${fuente.estado}">ESTADO</span>
+        <span class="badge" th:classappend="${fuente.estado}"><th:block th:replace="~{fragmentos/estado :: etiqueta(${fuente.estado})}"></th:block></span>
         <span th:if="${fuente.ultimoError}" th:text="'· ' + ${fuente.ultimoError}" style="color:#f44336;">error</span>
         · <span data-actualizado-hace></span>
     </p>
@@ -67,7 +68,7 @@
             <tr th:each="chequeo : ${ultimo.chequeos}">
                 <td><code th:text="${chequeo.codigo}">-</code></td>
                 <td th:text="${chequeo.categoria}">-</td>
-                <td><span class="badge" th:classappend="${chequeo.estado}" th:text="${chequeo.estado}">-</span></td>
+                <td><span class="badge" th:classappend="${chequeo.estado}"><th:block th:replace="~{fragmentos/estado :: etiqueta(${chequeo.estado})}"></th:block></span></td>
                 <td th:text="${chequeo.puntaje} ?: '—'">-</td>
                 <td th:text="${chequeo.mensaje}">-</td>
                 <td><code th:if="${chequeo.recomendacion}" th:text="${chequeo.recomendacion}">-</code>
@@ -134,6 +135,7 @@
         const etiquetas = salud.tendencia7d.map(d => d.analizadoEn);
         const datos = salud.tendencia7d.map(d => d.puntajeSalud);
         if (!grafico) {
+            const colores = PostgresPulsePanel.coloresGrafico();
             grafico = new Chart(document.getElementById('graficoTendencia'), {
                 type: 'line',
                 data: {
@@ -141,18 +143,18 @@
                     datasets: [{
                         label: 'Puntuación de salud',
                         data: datos,
-                        borderColor: '#7aa2f7',
-                        backgroundColor: 'rgba(122,162,247,0.15)',
+                        borderColor: colores.linea,
+                        backgroundColor: colores.relleno,
                         tension: 0.25,
                         fill: true
                     }]
                 },
                 options: {
                     scales: {
-                        y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
-                        x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+                        y: { min: 0, max: 100, ticks: { color: colores.texto }, grid: { color: colores.grilla } },
+                        x: { ticks: { color: colores.texto }, grid: { color: colores.grilla } }
                     },
-                    plugins: { legend: { labels: { color: '#e6e6e6' } } }
+                    plugins: { legend: { labels: { color: colores.texto } } }
                 }
             });
             return;
@@ -161,6 +163,26 @@
         grafico.data.datasets[0].data = datos;
         grafico.update();
     }
+
+    function recolorearGraficos() {
+        const colores = PostgresPulsePanel.coloresGrafico();
+        [grafico, graficoChequeo].forEach((g) => {
+            if (!g) {
+                return;
+            }
+            g.data.datasets[0].borderColor = colores.linea;
+            g.data.datasets[0].backgroundColor = colores.relleno;
+            g.options.scales.x.ticks.color = colores.texto;
+            g.options.scales.x.grid.color = colores.grilla;
+            g.options.scales.y.ticks.color = colores.texto;
+            g.options.scales.y.grid.color = colores.grilla;
+            g.options.plugins.legend.labels.color = colores.texto;
+            g.update();
+        });
+    }
+
+    PostgresPulsePanel.iniciarTema();
+    document.addEventListener('pulse:tema-cambio', recolorearGraficos);
 
     PostgresPulsePanel.iniciarPoll(window.location.pathname + '/salud-panel', (salud) => {
         actualizarPuntaje(salud);
@@ -178,6 +200,7 @@
                 const etiquetas = puntos.map(p => p.analizadoEn);
                 const datos = puntos.map(p => p.puntaje);
                 if (!graficoChequeo) {
+                    const colores = PostgresPulsePanel.coloresGrafico();
                     graficoChequeo = new Chart(document.getElementById('graficoChequeo'), {
                         type: 'line',
                         data: {
@@ -185,18 +208,18 @@
                             datasets: [{
                                 label: codigo,
                                 data: datos,
-                                borderColor: '#9d7aec',
-                                backgroundColor: 'rgba(157,122,236,0.15)',
+                                borderColor: colores.linea,
+                                backgroundColor: colores.relleno,
                                 tension: 0.25,
                                 fill: true
                             }]
                         },
                         options: {
                             scales: {
-                                y: { min: 0, max: 100, ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } },
-                                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#24272f' } }
+                                y: { min: 0, max: 100, ticks: { color: colores.texto }, grid: { color: colores.grilla } },
+                                x: { ticks: { color: colores.texto }, grid: { color: colores.grilla } }
                             },
-                            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+                            plugins: { legend: { labels: { color: colores.texto } } }
                         }
                     });
                     return;

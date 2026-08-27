@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="'PostgresPulse — ' + ${nombreTabla}">PostgresPulse</title>
+    <th:block th:replace="~{fragmentos/tema :: script}"></th:block>
     <link rel="stylesheet" th:href="@{/panel.css}">
 </head>
 <body>
@@ -29,5 +30,9 @@
         </tbody>
     </table>
 </div>
+<script th:src="@{/panel.js}"></script>
+<script>
+    PostgresPulsePanel.iniciarTema();
+</script>
 </body>
 </html>

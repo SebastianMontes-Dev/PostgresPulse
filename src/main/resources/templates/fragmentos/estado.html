@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="etiqueta(codigo)" th:switch="${codigo.toString()}">
+    <th:block th:case="'EN_LINEA'">En línea</th:block>
+    <th:block th:case="'FUERA_LINEA'">Fuera de línea</th:block>
+    <th:block th:case="'SANO'">Sano</th:block>
+    <th:block th:case="'ADVERTENCIA'">Advertencia</th:block>
+    <th:block th:case="'CRITICO'">Crítico</th:block>
+    <th:block th:case="'ERROR'">Error</th:block>
+    <th:block th:case="*" th:text="${codigo}">-</th:block>
+</th:block>
+</body>
+</html>
