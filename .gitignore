@@ -36,6 +36,7 @@ logs/
 # Docker
 postgres-data/
 pgdata/
+docker-compose.override.yml
 
 # Respaldos generados por scripts/respaldar.*
 backups/

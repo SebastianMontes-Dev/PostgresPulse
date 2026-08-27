@@ -58,6 +58,11 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 - Plataforma de software como servicio multiinquilino con panel de suscripciones
 - Sin agente, basado en extensiones instaladas en las bases objetivo
 
+> Nota: esta lista describe el alcance *original* de v1.0. JWT multiusuario, alertas
+> (Email/Slack/PagerDuty) y la integración Prometheus/Grafana se implementaron después como
+> incrementos post-v1.0 — ver [CHANGELOG.md](../CHANGELOG.md) y [ROADMAP.md](../ROADMAP.md). Solo
+> el soporte multi-motor y la plataforma SaaS multiinquilino siguen plenamente fuera de alcance.
+
 ---
 
 ## 4. Glosario y abreviaturas
