@@ -34,6 +34,8 @@ Guía para ejecutar, configurar y operar PostgresPulse en desarrollo y producci�
 | `PULSE_DEMO_SEED` | `true` en `docker-compose.yml`, `false` por defecto en la app | Registra automáticamente la fuente `Ventas Demo` contra `target-demo` al arrancar. Solo tiene sentido con la infraestructura de `docker-compose.yml`; en un despliegue real contra fuentes de producción, déjalo en `false` |
 | `PULSE_LOG_FORMAT` | *(vacía = consola legible)* | `ecs` activa logs estructurados JSON por consola, para agregadores de logs (ver §4) |
 | `PULSE_API_RATE_LIMIT` | `60` | Peticiones por minuto por IP admitidas en `/api/v1/**` (fuera de `/auth/**`, que tiene su propio control de fuerza bruta). Al superarlo, `429` con `Retry-After` |
+| `PULSE_BLOQUEAR_DEFAULTS_INSEGUROS` | `false` | Si `true`, falla el arranque (en vez de solo advertir) cuando detecta `PULSE_ADMIN_USER/PASSWORD`, `PULSE_CRYPTO_KEY`, `PULSE_JWT_SECRET` o `PULSE_DB_PASSWORD` en su valor de desarrollo por defecto. `deploy/docker-compose.prod.yml` lo activa siempre |
+| `PULSE_PROXIES_CONFIABLES` | *(vacía)* | Lista de IPs/CIDR separadas por coma. La app solo confía en `X-Forwarded-For`/`X-Real-IP` para el rate limiting y el bloqueo por fuerza bruta cuando la conexión TCP viene de una de estas direcciones (p. ej. la subred interna de `caddy` en `deploy/docker-compose.prod.yml`); vacío = usar siempre la IP TCP directa (comportamiento de siempre, correcto sin reverse proxy delante) |
 | `PULSE_ALERTS_EMAIL_ENABLED` | `false` | Habilita el envío de alertas por email cuando una fuente cruza su `umbralAlerta` (ver §5.5) |
 | `PULSE_ALERTS_EMAIL_FROM` | *(vacía)* | Dirección remitente de las alertas por email |
 | `PULSE_ALERTS_EMAIL_TO` | *(vacía)* | Dirección destinataria de las alertas por email |
@@ -147,8 +149,16 @@ puerto 8080 de `app` — solo Caddy queda expuesto (80/443). Además de TLS, est
 **no trae valores por defecto inseguros**: cada variable sensible (`PULSE_DB_PASSWORD`,
 `PULSE_CRYPTO_KEY`, `PULSE_ADMIN_USER`, `PULSE_ADMIN_PASSWORD`, `PULSE_DOMAIN`) es obligatoria y el
 arranque falla si falta alguna, en vez de advertir y continuar como hace el demo
-(`AvisoDefaultsInseguros`). Tampoco incluye `target-demo`: la base de ventas mal modelada a propósito
-es solo para el demo local, no pertenece a un despliegue real.
+(`AvisoDefaultsInseguros`) — y además fija `PULSE_BLOQUEAR_DEFAULTS_INSEGUROS=true`, así que si alguna
+de esas variables igual se deja en su valor de desarrollo (`admin`/`admin`, etc.) el arranque también
+falla. Tampoco incluye `target-demo`: la base de ventas mal modelada a propósito es solo para el demo
+local, no pertenece a un despliegue real.
+
+`app` tampoco confía a ciegas en `X-Forwarded-For` para identificar la IP real del cliente al aplicar
+el límite de tasa (`PULSE_API_RATE_LIMIT`) y el bloqueo por fuerza bruta del login: solo lo hace cuando
+la conexión llega desde `PULSE_PROXIES_CONFIABLES`, que este compose fija a la subred interna donde
+vive `caddy` (`172.28.0.0/24`, ver bloque `networks` del archivo). Sin esto, ambos controles verían
+siempre la IP de Caddy en lugar de la del cliente real, y dejarían de tener efecto.
 
 ```bash
 cp deploy/Caddyfile.example deploy/Caddyfile   # ajusta si necesitas mas directivas

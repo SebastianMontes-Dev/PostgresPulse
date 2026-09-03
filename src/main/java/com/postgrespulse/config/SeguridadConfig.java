@@ -5,6 +5,7 @@ import com.postgrespulse.seguridad.JwtAuthenticationFilter;
 import com.postgrespulse.seguridad.JwtServicio;
 import com.postgrespulse.seguridad.LimiteTasaApiFilter;
 import com.postgrespulse.seguridad.LimiteTasaApiServicio;
+import com.postgrespulse.seguridad.ResolvedorIpCliente;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -80,8 +81,9 @@ public class SeguridadConfig {
 
     @Bean
     public LimiteTasaApiFilter limiteTasaApiFilter(LimiteTasaApiServicio limiteTasaApiServicio,
-                                                    ObjectMapper objectMapper) {
-        return new LimiteTasaApiFilter(limiteTasaApiServicio, objectMapper);
+                                                    ObjectMapper objectMapper,
+                                                    ResolvedorIpCliente resolvedorIpCliente) {
+        return new LimiteTasaApiFilter(limiteTasaApiServicio, objectMapper, resolvedorIpCliente);
     }
 
     @Bean

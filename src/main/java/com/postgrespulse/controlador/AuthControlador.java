@@ -5,6 +5,7 @@ import com.postgrespulse.dto.TokenRespuestaDto;
 import com.postgrespulse.excepcion.DemasiadosIntentosException;
 import com.postgrespulse.seguridad.ControlIntentosFallidosServicio;
 import com.postgrespulse.seguridad.CookieJwtFabrica;
+import com.postgrespulse.seguridad.ResolvedorIpCliente;
 import com.postgrespulse.servicio.AutenticacionServicio;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -31,18 +32,21 @@ public class AuthControlador {
     private final AutenticacionServicio autenticacionServicio;
     private final ControlIntentosFallidosServicio controlIntentos;
     private final CookieJwtFabrica cookieJwtFabrica;
+    private final ResolvedorIpCliente resolvedorIpCliente;
 
     public AuthControlador(AutenticacionServicio autenticacionServicio,
                             ControlIntentosFallidosServicio controlIntentos,
-                            CookieJwtFabrica cookieJwtFabrica) {
+                            CookieJwtFabrica cookieJwtFabrica,
+                            ResolvedorIpCliente resolvedorIpCliente) {
         this.autenticacionServicio = autenticacionServicio;
         this.controlIntentos = controlIntentos;
         this.cookieJwtFabrica = cookieJwtFabrica;
+        this.resolvedorIpCliente = resolvedorIpCliente;
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokenRespuestaDto> login(@Valid @RequestBody LoginDto credenciales, HttpServletRequest peticion) {
-        String ip = peticion.getRemoteAddr();
+        String ip = resolvedorIpCliente.resolver(peticion);
         Duration restante = controlIntentos.tiempoRestanteBloqueo(ip);
         if (!restante.isZero()) {
             throw new DemasiadosIntentosException(Math.max(1, restante.toSeconds()));

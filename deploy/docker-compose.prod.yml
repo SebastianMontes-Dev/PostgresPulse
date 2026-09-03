@@ -13,6 +13,16 @@
 #   - "app" ya no publica el puerto 8080 al host: solo "caddy" es
 #     publico (80/443). Caddy termina TLS con un certificado Let's
 #     Encrypt renovado automaticamente (ver Caddyfile.example).
+#   - PULSE_BLOQUEAR_DEFAULTS_INSEGUROS=true: ademas de exigir cada
+#     variable sensible arriba, falla el arranque si alguna igual quedo
+#     con el valor de desarrollo (admin/admin, etc.) -- ver
+#     AvisoDefaultsInseguros.
+#   - PULSE_PROXIES_CONFIABLES fija a la subred interna (172.28.0.0/24,
+#     ver "networks" abajo): "app" solo confia en X-Forwarded-For/
+#     X-Real-IP cuando la conexion TCP viene de esa subred (donde vive
+#     "caddy", el unico reverse proxy de este compose) -- de lo
+#     contrario el rate limiting y el bloqueo por fuerza bruta verian
+#     siempre la IP de Caddy en vez de la del cliente real.
 #
 # Uso:
 #   cp deploy/Caddyfile.example deploy/Caddyfile
@@ -75,6 +85,8 @@ services:
       PULSE_ADMIN_PASSWORD: ${PULSE_ADMIN_PASSWORD:?Definir PULSE_ADMIN_PASSWORD}
       PULSE_JWT_SECRET: ${PULSE_JWT_SECRET:?Definir PULSE_JWT_SECRET (>=16 caracteres, gestor de secretos)}
       PULSE_DEMO_SEED: "false"
+      PULSE_BLOQUEAR_DEFAULTS_INSEGUROS: "true"
+      PULSE_PROXIES_CONFIABLES: "172.28.0.0/24"
     expose:
       - "8080"
     depends_on:
@@ -135,6 +147,12 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
 
 volumes:
   pulse_data:

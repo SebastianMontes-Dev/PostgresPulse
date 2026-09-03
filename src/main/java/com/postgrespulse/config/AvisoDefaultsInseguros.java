@@ -1,5 +1,6 @@
 package com.postgrespulse.config;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -16,8 +17,11 @@ import java.util.List;
  * dejaba en el valor por defecto de application.yml (pensado para el demo de
  * "3 comandos" del README). Como el repositorio es publico en GitHub,
  * cualquiera que lo clone y despliegue sin leer la documentacion hereda esos
- * defaults en silencio. Este chequeo solo advierte (no bloquea el arranque)
- * para no romper el flujo de demo local documentado.
+ * defaults en silencio. Por defecto este chequeo solo advierte (no bloquea el
+ * arranque) para no romper el flujo de demo local documentado; con
+ * app.seguridad.bloquear-defaults-inseguros=true (recomendado en
+ * deploy/docker-compose.prod.yml) pasa a fallar el arranque en @PostConstruct,
+ * antes de que el servidor web empiece a aceptar conexiones.
  */
 @Component
 public class AvisoDefaultsInseguros implements ApplicationListener<ApplicationReadyEvent> {
@@ -63,6 +67,21 @@ public class AvisoDefaultsInseguros implements ApplicationListener<ApplicationRe
             defaults.add("PULSE_DB_PASSWORD");
         }
         return defaults;
+    }
+
+    @PostConstruct
+    void fallarSiEstricto() {
+        if (!propiedadesSeguridad.isBloquearDefaultsInseguros()) {
+            return;
+        }
+        List<String> defaults = defaultsDetectados();
+        if (!defaults.isEmpty()) {
+            throw new IllegalStateException(
+                    "Arranque bloqueado por app.seguridad.bloquear-defaults-inseguros=true: "
+                            + "valores de desarrollo por defecto detectados para " + defaults
+                            + " -- cambielos o desactive esa propiedad para un entorno de demo -- "
+                            + "ver docs/DEPLOYMENT.md.");
+        }
     }
 
     @Override

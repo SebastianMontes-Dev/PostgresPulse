@@ -6,6 +6,7 @@ import com.postgrespulse.excepcion.CredencialesInvalidasException;
 import com.postgrespulse.excepcion.DemasiadosIntentosException;
 import com.postgrespulse.seguridad.ControlIntentosFallidosServicio;
 import com.postgrespulse.seguridad.CookieJwtFabrica;
+import com.postgrespulse.seguridad.ResolvedorIpCliente;
 import com.postgrespulse.servicio.AutenticacionServicio;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,13 +31,16 @@ public class PanelAuthControlador {
     private final AutenticacionServicio autenticacionServicio;
     private final ControlIntentosFallidosServicio controlIntentos;
     private final CookieJwtFabrica cookieJwtFabrica;
+    private final ResolvedorIpCliente resolvedorIpCliente;
 
     public PanelAuthControlador(AutenticacionServicio autenticacionServicio,
                                  ControlIntentosFallidosServicio controlIntentos,
-                                 CookieJwtFabrica cookieJwtFabrica) {
+                                 CookieJwtFabrica cookieJwtFabrica,
+                                 ResolvedorIpCliente resolvedorIpCliente) {
         this.autenticacionServicio = autenticacionServicio;
         this.controlIntentos = controlIntentos;
         this.cookieJwtFabrica = cookieJwtFabrica;
+        this.resolvedorIpCliente = resolvedorIpCliente;
     }
 
     @GetMapping("/login")
@@ -47,7 +51,7 @@ public class PanelAuthControlador {
     @PostMapping("/login")
     public String login(@RequestParam String usuario, @RequestParam String contrasena,
                          HttpServletRequest peticion, HttpServletResponse respuesta, Model modelo) {
-        String ip = peticion.getRemoteAddr();
+        String ip = resolvedorIpCliente.resolver(peticion);
         Duration restante = controlIntentos.tiempoRestanteBloqueo(ip);
         if (!restante.isZero()) {
             modelo.addAttribute("error", "Demasiados intentos fallidos. Reintenta en "

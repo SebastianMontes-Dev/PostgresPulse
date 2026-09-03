@@ -2,6 +2,7 @@ package com.postgrespulse.seguridad;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.postgrespulse.config.PropiedadesSeguridad;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -15,9 +16,17 @@ class LimiteTasaApiFilterTest {
     // app (ApiError.timestamp es OffsetDateTime); aqui hay que hacerlo a mano.
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
+    // Sin proxies-confiables configurados, se comporta igual que getRemoteAddr()
+    // directo -- ver ResolvedorIpClienteTest para los casos con proxy confiable.
+    private final ResolvedorIpCliente resolvedorIpCliente = new ResolvedorIpCliente(new PropiedadesSeguridad());
+
+    private LimiteTasaApiFilter filtro(int maxPeticiones) {
+        return new LimiteTasaApiFilter(new LimiteTasaApiServicio(maxPeticiones), objectMapper, resolvedorIpCliente);
+    }
+
     @Test
     void permiteMientrasNoSuperaElLimiteYSigueLaCadena() throws Exception {
-        LimiteTasaApiFilter filtro = new LimiteTasaApiFilter(new LimiteTasaApiServicio(2), objectMapper);
+        LimiteTasaApiFilter filtro = filtro(2);
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/fuentes");
         request.setRemoteAddr("10.0.0.1");
         MockFilterChain cadena = new MockFilterChain();
@@ -29,7 +38,7 @@ class LimiteTasaApiFilterTest {
 
     @Test
     void devuelve429ConRetryAfterAlSuperarElLimiteYCortaLaCadena() throws Exception {
-        LimiteTasaApiFilter filtro = new LimiteTasaApiFilter(new LimiteTasaApiServicio(1), objectMapper);
+        LimiteTasaApiFilter filtro = filtro(1);
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/fuentes");
         request.setRemoteAddr("10.0.0.2");
         filtro.doFilterInternal(request, new MockHttpServletResponse(), new MockFilterChain());
@@ -46,15 +55,11 @@ class LimiteTasaApiFilterTest {
 
     @Test
     void noAplicaSobreRutasDeAuthQueYaTienenSuPropioControl() {
-        LimiteTasaApiFilter filtro = new LimiteTasaApiFilter(new LimiteTasaApiServicio(1), objectMapper);
-
-        assertThat(filtro.shouldNotFilter(new MockHttpServletRequest("POST", "/api/v1/auth/login"))).isTrue();
+        assertThat(filtro(1).shouldNotFilter(new MockHttpServletRequest("POST", "/api/v1/auth/login"))).isTrue();
     }
 
     @Test
     void noAplicaFueraDeApiV1() {
-        LimiteTasaApiFilter filtro = new LimiteTasaApiFilter(new LimiteTasaApiServicio(1), objectMapper);
-
-        assertThat(filtro.shouldNotFilter(new MockHttpServletRequest("GET", "/fuentes/1"))).isTrue();
+        assertThat(filtro(1).shouldNotFilter(new MockHttpServletRequest("GET", "/fuentes/1"))).isTrue();
     }
 }

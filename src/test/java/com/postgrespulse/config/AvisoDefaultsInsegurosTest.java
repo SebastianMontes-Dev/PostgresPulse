@@ -7,6 +7,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
@@ -95,5 +97,47 @@ class AvisoDefaultsInsegurosTest {
                 "operador", "una-contrasena-fuerte", "una-clave-aes-de-produccion!!!!", "un-secreto-jwt-real");
 
         assertThat(aviso.defaultsDetectados()).isEmpty();
+    }
+
+    @Test
+    void bloqueoActivoFallaElArranqueSiHayDefaults() {
+        when(environment.getProperty("spring.datasource.password"))
+                .thenReturn(AvisoDefaultsInseguros.DB_PASSWORD_DEFECTO);
+
+        AvisoDefaultsInseguros aviso = crear(
+                AvisoDefaultsInseguros.USUARIO_DEFECTO,
+                AvisoDefaultsInseguros.CONTRASENA_DEFECTO,
+                AvisoDefaultsInseguros.CLAVE_CIFRADO_DEFECTO,
+                AvisoDefaultsInseguros.JWT_SECRETO_DEFECTO);
+        propiedadesSeguridad.setBloquearDefaultsInseguros(true);
+
+        assertThatThrownBy(aviso::fallarSiEstricto)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("PULSE_ADMIN_USER");
+    }
+
+    @Test
+    void bloqueoActivoNoFallaSiTodoFueCambiado() {
+        when(environment.getProperty("spring.datasource.password")).thenReturn("una-clave-de-produccion-real");
+
+        AvisoDefaultsInseguros aviso = crear(
+                "operador", "una-contrasena-fuerte-y-larga",
+                "una-clave-aes-de-produccion-de-32-bytes!!", "un-secreto-jwt-de-produccion-real");
+        propiedadesSeguridad.setBloquearDefaultsInseguros(true);
+
+        assertThatCode(aviso::fallarSiEstricto).doesNotThrowAnyException();
+    }
+
+    @Test
+    void bloqueoInactivoPorDefectoNoFallaAunqueHayaDefaults() {
+        // fallarSiEstricto() sale antes de leer ninguna propiedad cuando el flag
+        // esta en false (default) -- no hace falta stubear el datasource aqui.
+        AvisoDefaultsInseguros aviso = crear(
+                AvisoDefaultsInseguros.USUARIO_DEFECTO,
+                AvisoDefaultsInseguros.CONTRASENA_DEFECTO,
+                AvisoDefaultsInseguros.CLAVE_CIFRADO_DEFECTO,
+                AvisoDefaultsInseguros.JWT_SECRETO_DEFECTO);
+
+        assertThatCode(aviso::fallarSiEstricto).doesNotThrowAnyException();
     }
 }

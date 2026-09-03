@@ -99,6 +99,8 @@ app:
   seguridad:
     usuario: ${PULSE_ADMIN_USER:admin}
     contrasena: ${PULSE_ADMIN_PASSWORD:admin}
+    bloquear-defaults-inseguros: ${PULSE_BLOQUEAR_DEFAULTS_INSEGUROS:false}
+    proxies-confiables: ${PULSE_PROXIES_CONFIABLES:}
   jwt:
     secreto: ${PULSE_JWT_SECRET:secreto-jwt-de-desarrollo-por-defecto!}
     expiracion-minutos: ${PULSE_JWT_EXPIRACION_MINUTOS:480}

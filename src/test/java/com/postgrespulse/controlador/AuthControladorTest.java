@@ -6,7 +6,9 @@ import com.postgrespulse.dto.TokenRespuestaDto;
 import com.postgrespulse.excepcion.CredencialesInvalidasException;
 import com.postgrespulse.seguridad.ControlIntentosFallidosServicio;
 import com.postgrespulse.seguridad.CookieJwtFabrica;
+import com.postgrespulse.seguridad.ResolvedorIpCliente;
 import com.postgrespulse.servicio.AutenticacionServicio;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,6 +23,7 @@ import java.time.OffsetDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -42,6 +45,13 @@ class AuthControladorTest {
     private ControlIntentosFallidosServicio controlIntentos;
     @MockitoBean
     private CookieJwtFabrica cookieJwtFabrica;
+    @MockitoBean
+    private ResolvedorIpCliente resolvedorIpCliente;
+
+    @BeforeEach
+    void resolverIpPorDefecto() {
+        lenient().when(resolvedorIpCliente.resolver(any())).thenReturn("127.0.0.1");
+    }
 
     @Test
     void loginExitosoDevuelveTokenYCookie() throws Exception {

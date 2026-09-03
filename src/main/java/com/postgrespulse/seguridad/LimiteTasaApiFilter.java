@@ -29,10 +29,13 @@ public class LimiteTasaApiFilter extends OncePerRequestFilter {
 
     private final LimiteTasaApiServicio limiteTasaApiServicio;
     private final ObjectMapper objectMapper;
+    private final ResolvedorIpCliente resolvedorIpCliente;
 
-    public LimiteTasaApiFilter(LimiteTasaApiServicio limiteTasaApiServicio, ObjectMapper objectMapper) {
+    public LimiteTasaApiFilter(LimiteTasaApiServicio limiteTasaApiServicio, ObjectMapper objectMapper,
+                                ResolvedorIpCliente resolvedorIpCliente) {
         this.limiteTasaApiServicio = limiteTasaApiServicio;
         this.objectMapper = objectMapper;
+        this.resolvedorIpCliente = resolvedorIpCliente;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class LimiteTasaApiFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String ip = request.getRemoteAddr();
+        String ip = resolvedorIpCliente.resolver(request);
         if (limiteTasaApiServicio.permitir(ip)) {
             chain.doFilter(request, response);
             return;
