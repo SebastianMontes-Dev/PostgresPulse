@@ -1,0 +1,52 @@
+name: CodeQL
+
+# Analisis estatico de seguridad (SAST) complementario a SpotBugs (bloqueante
+# en ci.yml, pero orientado a bugs/calidad, no a un catalogo de
+# vulnerabilidades) y Trivy (escanea la imagen ya construida, no el codigo
+# fuente). CodeQL es first-party de GitHub, gratis para repos publicos, y
+# publica los hallazgos en la pestana "Security" del repo en vez de solo un
+# artefacto de build.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Lunes 06:00 UTC: agarra vulnerabilidades nuevas en el catalogo de
+    # queries de CodeQL aunque no haya cambios de codigo esa semana.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analizar (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v7
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+
+      - name: Compilar (sin tests/verify -- CodeQL solo necesita el bytecode)
+        run: ./mvnw -B -DskipTests package
+
+      - name: Analizar con CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java"

@@ -169,3 +169,36 @@ jobs:
           context: .
           push: true
           tags: ${{ env.TAGS }}
+
+  release:
+    name: Crear GitHub Release
+    needs: [build, docker]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v7
+
+      - name: Extraer la seccion del CHANGELOG para esta version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="[$VERSION]" '
+            /^## \[/ {
+              if (encontrado) exit
+              if (index($0, ver) > 0) { encontrado=1; next }
+              next
+            }
+            encontrado { print }
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "No se encontro una seccion '## [$VERSION]' en CHANGELOG.md" >&2
+            exit 1
+          fi
+          cat release_notes.md
+
+      - name: Crear release (usa el CHANGELOG como notas, no el resumen automatico de GitHub)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release_notes.md
