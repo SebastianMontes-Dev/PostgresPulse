@@ -180,7 +180,7 @@ class FuenteApiIntegracionTest {
         long id = objectMapper.readTree(respuesta).get("id").asLong();
 
         mockMvc.perform(post("/api/v1/fuentes/{id}/probar", id).with(admin()))
-                .andExpect(status().isUnprocessableEntity())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.codigo").value("CONEXION_FALLIDA"));
 
         FuenteDatos fuente = repositorio.findById(id).orElseThrow();

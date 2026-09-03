@@ -71,7 +71,7 @@ public class ManejadorErroresGlobal {
 
     @ExceptionHandler(ConexionFallidaException.class)
     public ResponseEntity<ApiError> conexionFallida(ConexionFallidaException ex, HttpServletRequest peticion) {
-        return construir(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY, "CONEXION_FALLIDA", peticion, List.of());
+        return construir(ex.getMessage(), HttpStatus.UNPROCESSABLE_CONTENT, "CONEXION_FALLIDA", peticion, List.of());
     }
 
     @ExceptionHandler(ExtensionAusenteException.class)

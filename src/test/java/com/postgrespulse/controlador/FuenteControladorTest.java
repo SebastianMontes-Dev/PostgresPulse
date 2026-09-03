@@ -146,7 +146,7 @@ class FuenteControladorTest {
         when(pruebaConexionServicio.probar(1L)).thenThrow(new ConexionFallidaException("timeout"));
 
         mockMvc.perform(post("/api/v1/fuentes/1/probar"))
-                .andExpect(status().isUnprocessableEntity())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.codigo").value("CONEXION_FALLIDA"));
     }
 

@@ -17,6 +17,13 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
     (`addEntryPointFor`/`defaultEntryPoint`/`build()`); el método ahora devuelve `AuthenticationEntryPoint`
     en vez del tipo concreto. Sin cambio de comportamiento (mismo entry point 401 sin cuerpo para
     `/api/v1/**` y `/actuator/**`, redirect a `/login` por defecto).
+  - `HttpStatus.UNPROCESSABLE_ENTITY`/`StatusResultMatchers#isUnprocessableEntity()` (deprecados
+    desde Spring Framework 7.0 en favor de `UNPROCESSABLE_CONTENT`/`isUnprocessableContent()`, mismo
+    422): no aparecían entre las anotaciones de CI del primer fix por el límite de anotaciones
+    visibles de GitHub Actions, encontrados recompilando con `-Dmaven.compiler.showDeprecation=true`.
+    4 sitios (`ManejadorErroresGlobal` + 3 tests).
+- README.md tenía 3 referencias sueltas a "Spring Boot 3.5.16" (badge, diagrama de arquitectura,
+  tabla de stack) que quedaron desactualizadas al actualizar `docs/SPECS.md` en el release 2.2.0.
 
 ## [2.2.0] — 2026-09-03
 

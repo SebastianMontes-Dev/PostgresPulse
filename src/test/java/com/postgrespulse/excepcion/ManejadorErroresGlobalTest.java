@@ -94,7 +94,7 @@ class ManejadorErroresGlobalTest {
 
         var respuesta = manejador.conexionFallida(new ConexionFallidaException("timeout"), peticion);
 
-        verificar(respuesta, HttpStatus.UNPROCESSABLE_ENTITY, "CONEXION_FALLIDA");
+        verificar(respuesta, HttpStatus.UNPROCESSABLE_CONTENT, "CONEXION_FALLIDA");
     }
 
     @Test

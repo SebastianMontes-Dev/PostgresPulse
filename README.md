@@ -4,7 +4,7 @@
 
   [![CI](https://github.com/SebastianMontes-Dev/PostgresPulse/actions/workflows/ci.yml/badge.svg)](https://github.com/SebastianMontes-Dev/PostgresPulse/actions/workflows/ci.yml)
   [![Java Version](https://img.shields.io/badge/Java-21-blue.svg?style=for-the-badge&logo=openjdk)](#)
-  [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.16-brightgreen.svg?style=for-the-badge&logo=springboot)](#)
+  [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen.svg?style=for-the-badge&logo=springboot)](#)
   [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](#)
   [![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
 </div>
@@ -109,7 +109,7 @@ chequeos con hallazgos + SQL listo para ejecutar.
 ## 🏗️ Arquitectura
 
 ```
-Cliente (panel + API REST) ──HTTPS──▶ Reverse proxy (Caddy, TLS)──HTTP interno──▶ PostgresPulse (Spring Boot 3.5 / Java 21)
+Cliente (panel + API REST) ──HTTPS──▶ Reverse proxy (Caddy, TLS)──HTTP interno──▶ PostgresPulse (Spring Boot 4.1 / Java 21)
                                                                                           │
                                                              ┌────────────────────────────┴───────────────────────┐
                                                              │ conexiones en tiempo de ejecución (solo lectura)     │
@@ -126,7 +126,7 @@ sin certificados; el reverse proxy solo entra en juego en producción — ver
 
 | Categoría | Tecnología |
 | :--- | :--- |
-| **Framework** | Spring Boot 3.5.16, Java 21 |
+| **Framework** | Spring Boot 4.1.1, Java 21 |
 | **Persistencia** | Spring Data JPA, driver PostgreSQL, Flyway |
 | **Resiliencia** | Resilience4j (circuit breaker por fuente + reintento en fallos transitorios) |
 | **Seguridad** | Spring Security (JWT), AES-256-GCM, anti-fuerza-bruta, CSRF en el panel |
