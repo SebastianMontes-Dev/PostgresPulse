@@ -72,6 +72,51 @@
         });
     }
 
+    /**
+     * Controla un FAB + hoja modal generico (hoy solo "Registrar fuente" en
+     * index.html, ver CHANGELOG.md). Visibilidad via el atributo `hidden`,
+     * no `display` inline, para no pisar el `display:flex` que ya trae
+     * `.hoja-cabecera` en panel.css.
+     */
+    function iniciarHoja({ boton, hoja, fondo, botonCerrar }) {
+        const elBoton = document.getElementById(boton);
+        const elHoja = document.getElementById(hoja);
+        const elFondo = document.getElementById(fondo);
+        const elCerrar = botonCerrar ? document.getElementById(botonCerrar) : null;
+        if (!elBoton || !elHoja || !elFondo) {
+            return;
+        }
+
+        function alEscape(evento) {
+            if (evento.key === 'Escape') {
+                cerrar();
+            }
+        }
+
+        function abrir() {
+            elHoja.hidden = false;
+            elFondo.hidden = false;
+            const primerCampo = elHoja.querySelector('input, select, textarea');
+            if (primerCampo) {
+                primerCampo.focus();
+            }
+            document.addEventListener('keydown', alEscape);
+        }
+
+        function cerrar() {
+            elHoja.hidden = true;
+            elFondo.hidden = true;
+            document.removeEventListener('keydown', alEscape);
+            elBoton.focus();
+        }
+
+        elBoton.addEventListener('click', abrir);
+        elFondo.addEventListener('click', cerrar);
+        if (elCerrar) {
+            elCerrar.addEventListener('click', cerrar);
+        }
+    }
+
     function coloresGrafico() {
         const estilos = getComputedStyle(document.documentElement);
         return {
@@ -82,5 +127,5 @@
         };
     }
 
-    window.PostgresPulsePanel = { iniciarPoll, iniciarTema, coloresGrafico, etiquetaEstado };
+    window.PostgresPulsePanel = { iniciarPoll, iniciarTema, iniciarHoja, coloresGrafico, etiquetaEstado };
 })();

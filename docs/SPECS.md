@@ -7,8 +7,8 @@
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
 | **Estado** | v1.0 completada (fases 0–8, ver §17); JWT multiusuario, exportador Prometheus, despliegue TLS, alertas de salud y tableros Grafana añadidos después — ver CHANGELOG.md. El RBAC (roles ADMIN/LECTOR) introducido junto con JWT se eliminó después en la v2.0.0: hoy cualquier cuenta autenticada tiene el mismo acceso |
-| **Versión** | 2.0.0 |
-| **Última actualización** | 2026-08-25 |
+| **Versión** | 2.1.0 |
+| **Última actualización** | 2026-09-03 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
 
 ---

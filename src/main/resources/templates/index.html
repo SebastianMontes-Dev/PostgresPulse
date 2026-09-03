@@ -44,7 +44,22 @@
         </div>
     </div>
 
-    <h2>Registrar fuente</h2>
+    <button type="button" id="botonRegistrarFuente" class="fab" aria-haspopup="dialog"
+            aria-controls="hojaRegistrarFuente" aria-label="Registrar fuente">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+</div>
+
+<div id="hojaFondo" class="hoja-fondo" hidden></div>
+<div id="hojaRegistrarFuente" class="hoja" role="dialog" aria-modal="true" aria-labelledby="tituloRegistrarFuente" hidden>
+    <div class="hoja-cabecera">
+        <h2 id="tituloRegistrarFuente">Registrar fuente</h2>
+        <button type="button" id="botonCerrarHoja" class="boton-cerrar-hoja" aria-label="Cerrar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                 stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+    </div>
     <form class="formulario" th:action="@{/fuentes}" th:object="${formulario}" method="post">
         <div class="campo">
             <label for="nombre">Nombre</label>
@@ -95,6 +110,12 @@
 <script th:src="@{/panel.js}"></script>
 <script>
     PostgresPulsePanel.iniciarTema();
+    PostgresPulsePanel.iniciarHoja({
+        boton: 'botonRegistrarFuente',
+        hoja: 'hojaRegistrarFuente',
+        fondo: 'hojaFondo',
+        botonCerrar: 'botonCerrarHoja'
+    });
     PostgresPulsePanel.iniciarPoll('/resumen-panel', (fuentes) => {
         fuentes.forEach((item) => {
             const tarjeta = document.querySelector('[data-fuente-id="' + item.fuente.id + '"]');

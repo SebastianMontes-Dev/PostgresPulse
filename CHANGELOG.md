@@ -20,10 +20,28 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 - Etiquetas de estado humanizadas (`En línea`, `Sano`, `Advertencia`, etc.) en vez del nombre
   crudo del enum, vía el fragmento reutilizable `fragmentos/estado.html` y
   `panel.js#etiquetaEstado`.
+- **FAB + hoja flotante para "Registrar fuente"**: el formulario, antes siempre visible al pie
+  de `index.html`, ahora vive en una hoja modal (centrada en escritorio, deslizada desde abajo
+  en móvil) que abre un botón flotante circular. Cierra con el botón de cerrar, click en el
+  fondo u <kbd>Esc</kbd>; el foco vuelve al FAB al cerrar. Mismo `<form>`/mismos campos de
+  siempre, sin cambios de backend — solo se mueve dónde vive en el DOM
+  (`panel.js#iniciarHoja`, genérico por si se reutiliza en otra pantalla).
+- `<meta name="viewport">` en las 6 plantillas (faltaba, el panel no escalaba en móvil) y
+  `aria-live="polite"` en el badge de estado y el puntaje que actualiza el polling de 30s, para
+  que lectores de pantalla anuncien los cambios.
+
+Se evaluó agregar una política CORS explícita en `SeguridadConfig` (hoy no hay ninguna,
+funciona por ausencia de cabeceras `Access-Control-*`), pero se descartó: `CorsUtils.isCorsRequest`
+de Spring solo mira si la cabecera `Origin` está presente, no si coincide con el origen de la
+petición, así que cualquier `CorsConfigurationSource` sin ese origen en la lista permitida
+también rechaza peticiones same-origin — rompió el login real al probarlo en el navegador. Calcular
+el origen propio de forma confiable requeriría `server.forward-headers-strategy` (para que
+`request.getScheme()`/`getServerPort()` reflejen lo que ve Caddy, no la conexión interna en
+`:8080`), que es un cambio aparte. Se deja la ausencia de CORS como está — ya es efectivamente
+"denegar cruzado" para un navegador, solo que implícito.
 
 Fuera de esta pasada, a propósito: el reporte exportable/imprimible (`reporte.html`) no cambia
-— es un documento standalone, no parte del panel; "Registrar fuente" sigue siendo el formulario
-inline de siempre, solo re-estilizado, sin el FAB/hoja flotante que se exploró en el mockup.
+— es un documento standalone, no parte del panel, y blur/transparencia no imprime bien.
 
 ## [2.1.0] — 2026-08-27
 
