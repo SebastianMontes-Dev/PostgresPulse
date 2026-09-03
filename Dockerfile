@@ -15,6 +15,11 @@ COPY src/ src/
 RUN ./mvnw -q -B clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+# Parches de seguridad del sistema base (libcrypto3/libssl3/libexpat, etc.):
+# la imagen base es una etiqueta movil, no siempre reconstruida al dia con
+# el ultimo aviso de Alpine -- esto la trae al dia en cada build, sin
+# esperar a que eclipse-temurin publique una nueva capa.
+RUN apk update && apk upgrade --no-cache
 RUN addgroup -S pulse && adduser -S pulse -G pulse
 WORKDIR /app
 
