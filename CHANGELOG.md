@@ -19,10 +19,12 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
     contra una base vacía y falla el arranque).
   - `resilience4j-spring-boot4` en vez de `resilience4j-spring-boot3`: este último se
     autoverifica contra la versión de Spring Boot y rechaza explícitamente Boot 4.x.
-  - Se retiran los overrides de `postgresql.version`/`tomcat.version` (CVEs ya parchados en
-    2.1.0): `spring-boot-dependencies:4.1.1` ya gestiona versiones más nuevas por defecto
-    (postgresql 42.7.13, tomcat 11.0.24) — mantener el override de tomcat lo habría *bajado*
-    a la línea 10.x, incompatible con Servlet 6.1.
+  - Se retira el override de `postgresql.version` (CVE-2026-54291 ya parchado en 2.1.0):
+    `spring-boot-dependencies:4.1.1` ya gestiona 42.7.13 por defecto. El de `tomcat.version` se
+    reintrodujo aparte a los pocos minutos: el 11.0.24 que trae 4.1.1 por defecto seguía expuesto
+    a CVE-2026-65182/65905/68525 (bypass de autenticación/control de acceso) — Trivy lo bloqueó en
+    CI en el primer push; fix real recién en 11.0.25 (misma línea 11.0.x, requerida por Servlet
+    6.1 — no se puede bajar a la línea 10.x como en 2.1.0).
   - Tests: `@WebMvcTest`/`@DataJpaTest` y varias clases de soporte (`TestRestTemplate`,
     `AutoConfigureTestDatabase`, etc.) se reubicaron a starters de test dedicados
     (`spring-boot-starter-webmvc-test`, `spring-boot-starter-data-jpa-test`,

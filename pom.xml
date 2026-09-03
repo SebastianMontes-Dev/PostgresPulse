@@ -23,13 +23,15 @@
         <resilience4j.version>2.4.0</resilience4j.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <!-- postgresql.version y tomcat.version ya no se fijan a mano: los
-             overrides de CVE-2026-54291 (postgresql) y CVE-2026-65182/65905/
-             68525 (tomcat) de la v2.1.0 quedaron por debajo de lo que
-             spring-boot-dependencies:4.1.1 gestiona por defecto (postgresql
-             42.7.13, tomcat 11.0.24, linea nueva de Jakarta EE 11/Servlet
-             6.1); forzar la version vieja de tomcat aqui rompería esa
-             compatibilidad binaria. -->
+        <!-- postgresql.version ya no se fija a mano: el override de
+             CVE-2026-54291 de la v2.1.0 quedó por debajo de lo que
+             spring-boot-dependencies:4.1.1 gestiona por defecto (42.7.13). -->
+        <!-- tomcat.version SÍ se fija: 11.0.24 (default de 4.1.1) sigue
+             expuesto a CVE-2026-65182/65905/68525 (bypass de autenticacion/
+             control de acceso), parcheados en la linea 11.0.x recien en
+             11.0.25 — Trivy lo bloqueó en CI. Se mantiene en la linea 11.0.x
+             (Jakarta EE 11/Servlet 6.1, requerido por Boot 4.1.1). -->
+        <tomcat.version>11.0.25</tomcat.version>
     </properties>
 
     <dependencies>
