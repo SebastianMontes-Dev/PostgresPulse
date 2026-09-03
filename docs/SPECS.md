@@ -6,7 +6,7 @@
 |---|---|
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
-| **Estado** | v1.0 completada (fases 0–8, ver §17); JWT multiusuario, exportador Prometheus, despliegue TLS, alertas de salud y tableros Grafana añadidos después — ver CHANGELOG.md. El RBAC (roles ADMIN/LECTOR) introducido junto con JWT se eliminó después en la v2.0.0: hoy cualquier cuenta autenticada tiene el mismo acceso |
+| **Estado** | v1.0 completada (fases 0–8, ver §17); JWT multiusuario, exportador Prometheus, despliegue TLS, alertas de salud y tableros Grafana añadidos después — ver CHANGELOG.md. El RBAC (roles ADMIN/LECTOR) introducido junto con JWT se eliminó después en la v2.0.0: hoy cualquier cuenta autenticada tiene el mismo acceso. Upgrade mayor a Spring Boot 4.1.1 (Spring Framework 7 / Spring Security 7 / Jakarta EE 11) y rediseño visual del panel ("Liquid Glass") en curso — ver sección "[No publicado]" de CHANGELOG.md |
 | **Versión** | 2.1.0 |
 | **Última actualización** | 2026-09-03 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
@@ -84,7 +84,7 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 
 - Documentación oficial PostgreSQL 16: catálogo `pg_catalog`, `information_schema`, `pg_stat_user_tables`, `pg_stat_user_indexes`, `pg_stat_database`, `pg_stat_activity`, `pg_stat_statements`
 - O'Reilly, *PostgreSQL de Alto Rendimiento* (2018) — criterios de hinchamiento y autovacuum
-- Documentación Spring Boot 3.4: Fuentes de datos dinámicas, Programación, Seguridad, Actuator
+- Documentación Spring Boot 4.1: Fuentes de datos dinámicas, Programación, Seguridad, Actuator
 - PgHero (referencia de producto de mercado) — punto de referencia de chequeos
 
 ---
@@ -116,7 +116,7 @@ PostgresPulse es una plataforma que se conecta a cualquier base de datos Postgre
 
 ```
 Docker Compose:
-├── servicio: app          → Spring Boot 3.5, puerto 8080
+├── servicio: app          → Spring Boot 4.1, puerto 8080
 │     └─ conecta a: pulse-db (propia) + target-demo (objetivo)
 ├── servicio: pulse-db     → PostgreSQL 16 (esquema propio con Flyway)
 └── servicio: target-demo  → PostgreSQL 16 + sample_data.sql
