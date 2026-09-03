@@ -7,6 +7,34 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Upgrade mayor a Spring Boot 4.1.1** (desde 3.5.16 — Spring Framework 7, Spring Security 7,
+  Tomcat 11/Jakarta EE 11). Cambios que exigió, en orden de impacto:
+  - **`JacksonConfig`**: Spring Boot 4 auto-configura Jackson 3 (`tools.jackson`) por defecto,
+    no Jackson 2 (`com.fasterxml.jackson`, lo que usa el resto de la app —
+    `LimiteTasaApiFilter`, `ExportacionServicio`, `jjwt-jackson`). Sin un `ObjectMapper` propio
+    vía `Jackson2ObjectMapperBuilder`, la app entera fallaba al arrancar (ni un solo bean
+    candidato) — no era un problema aislado a los tests.
+  - `spring-boot-starter-flyway`: la autoconfiguración de Flyway se movió a un starter separado;
+    sin él, `flyway-core` queda en el classpath pero nunca corre (Hibernate valida el esquema
+    contra una base vacía y falla el arranque).
+  - `resilience4j-spring-boot4` en vez de `resilience4j-spring-boot3`: este último se
+    autoverifica contra la versión de Spring Boot y rechaza explícitamente Boot 4.x.
+  - Se retiran los overrides de `postgresql.version`/`tomcat.version` (CVEs ya parchados en
+    2.1.0): `spring-boot-dependencies:4.1.1` ya gestiona versiones más nuevas por defecto
+    (postgresql 42.7.13, tomcat 11.0.24) — mantener el override de tomcat lo habría *bajado*
+    a la línea 10.x, incompatible con Servlet 6.1.
+  - Tests: `@WebMvcTest`/`@DataJpaTest` y varias clases de soporte (`TestRestTemplate`,
+    `AutoConfigureTestDatabase`, etc.) se reubicaron a starters de test dedicados
+    (`spring-boot-starter-webmvc-test`, `spring-boot-starter-data-jpa-test`,
+    `spring-boot-starter-restclient`) con nuevos paquetes; `@WebMvcTest` además dejó de traer
+    un `ObjectMapper` de propósito general, así que los controladores que lo necesitan para
+    tests importan `JacksonConfig` explícitamente. `@AutoConfigureObservability` desapareció
+    sin reemplazo (el comportamiento que habilitaba parece ser el default ahora).
+  - Verificado en el navegador/curl contra `docker compose up`: login (form y API), dashboard,
+    polling JSON con fechas, Swagger UI, exportación de reporte.
+
+### Añadido (panel)
+
 - **Rediseño del panel ("Liquid Glass")**: nuevo lenguaje visual inspirado en iOS 26/macOS 26
   (vidrio traslúcido con blur, malla de fondo en degradado, tarjetas y botones tipo píldora) en
   las 4 pantallas autenticadas (`index`, `fuente-detalle`, `historial`, `tabla-detalle`) y en

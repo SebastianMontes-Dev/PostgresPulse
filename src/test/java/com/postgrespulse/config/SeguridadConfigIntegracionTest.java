@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -35,13 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * documentan los comentarios de SeguridadConfig.
  */
 @Testcontainers
-// @AutoConfigureObservability: @SpringBootTest desactiva la exportacion de
-// metricas por defecto (ObservabilityContextCustomizerFactory, para no pagar
-// el costo de instrumentacion real en cada test); sin esto
-// actuatorPrometheusRequiereAutenticacionYExponeLasMetricasPropias no
-// registraria el endpoint /actuator/prometheus.
+// Spring Boot 4 elimino @AutoConfigureObservability y el mecanismo que
+// suprimia metricas reales en @SpringBootTest por defecto
+// (ObservabilityContextCustomizerFactory ya no existe) -- verificado que
+// actuatorPrometheusRequiereAutenticacionYExponeLasMetricasPropias sigue
+// pasando sin la anotacion.
 @SpringBootTest
-@AutoConfigureObservability
 @AutoConfigureMockMvc
 class SeguridadConfigIntegracionTest {
 

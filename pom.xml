@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.16</version>
+        <version>4.1.1</version>
         <relativePath/>
     </parent>
 
@@ -22,18 +22,14 @@
         <springdoc.version>2.7.0</springdoc.version>
         <resilience4j.version>2.4.0</resilience4j.version>
         <testcontainers.version>1.21.4</testcontainers.version>
-        <!-- CVE-2026-54291 (bypass de proteccion MITM via downgrade de
-             SCRAM-SHA-256-PLUS): fijado por encima del 42.7.11 que trae
-             spring-boot-dependencies:3.5.16. -->
-        <postgresql.version>42.7.12</postgresql.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <!-- CVE-2026-65182/65905/68525 (bypasses de autenticacion/control de
-             acceso): fijado por encima del 10.1.55 que trae
-             spring-boot-dependencies:3.5.16. 10.1.x, no 11.x, para no saltar
-             a Jakarta EE 11/Servlet 6.1 (Spring Boot 3.5.x espera 6.0);
-             10.1.58 no llego a publicarse en Maven Central, 10.1.59 es la
-             siguiente disponible e incluye los mismos fixes. -->
-        <tomcat.version>10.1.59</tomcat.version>
+        <!-- postgresql.version y tomcat.version ya no se fijan a mano: los
+             overrides de CVE-2026-54291 (postgresql) y CVE-2026-65182/65905/
+             68525 (tomcat) de la v2.1.0 quedaron por debajo de lo que
+             spring-boot-dependencies:4.1.1 gestiona por defecto (postgresql
+             42.7.13, tomcat 11.0.24, linea nueva de Jakarta EE 11/Servlet
+             6.1); forzar la version vieja de tomcat aqui rompería esa
+             compatibilidad binaria. -->
     </properties>
 
     <dependencies>
@@ -79,6 +75,14 @@
         </dependency>
 
         <dependency>
+            <!-- Spring Boot 4 saco la autoconfiguracion de Flyway a este
+                 starter separado: sin el, flyway-core queda en el classpath
+                 pero nunca corre (Hibernate valida el esquema contra una BD
+                 vacia y falla en el arranque). -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
@@ -94,8 +98,12 @@
         </dependency>
 
         <dependency>
+            <!-- resilience4j-spring-boot3 se autoverifica contra la version
+                 de Spring Boot en el arranque y rechaza explicitamente Boot
+                 4.x ("only compatible with Spring Boot 3.x"); el artefacto
+                 correcto para esta version es resilience4j-spring-boot4. -->
             <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-spring-boot3</artifactId>
+            <artifactId>resilience4j-spring-boot4</artifactId>
             <version>${resilience4j.version}</version>
         </dependency>
 
@@ -127,6 +135,27 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Spring Boot 4 saco @WebMvcTest/@AutoConfigureMockMvc/TestRestTemplate
+                 de spring-boot-starter-test a este starter separado. -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Idem para @DataJpaTest/@AutoConfigureTestDatabase/TestEntityManager. -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- spring-boot-resttestclient (TestRestTemplate) referencia
+                 RestTemplateBuilder al introspeccionar su auto-configuracion,
+                 aunque el modulo no forme parte de la app en si. -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

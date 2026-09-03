@@ -118,7 +118,7 @@ class ManejadorErroresGlobalTest {
     @Test
     void recursoEstaticoAusenteMapeaA404SinFiltrarElMensajeOriginal() {
         stubRuta("/favicon.ico");
-        NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "/favicon.ico");
+        NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "/favicon.ico", "/favicon.ico");
 
         var respuesta = manejador.recursoNoEncontrado(ex, peticion);
 

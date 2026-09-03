@@ -1,6 +1,7 @@
 package com.postgrespulse.controlador;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.postgrespulse.config.JacksonConfig;
 import com.postgrespulse.dto.LoginDto;
 import com.postgrespulse.dto.TokenRespuestaDto;
 import com.postgrespulse.excepcion.CredencialesInvalidasException;
@@ -11,8 +12,9 @@ import com.postgrespulse.servicio.AutenticacionServicio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -32,6 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthControlador.class)
 @AutoConfigureMockMvc(addFilters = false)
+// @WebMvcTest no trae el ObjectMapper de JacksonConfig (component scan
+// restringido a controladores/beans web) -- ver el javadoc de JacksonConfig
+// para el porque de ese bean.
+@Import(JacksonConfig.class)
 class AuthControladorTest {
 
     @Autowired

@@ -1,6 +1,7 @@
 package com.postgrespulse.controlador;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.postgrespulse.config.JacksonConfig;
 import com.postgrespulse.dto.CrearUsuarioDto;
 import com.postgrespulse.dto.EditarUsuarioDto;
 import com.postgrespulse.dto.UsuarioRespuestaDto;
@@ -10,8 +11,9 @@ import com.postgrespulse.excepcion.UsuarioNoEncontradoException;
 import com.postgrespulse.servicio.UsuarioServicio;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,6 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UsuarioControlador.class)
 @AutoConfigureMockMvc(addFilters = false)
+// Ver JacksonConfig: @WebMvcTest no lo trae (component scan restringido a
+// controladores/beans web).
+@Import(JacksonConfig.class)
 class UsuarioControladorTest {
 
     @Autowired
