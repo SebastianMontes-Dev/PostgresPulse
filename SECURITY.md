@@ -8,8 +8,8 @@ parches de seguridad.
 
 | Versión | Soportada |
 |---|---|
-| 1.x.x | ✅ |
-| < 1.0 | ❌ |
+| 2.x.x | ✅ |
+| < 2.0 | ❌ |
 
 ## Reportar una vulnerabilidad
 
