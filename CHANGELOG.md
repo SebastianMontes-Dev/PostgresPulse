@@ -5,6 +5,14 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [No publicado]
 
+### Añadido
+
+- **`springdoc-openapi` 2.7.0 → 3.1.0**: quedó bloqueado en el bump de `jjwt` (ver `[2.2.0]`) porque
+  esa versión requiere Spring Boot 4.1.0+ y rompía el arranque contra el 3.5.16 de entonces; con el
+  upgrade a 4.1.1 ya resuelto, se probó de nuevo — 219 tests, SpotBugs y JaCoCo en verde, y
+  verificado en runtime real (`docker compose up`): login, dashboard, Swagger UI y `/v3/api-docs`
+  (OpenAPI 3.1.0, esquema JWT Bearer) sin regresiones ni deprecaciones nuevas.
+
 ### Corregido
 
 - **Limpieza de las 3 anotaciones `deprecated` que dejó el upgrade a Spring Boot 4.1.1 en CI**:
