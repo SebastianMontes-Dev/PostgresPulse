@@ -3,6 +3,21 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
+## [No publicado]
+
+### Corregido
+
+- **Limpieza de las 3 anotaciones `deprecated` que dejó el upgrade a Spring Boot 4.1.1 en CI**:
+  - `JacksonConfig`: `Jackson2ObjectMapperBuilder` (deprecado y marcado para remoción desde Spring
+    Framework 7.0) reemplazado por `JsonMapper.builder().findAndAddModules().build()` — Jackson 2
+    nativo, mismo registro de módulos vía SPI (`jackson-datatype-jsr310` para `OffsetDateTime`).
+  - `SeguridadConfig#entryPointPorRuta`: el constructor `DelegatingAuthenticationEntryPoint(LinkedHashMap)`
+    y `setDefaultEntryPoint(...)` (ambos deprecados, marcados para remoción) reemplazados por el
+    `DelegatingAuthenticationEntryPoint.builder()` nuevo de Spring Security 7.0
+    (`addEntryPointFor`/`defaultEntryPoint`/`build()`); el método ahora devuelve `AuthenticationEntryPoint`
+    en vez del tipo concreto. Sin cambio de comportamiento (mismo entry point 401 sin cuerpo para
+    `/api/v1/**` y `/actuator/**`, redirect a `/login` por defecto).
+
 ## [2.2.0] — 2026-09-03
 
 ### Añadido

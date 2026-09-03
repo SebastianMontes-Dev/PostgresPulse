@@ -22,9 +22,6 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-
-import java.util.LinkedHashMap;
 
 /**
  * Autenticación JWT, reemplaza la Autenticación Básica de un solo
@@ -131,14 +128,13 @@ public class SeguridadConfig {
      * reenvio a /error de un contenedor real; encontrado verificando
      * manualmente contra el contenedor real con curl.
      */
-    private DelegatingAuthenticationEntryPoint entryPointPorRuta() {
+    private AuthenticationEntryPoint entryPointPorRuta() {
         AuthenticationEntryPoint sin401 = (request, response, authException) -> response.setStatus(401);
-        var entryPoints = new LinkedHashMap<RequestMatcher, AuthenticationEntryPoint>();
-        entryPoints.put(PathPatternRequestMatcher.withDefaults().matcher("/api/v1/**"), sin401);
-        entryPoints.put(PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"), sin401);
-        DelegatingAuthenticationEntryPoint delegating = new DelegatingAuthenticationEntryPoint(entryPoints);
-        delegating.setDefaultEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
-        return delegating;
+        return DelegatingAuthenticationEntryPoint.builder()
+                .addEntryPointFor(sin401, PathPatternRequestMatcher.withDefaults().matcher("/api/v1/**"))
+                .addEntryPointFor(sin401, PathPatternRequestMatcher.withDefaults().matcher("/actuator/**"))
+                .defaultEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                .build();
     }
 
     /**
