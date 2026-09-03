@@ -3,7 +3,7 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
-## [No publicado]
+## [2.3.0] — 2026-09-03
 
 ### Añadido
 
@@ -32,6 +32,10 @@ Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
     4 sitios (`ManejadorErroresGlobal` + 3 tests).
 - README.md tenía 3 referencias sueltas a "Spring Boot 3.5.16" (badge, diagrama de arquitectura,
   tabla de stack) que quedaron desactualizadas al actualizar `docs/SPECS.md` en el release 2.2.0.
+
+### Cambiado
+
+- `actions/setup-java` 5 → 6 en `ci.yml`/`codeql.yml` (Dependabot PR #15).
 
 ## [2.2.0] — 2026-09-03
 
@@ -459,6 +463,7 @@ panel de control, programador y exportación de reportes, seguridad y despliegue
   Actions (Testcontainers + JaCoCo + publicación de imagen a GHCR).
 - **Pruebas**: cobertura JaCoCo con gate ≥80% en el motor de análisis y ≥70% en servicios/programador.
 
+[2.3.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v2.0.0...v2.1.0
 [1.4.1]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.4.0...v1.4.1
