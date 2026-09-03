@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="'PostgresPulse — ' + ${fuente.nombre}">PostgresPulse</title>
     <th:block th:replace="~{fragmentos/tema :: script}"></th:block>
     <link rel="stylesheet" th:href="@{/panel.css}">
@@ -21,7 +22,7 @@
     <div th:if="${error}" class="banner banner-error" th:text="${error}">Error</div>
 
     <div style="display:flex; align-items:center; gap:1rem; margin: 1rem 0 1.5rem;">
-        <div class="js-puntaje-slot">
+        <div class="js-puntaje-slot" aria-live="polite">
             <span th:if="${salud.puntajeActual != null}" class="puntaje" th:classappend="${salud.estadoActual}"
                   th:text="${salud.puntajeActual} + ' / 100'" style="font-size:2.5rem; font-weight:700;">— / 100</span>
             <span th:unless="${salud.puntajeActual != null}" class="meta">Sin análisis todavía</span>

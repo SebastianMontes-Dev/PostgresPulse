@@ -23,8 +23,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Autenticación JWT, reemplaza la Autenticación Básica de un solo
@@ -79,6 +83,29 @@ public class SeguridadConfig {
         return new JwtAuthenticationFilter(jwtServicio);
     }
 
+    /**
+     * Sin origenes permitidos a proposito: el panel es Thymeleaf servido por
+     * esta misma app (same-origin, ver ADR-7 en docs/SPECS.md) y /api/v1/**
+     * se autentica con `Authorization: Bearer`, no con cookies -- ningun
+     * cliente legitimo de hoy necesita CORS. Spring ni siquiera evalua esta
+     * configuracion para peticiones same-origin (CorsUtils.isCorsRequest
+     * las excluye antes de llegar aca), asi que esto no afecta al panel ni a
+     * clientes que llamen a la API con su propio Origin igual al del server;
+     * solo formaliza el rechazo de origenes cruzados en vez de dejarlo
+     * implicito en la ausencia de cabeceras Access-Control-*. Si en el
+     * futuro se separa el frontend, reemplazar List.of() por la lista
+     * explicita de origenes confiables -- nunca "*" combinado con cookies/
+     * credenciales.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuracion = new CorsConfiguration();
+        configuracion.setAllowedOrigins(List.of());
+        UrlBasedCorsConfigurationSource fuente = new UrlBasedCorsConfigurationSource();
+        fuente.registerCorsConfiguration("/**", configuracion);
+        return fuente;
+    }
+
     @Bean
     public LimiteTasaApiFilter limiteTasaApiFilter(LimiteTasaApiServicio limiteTasaApiServicio,
                                                     ObjectMapper objectMapper,
@@ -88,9 +115,11 @@ public class SeguridadConfig {
 
     @Bean
     public SecurityFilterChain cadenaFiltros(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
-                                              LimiteTasaApiFilter limiteTasaApiFilter)
+                                              LimiteTasaApiFilter limiteTasaApiFilter,
+                                              CorsConfigurationSource corsConfigurationSource)
             throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/api/v1/**"))

@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PostgresPulse — Resumen</title>
     <th:block th:replace="~{fragmentos/tema :: script}"></th:block>
     <link rel="stylesheet" th:href="@{/panel.css}">
@@ -25,9 +26,9 @@
                 <a th:href="@{/fuentes/{id}(id=${item.fuente.id})}" th:text="${item.fuente.nombre}">Fuente</a>
             </div>
             <div class="meta" th:text="${item.fuente.host} + ':' + ${item.fuente.puerto} + '/' + ${item.fuente.baseDeDatos}">host</div>
-            <span class="badge js-estado-fuente" th:classappend="${item.fuente.estado}"><th:block th:replace="~{fragmentos/estado :: etiqueta(${item.fuente.estado})}"></th:block></span>
+            <span class="badge js-estado-fuente" aria-live="polite" th:classappend="${item.fuente.estado}"><th:block th:replace="~{fragmentos/estado :: etiqueta(${item.fuente.estado})}"></th:block></span>
 
-            <div class="js-puntaje-slot">
+            <div class="js-puntaje-slot" aria-live="polite">
                 <div class="puntaje" th:if="${item.ultimoAnalisis != null and item.ultimoAnalisis.puntajeSalud != null}"
                      th:classappend="${item.ultimoAnalisis.estado}"
                      th:text="${item.ultimoAnalisis.puntajeSalud} + ' / 100'">— / 100</div>
