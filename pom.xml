@@ -13,7 +13,7 @@
 
     <groupId>com.postgrespulse</groupId>
     <artifactId>postgrespulse</artifactId>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
     <name>PostgresPulse</name>
     <description>Plataforma enterprise de monitoreo, analisis y salud de bases de datos PostgreSQL</description>
 

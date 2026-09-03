@@ -3,7 +3,7 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
-## [No publicado]
+## [2.2.0] — 2026-09-03
 
 ### Añadido
 
@@ -72,6 +72,36 @@ el origen propio de forma confiable requeriría `server.forward-headers-strategy
 
 Fuera de esta pasada, a propósito: el reporte exportable/imprimible (`reporte.html`) no cambia
 — es un documento standalone, no parte del panel, y blur/transparencia no imprime bien.
+
+### Añadido (seguridad y despliegue)
+
+- **Failfast opcional para defaults inseguros**: `AvisoDefaultsInseguros` puede bloquear el arranque
+  en `@PostConstruct` (`app.seguridad.bloquear-defaults-inseguros`, `false` por defecto) en vez de
+  solo advertir, para despliegues reales que no leyeron `docs/DEPLOYMENT.md`.
+- **Soporte de proxy confiable**: nuevo `ResolvedorIpCliente` — `LimiteTasaApiServicio` y
+  `ControlIntentosFallidosServicio` dejan de ver siempre la IP de Caddy en producción; solo confían
+  en `X-Forwarded-For`/`X-Real-IP` cuando la conexión TCP viene de un proxy listado en
+  `app.seguridad.proxies-confiables` (sin configurar, comportamiento idéntico al anterior).
+  `deploy/docker-compose.prod.yml` activa ambos hardenings por defecto con una subred interna
+  estable (172.28.0.0/24) para que el segundo tenga efecto real contra el Caddy del stack.
+
+### Añadido (CI/CD)
+
+- **GitHub Releases automatizado**: nuevo job `release` en `ci.yml` (solo en tags `v*`, tras
+  build+docker) extrae la sección correspondiente de este CHANGELOG y crea el Release con esas
+  notas vía `gh release create`, en vez del resumen automático genérico de GitHub.
+- **CodeQL** como SAST adicional (`codeql.yml`, push/PR a `main` y semanal) — complementa a
+  SpotBugs (bloqueante, orientado a bugs/calidad) y Trivy (escanea la imagen ya construida, no el
+  código fuente); publica hallazgos en la pestaña Security del repo.
+- Cobertura de `PanelAuthControlador` (login/logout del dashboard, antes sin test propio) sube el
+  paquete `panel` de ~62% a ~73% de líneas; nuevo gate de JaCoCo al 65% para ese paquete.
+
+### Corregido
+
+- `jjwt` 0.12.6 → 0.13.0 (cambio trivial: un constructor antes privado ahora es público). Se evaluó
+  también `springdoc-openapi` 2.7.0 → 3.1.0, pero esa versión requiere Spring Boot 4.1.0+ y rompía
+  el arranque contra el 3.5.16 de entonces (77 tests con `ApplicationContext` failure); con el
+  upgrade a 4.1.1 de esta misma release queda habilitado para un próximo bump.
 
 ## [2.1.0] — 2026-08-27
 
@@ -399,6 +429,7 @@ panel de control, programador y exportación de reportes, seguridad y despliegue
   Actions (Testcontainers + JaCoCo + publicación de imagen a GHCR).
 - **Pruebas**: cobertura JaCoCo con gate ≥80% en el motor de análisis y ≥70% en servicios/programador.
 
+[2.2.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v2.0.0...v2.1.0
 [1.4.1]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/SebastianMontes-Dev/PostgresPulse/compare/v1.3.0...v1.4.0

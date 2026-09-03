@@ -6,8 +6,8 @@
 |---|---|
 | **Proyecto** | PostgresPulse — "El electrocardiograma de tu base de datos" |
 | **Autor** | Sebastian Montes Olivera |
-| **Estado** | v1.0 completada (fases 0–8, ver §17); JWT multiusuario, exportador Prometheus, despliegue TLS, alertas de salud y tableros Grafana añadidos después — ver CHANGELOG.md. El RBAC (roles ADMIN/LECTOR) introducido junto con JWT se eliminó después en la v2.0.0: hoy cualquier cuenta autenticada tiene el mismo acceso. Upgrade mayor a Spring Boot 4.1.1 (Spring Framework 7 / Spring Security 7 / Jakarta EE 11) y rediseño visual del panel ("Liquid Glass") en curso — ver sección "[No publicado]" de CHANGELOG.md |
-| **Versión** | 2.1.0 |
+| **Estado** | v1.0 completada (fases 0–8, ver §17); JWT multiusuario, exportador Prometheus, despliegue TLS, alertas de salud y tableros Grafana añadidos después — ver CHANGELOG.md. El RBAC (roles ADMIN/LECTOR) introducido junto con JWT se eliminó después en la v2.0.0: hoy cualquier cuenta autenticada tiene el mismo acceso. v2.2.0: upgrade mayor a Spring Boot 4.1.1 (Spring Framework 7 / Spring Security 7 / Jakarta EE 11), rediseño visual del panel ("Liquid Glass") y endurecimiento de seguridad/CI — ver CHANGELOG.md |
+| **Versión** | 2.2.0 |
 | **Última actualización** | 2026-09-03 |
 | **Audiencia** | Evaluadores técnicos, reclutadores, equipos de datos |
 
