@@ -34,13 +34,13 @@ de convertirse en plan. No asumas que alguna de estas está en curso.
   dependencia que tenía, ya está lista).
 - **Historial y plan de queries lentas:** `ConsultasLentasServicio` hoy lee `pg_stat_statements` en
   vivo (top 10 por `mean_exec_time`), sin persistir nada y sin recomendación — ver
-  `docs/API.md §1-3` y el endpoint `/api/v1/fuentes/{id}/consultas`. Dos extensiones combinables:
-  (1) persistir una foto de `pg_stat_statements` por análisis (como ya se hace con los 8 chequeos)
-  para ver tendencia por query en vez de solo el ranking actual; (2) correr `EXPLAIN` — **nunca
-  `EXPLAIN ANALYZE`**, que ejecuta la query de verdad y podría re-disparar un `INSERT`/`UPDATE`/
-  `DELETE` capturado en las estadísticas, violando la garantía de solo-lectura (ADR-2,
-  `docs/SPECS.md §6.4`) — filtrado a queries `SELECT`, para detectar planes con Seq Scan y sugerir
-  el índice, igual en espíritu al chequeo `SEQ_SCAN` pero a nivel de query individual.
+  `docs/API.md §1-3` y el endpoint `/api/v1/fuentes/{id}/consultas`. **Ya tiene spec y plan de
+  implementación completos, listos para ejecutar** (persistir una foto de `pg_stat_statements` por
+  análisis igual que los 8 chequeos, tendencia por `queryId`, y `EXPLAIN` — nunca `EXPLAIN ANALYZE`,
+  ver el razonamiento de seguridad en la spec — bajo demanda filtrado a `SELECT`): ver
+  `docs/superpowers/specs/2026-09-04-historial-queries-lentas-design.md` y
+  `docs/superpowers/plans/2026-09-04-historial-queries-lentas-plan.md`. Solo falta decidir cuándo
+  ejecutar el plan.
 - **Soporte MySQL / Oracle / SQL Server:** motor de chequeos extendido más allá de PostgreSQL 12–17.
 - **Agente ligero (Go/Rust):** recolector de métricas de bajo consumo instalable en los servidores
   objetivo, como alternativa al modelo actual sin agente.
