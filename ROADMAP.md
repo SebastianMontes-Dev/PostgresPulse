@@ -32,6 +32,15 @@ de convertirse en plan. No asumas que alguna de estas está en curso.
 
 - **Auditoría de cambios:** registro de quién modificó qué configuración y cuándo (RBAC, la
   dependencia que tenía, ya está lista).
+- **Historial y plan de queries lentas:** `ConsultasLentasServicio` hoy lee `pg_stat_statements` en
+  vivo (top 10 por `mean_exec_time`), sin persistir nada y sin recomendación — ver
+  `docs/API.md §1-3` y el endpoint `/api/v1/fuentes/{id}/consultas`. Dos extensiones combinables:
+  (1) persistir una foto de `pg_stat_statements` por análisis (como ya se hace con los 8 chequeos)
+  para ver tendencia por query en vez de solo el ranking actual; (2) correr `EXPLAIN` — **nunca
+  `EXPLAIN ANALYZE`**, que ejecuta la query de verdad y podría re-disparar un `INSERT`/`UPDATE`/
+  `DELETE` capturado en las estadísticas, violando la garantía de solo-lectura (ADR-2,
+  `docs/SPECS.md §6.4`) — filtrado a queries `SELECT`, para detectar planes con Seq Scan y sugerir
+  el índice, igual en espíritu al chequeo `SEQ_SCAN` pero a nivel de query individual.
 - **Soporte MySQL / Oracle / SQL Server:** motor de chequeos extendido más allá de PostgreSQL 12–17.
 - **Agente ligero (Go/Rust):** recolector de métricas de bajo consumo instalable en los servidores
   objetivo, como alternativa al modelo actual sin agente.
