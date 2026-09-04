@@ -134,9 +134,19 @@ El filtro de "solo `SELECT`" (paso 3 arriba) **no es una medida de seguridad** �
 
 ## 7. Ciclo de vida y retención
 
-Sin regla de retención nueva: `consultas_lentas` cuelga de `analisis_id` (FK), así que se
-compacta/poda junto con su `Analisis` padre por el job existente (`RetencionAnalisisServicio`, 90
-días — `docs/SPECS.md §7`). Cero código nuevo de retención.
+**Corrección respecto al borrador inicial de esta sección** (encontrada al escribir el plan de
+implementación, `docs/superpowers/plans/2026-09-04-historial-queries-lentas-plan.md`): el `Analisis`
+padre **nunca se borra** — lo confirma el código real de `RetencionAnalisisServicio` y el javadoc de
+`ResultadoChequeoRepositorio#borrarPorAnalisisAnteriorA`. El job de retención (90 días,
+`docs/SPECS.md §7`) solo poda el **detalle granular** (`ResultadoChequeo` hoy); `Analisis` se
+conserva para siempre con su `detalleJson` agregado, para que la tendencia histórica de
+`/fuentes/{id}/salud` no tenga límite de antigüedad.
+
+Entonces sí hace falta código de retención nuevo, pero mínimo y por el mismo patrón exacto que
+`ResultadoChequeoRepositorio`: un `ConsultaLentaRepositorio#borrarPorAnalisisAnteriorA(OffsetDateTime)`
+análogo, invocado desde el mismo método `RetencionAnalisisServicio#compactarAnalisisAntiguos()` que
+ya poda `ResultadoChequeo`. `consultas_lentas` queda con la misma ventana de 90 días que el resto del
+detalle granular, sin una regla de retención distinta que mantener por separado.
 
 **Limitación conocida, documentar en el código**: si `pg_stat_statements` se resetea (reinicio de
 PostgreSQL, o `pg_stat_statements_reset()` manual), el `queryid` de una query puede cambiar o
