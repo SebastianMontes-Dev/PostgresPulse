@@ -39,17 +39,29 @@ Tabla nueva, mismo patrón que `resultados_chequeos` (ver `docs/SPECS.md §7`):
 
 ```sql
 consultas_lentas
-┌───────────────────────────────────────┐
-│ id             BIGSERIAL PK           │
-│ analisis_id    FK → analisis          │
-│ query_id       BIGINT                 │  -- queryid de pg_stat_statements
-│ query_texto    TEXT                   │  -- para mostrar/usar en el EXPLAIN bajo demanda
-│ calls          BIGINT                 │
-│ total_exec_ms  NUMERIC                │
-│ mean_exec_ms   NUMERIC                │
-│ filas          BIGINT                 │
-└───────────────────────────────────────┘
+┌────────────────────────────────────────┐
+│ id             BIGSERIAL PK            │
+│ analisis_id    FK → analisis           │
+│ query_id       BIGINT                  │  -- queryid de pg_stat_statements (bigint en origen)
+│ query_texto    TEXT                    │  -- para mostrar/usar en el EXPLAIN bajo demanda
+│ calls          BIGINT                  │  -- bigint en pg_stat_statements
+│ total_exec_ms  NUMERIC(12,3)           │  -- origen: double precision; NUMERIC por consistencia
+│ mean_exec_ms   NUMERIC(12,3)           │  -- con analisis.puntaje_salud/resultados_chequeos.puntaje
+│ filas          BIGINT                  │  -- bigint en pg_stat_statements
+└────────────────────────────────────────┘
 ```
+
+**Tipos del lado Java** (entidad JPA nueva, mismo mapeo que ya usa el resto del dominio): `Long` para
+`queryId`/`calls`/`filas`, `BigDecimal` para `totalExecMs`/`meanExecMs` (correspondiente a
+`NUMERIC` — igual que `Analisis.puntajeSalud` ya se mapea a `BigDecimal` hoy), `String` para
+`queryTexto`.
+
+**Cambio necesario en `ConsultasLentasServicio` que la sección 4 no mencionaba**: `SQL_CONSULTAS` hoy
+es `SELECT query, calls, total_exec_time, mean_exec_time, rows FROM pg_stat_statements ...` — **no
+trae `queryid`**. Hay que agregarlo al `SELECT` (`SELECT queryid, query, calls, ...`) y sumar el
+campo a `ConsultaLentaDto` (hoy `record ConsultaLentaDto(String consulta, Long llamadas, Double
+tiempoTotalMs, Double tiempoMedioMs, Long filas)`, sin `queryId`). Es la única modificación real al
+servicio existente — el resto (umbral, límite 10, manejo de `ExtensionAusenteException`) queda igual.
 
 Índice compuesto `(analisis_id)` (ya cubierto por la FK) y uno adicional pensado para la consulta de
 tendencia: `(query_id, analisis_id)` — o, si se prefiere evitar un join extra en la query de
@@ -67,8 +79,9 @@ trivial con esta tabla e índice. Contra JSONB sería necesario deserializar y f
 
 ## 4. Integración con el orquestador
 
-`ConsultasLentasServicio` no cambia su lógica de lectura (mismo `SQL_CONSULTAS`, mismo manejo de
-`ExtensionAusenteException`). Lo que cambia es *dónde se llama*: hoy solo se invoca cuando alguien
+`ConsultasLentasServicio` casi no cambia — solo el agregado de `queryid` al `SELECT` y al DTO descrito
+en la sección 3 (mismo umbral de 10, mismo orden por `mean_exec_time`, mismo manejo de
+`ExtensionAusenteException`). Lo que sí cambia es *dónde se llama*: hoy solo se invoca cuando alguien
 pega al endpoint `GET .../consultas`; con este cambio, `OrquestadorAnalisisServicio` lo invoca
 también al final de cada ciclo de análisis (en el mismo punto donde persiste `ResultadoChequeo`) y
 persiste el resultado como filas de `consultas_lentas` ligadas al `Analisis` recién creado.
